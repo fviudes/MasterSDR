@@ -59,7 +59,7 @@ QByteArray KenwoodCatProtocol::buildSetAutoInfo(bool on) const
     return buildCommand(on ? "AI1;" : "AI0;");
 }
 
-QByteArray KenwoodCatProtocol::buildSetAg(uint8_t level)
+QByteArray KenwoodCatProtocol::buildSetAg(uint8_t level) const
 {
     return buildCommand(QString("AG0%1;").arg(level, 3, 10, QChar('0')));
 }
