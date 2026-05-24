@@ -298,6 +298,13 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
                         HermesMode);
     modeRow->addWidget(m_hermesModeBtn);
 
+    m_serialCatModeBtn = new QCommandLinkButton(this);
+    configureModeButton(m_serialCatModeBtn,
+                        "Serial CAT (Icom / Kenwood)",
+                        "Connect to an Icom or Kenwood transceiver via serial CAT port (CI-V / CAT).",
+                        SerialCatMode);
+    modeRow->addWidget(m_serialCatModeBtn);
+
     root->addLayout(modeRow);
 
     m_modeStack = new QStackedWidget(this);
@@ -559,6 +566,63 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
 
     m_modeStack->addWidget(hermesPage);
 
+    // ── Serial CAT page (Icom / Kenwood) ────────────────────────────────────
+    auto* serialCatPage = new QWidget(m_modeStack);
+    auto* serialCatLayout = new QVBoxLayout(serialCatPage);
+    serialCatLayout->setContentsMargins(0, 4, 0, 0);
+    serialCatLayout->setSpacing(10);
+
+    auto* serialCatInfo = new QLabel(
+        "Connect to an Icom or Kenwood transceiver using a serial CAT cable.<br>"
+        "Configure the serial port, baud rate, and protocol below.",
+        serialCatPage);
+    serialCatInfo->setWordWrap(true);
+    serialCatInfo->setStyleSheet("color: #a0b4c4; font-size: 12px; padding: 4px 0;");
+    serialCatLayout->addWidget(serialCatInfo);
+
+    auto* serialForm = new QFormLayout;
+    serialForm->setSpacing(8);
+
+    m_serialPortCombo = new QComboBox(serialCatPage);
+    m_serialPortCombo->setEditable(true);
+    m_serialPortCombo->setMinimumHeight(32);
+    m_serialPortCombo->setStyleSheet(editStyle);
+    serialForm->addRow("Serial Port:", m_serialPortCombo);
+
+    m_serialBaudCombo = new QComboBox(serialCatPage);
+    m_serialBaudCombo->addItems({"9600", "19200", "38400", "57600", "115200"});
+    m_serialBaudCombo->setCurrentIndex(1);
+    m_serialBaudCombo->setMinimumHeight(32);
+    m_serialBaudCombo->setStyleSheet(editStyle);
+    serialForm->addRow("Baud Rate:", m_serialBaudCombo);
+
+    m_serialProtocolCombo = new QComboBox(serialCatPage);
+    m_serialProtocolCombo->addItem("Icom CI-V (default addr 0x70)", "IcomCiv");
+    m_serialProtocolCombo->addItem("Kenwood CAT", "KenwoodCat");
+    m_serialProtocolCombo->setMinimumHeight(32);
+    m_serialProtocolCombo->setStyleSheet(editStyle);
+    serialForm->addRow("Protocol:", m_serialProtocolCombo);
+
+    serialCatLayout->addLayout(serialForm);
+
+    m_serialCatStatusLabel = new QLabel("", serialCatPage);
+    m_serialCatStatusLabel->setAlignment(Qt::AlignCenter);
+    m_serialCatStatusLabel->setStyleSheet("color: #20c060; font-size: 12px; padding: 8px;");
+    m_serialCatStatusLabel->setVisible(false);
+    serialCatLayout->addWidget(m_serialCatStatusLabel);
+
+    auto* serialCatBtnRow = new QHBoxLayout;
+    serialCatBtnRow->addStretch();
+    m_serialCatConnectBtn = new QPushButton("Connect via Serial CAT", serialCatPage);
+    m_serialCatConnectBtn->setMinimumHeight(38);
+    m_serialCatConnectBtn->setStyleSheet(editStyle);
+    serialCatBtnRow->addWidget(m_serialCatConnectBtn);
+    serialCatBtnRow->addStretch();
+    serialCatLayout->addLayout(serialCatBtnRow);
+    serialCatLayout->addStretch();
+
+    m_modeStack->addWidget(serialCatPage);
+
     // ── Contextual options ────────────────────────────────────────────────
     m_linkOptionsWidget = new QFrame(this);
     m_linkOptionsWidget->setObjectName("connectionCallout");
@@ -663,6 +727,11 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     });
     connect(m_hermesConnectBtn, &QPushButton::clicked,
             this, &ConnectionPanel::onHermesConnectClicked);
+
+    connect(m_serialCatConnectBtn, &QPushButton::clicked,
+            this, &ConnectionPanel::onSerialCatConnectClicked);
+    connect(m_serialProtocolCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &ConnectionPanel::onSerialCatProtocolChanged);
     connect(m_manualIpEdit, &QLineEdit::textChanged,
             this, &ConnectionPanel::onManualIpChanged);
     connect(m_manualAdvancedToggle, &QToolButton::toggled,
@@ -721,6 +790,38 @@ void ConnectionPanel::setFramelessMode(bool on)
         m_rootLayout->setContentsMargins(12, on ? 10 : 12, 12, 12);
     if (wasVisible)
         show();
+}
+
+void ConnectionPanel::onSerialCatConnectClicked()
+{
+    QString portName = m_serialPortCombo->currentText().trimmed();
+    if (portName.isEmpty()) {
+        m_serialCatStatusLabel->setText("Select a serial port first");
+        m_serialCatStatusLabel->setStyleSheet("color: #e8a040; font-size: 12px; padding: 8px;");
+        m_serialCatStatusLabel->setVisible(true);
+        return;
+    }
+
+    qint32 baud = m_serialBaudCombo->currentText().toInt();
+    QString protoType = m_serialProtocolCombo->currentData().toString();
+    uint8_t civAddr = IcomCivProtocol::DEFAULT_CI_V_ADDR;
+
+    m_serialCatStatusLabel->setText(QString("Connecting to %1 @ %2 baud...").arg(portName).arg(baud));
+    m_serialCatStatusLabel->setStyleSheet("color: #a0b4c4; font-size: 12px; padding: 8px;");
+    m_serialCatStatusLabel->setVisible(true);
+
+    emit serialCatConnectRequested(portName, baud, protoType, civAddr);
+}
+
+void ConnectionPanel::onSerialCatProtocolChanged(int index)
+{
+    Q_UNUSED(index);
+    QString protoType = m_serialProtocolCombo->currentData().toString();
+    if (protoType == "IcomCiv") {
+        m_serialBaudCombo->setCurrentText("19200");
+    } else if (protoType == "KenwoodCat") {
+        m_serialBaudCombo->setCurrentText("38400");
+    }
 }
 
 void ConnectionPanel::setConnected(bool connected)

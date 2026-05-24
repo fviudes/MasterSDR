@@ -59,6 +59,8 @@ signals:
     void networkDiagnosticsRequested();
     void smartLinkLoginRequested(const QString& email, const QString& password);
     void hermesConnectRequested(const HermesRadioInfo& radio);
+    void serialCatConnectRequested(const QString& portName, qint32 baudRate,
+                                   const QString& protocolType, uint8_t civAddr = 0x70);
 
 private slots:
     void onConnectionModeClicked(int id);
@@ -72,13 +74,16 @@ private slots:
     void onManualAdvancedToggled(bool checked);
     void onHermesConnectClicked();
     void onHermesListSelectionChanged();
+    void onSerialCatConnectClicked();
+    void onSerialCatProtocolChanged(int index);
 
 private:
     enum ConnectionMode {
         LocalMode = 0,
         SmartLinkMode = 1,
         ManualMode = 2,
-        HermesMode = 3
+        HermesMode = 3,
+        SerialCatMode = 4
     };
 
     void setCurrentMode(ConnectionMode mode);
@@ -155,6 +160,14 @@ private:
     QPushButton* m_hermesConnectBtn{nullptr};
     QLabel* m_hermesEmptyLabel{nullptr};
     QList<HermesRadioInfo> m_hermesRadios;
+
+    // Serial CAT (Icom/Kenwood)
+    QCommandLinkButton* m_serialCatModeBtn{nullptr};
+    QComboBox* m_serialPortCombo{nullptr};
+    QComboBox* m_serialBaudCombo{nullptr};
+    QComboBox* m_serialProtocolCombo{nullptr};
+    QPushButton* m_serialCatConnectBtn{nullptr};
+    QLabel* m_serialCatStatusLabel{nullptr};
 
     QWidget*     m_linkOptionsWidget{nullptr};
     QLabel*      m_lowBwHintLabel{nullptr};
