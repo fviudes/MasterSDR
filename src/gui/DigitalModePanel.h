@@ -3,6 +3,7 @@
 #include "core/DigitalModeEngine.h"
 #include "gui/PersistentDialog.h"
 
+#include <QPointer>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QLabel>
@@ -62,7 +63,7 @@ private:
     void buildCallPanel(QVBoxLayout* layout);
     void buildMessagePanel(QVBoxLayout* layout);
     void buildTxPanel(QVBoxLayout* layout);
-    void buildDecodePanel(QVBoxLayout* layout);
+    void buildDecodePanel(QWidget* container);
     void buildStatusBar(QVBoxLayout* layout);
     void wireSignals();
     QStringList generateStandardMessages() const;

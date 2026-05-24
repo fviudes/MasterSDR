@@ -202,7 +202,7 @@ void DigitalModePanel::buildTxPanel(QVBoxLayout* layout)
     layout->addWidget(txGroup);
 }
 
-void DigitalModePanel::buildDecodePanel(QVBoxLayout* layout)
+void DigitalModePanel::buildDecodePanel(QWidget* container)
 {
     auto* decodeGroup = new QGroupBox("Band Activity", bodyWidget());
     auto* decodeLayout = new QVBoxLayout(decodeGroup);
@@ -253,8 +253,8 @@ void DigitalModePanel::applyStyles()
         "border-radius: 4px; padding: 4px; font-size: 12px; }"
         "QTextEdit:focus { border-color: #00b4d8; }"
         "QLabel { color: #c0d0e0; font-size: 11px; background: transparent; }"
-        "QSplitter::handle { background: #2a3540; width: 3px; }"
-        "%1"
+        "QSplitter::handle { background: #2a3540; width: 3px; }");
+
     bodyWidget()->setStyleSheet(style);
 }
 
