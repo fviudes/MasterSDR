@@ -168,7 +168,7 @@ inline QByteArray HermesProtocol::buildCommandPacket(uint8_t addr, const QByteAr
     pkt[2] = PKT_COMMAND;
     pkt[3] = 0x7F;
     pkt[4] = static_cast<char>(addr << 1);
-    for (int i = 0; i < std::min(data.size(), 4); ++i) {
+    for (int i = 0; i < std::min(static_cast<int>(data.size()), 4); ++i) {
         pkt[5 + i] = data[i];
     }
     return pkt;
