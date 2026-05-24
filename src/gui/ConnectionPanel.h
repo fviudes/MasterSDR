@@ -2,6 +2,7 @@
 
 #include "core/RadioDiscovery.h"
 #include "core/SmartLinkClient.h"
+#include "core/HermesDiscovery.h"
 
 #include <QWidget>
 #include <QListWidget>
@@ -30,6 +31,7 @@ public:
     void setConnected(bool connected);
     void setStatusText(const QString& text);
     void probeRadio(const QString& ip);
+    void setHermesDiscovery(HermesDiscovery* discovery);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -43,6 +45,10 @@ public slots:
     // SmartLink
     void setSmartLinkClient(SmartLinkClient* client);
 
+    // Hermes Lite 2
+    void onHermesDiscovered(const HermesRadioInfo& radio);
+    void onHermesLost(const QString& ipAddress);
+
 signals:
     void connectRequested(const RadioInfo& radio);
     void wanConnectRequested(const WanRadioInfo& radio);
@@ -52,6 +58,7 @@ signals:
     void retryDiscoveryRequested();
     void networkDiagnosticsRequested();
     void smartLinkLoginRequested(const QString& email, const QString& password);
+    void hermesConnectRequested(const HermesRadioInfo& radio);
 
 private slots:
     void onConnectionModeClicked(int id);
@@ -63,12 +70,15 @@ private slots:
     void onManualIpChanged(const QString& ip);
     void onManualConnectClicked();
     void onManualAdvancedToggled(bool checked);
+    void onHermesConnectClicked();
+    void onHermesListSelectionChanged();
 
 private:
     enum ConnectionMode {
         LocalMode = 0,
         SmartLinkMode = 1,
-        ManualMode = 2
+        ManualMode = 2,
+        HermesMode = 3
     };
 
     void setCurrentMode(ConnectionMode mode);
@@ -137,6 +147,14 @@ private:
     bool         m_manualConnectPending{false};
 
     QCheckBox*   m_autoConnectCheck{nullptr};
+
+    // Hermes Lite 2
+    HermesDiscovery* m_hermesDiscovery{nullptr};
+    QCommandLinkButton* m_hermesModeBtn{nullptr};
+    QListWidget* m_hermesList{nullptr};
+    QPushButton* m_hermesConnectBtn{nullptr};
+    QLabel* m_hermesEmptyLabel{nullptr};
+    QList<HermesRadioInfo> m_hermesRadios;
 
     QWidget*     m_linkOptionsWidget{nullptr};
     QLabel*      m_lowBwHintLabel{nullptr};

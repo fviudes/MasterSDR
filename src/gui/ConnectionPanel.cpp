@@ -291,6 +291,13 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
                         ManualMode);
     modeRow->addWidget(m_manualModeBtn);
 
+    m_hermesModeBtn = new QCommandLinkButton(this);
+    configureModeButton(m_hermesModeBtn,
+                        "Hermes Lite 2",
+                        "Discover and connect to a Hermes Lite 2 SDR on your network.",
+                        HermesMode);
+    modeRow->addWidget(m_hermesModeBtn);
+
     root->addLayout(modeRow);
 
     m_modeStack = new QStackedWidget(this);
@@ -521,6 +528,37 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
 
     m_modeStack->addWidget(manualPage);
 
+    // ── Hermes Lite 2 page ──────────────────────────────────────────────────
+    auto* hermesPage = new QWidget(m_modeStack);
+    auto* hermesLayout = new QVBoxLayout(hermesPage);
+    hermesLayout->setContentsMargins(0, 4, 0, 0);
+    hermesLayout->setSpacing(10);
+
+    m_hermesList = new QListWidget(hermesPage);
+    m_hermesList->setAlternatingRowColors(true);
+    m_hermesList->setMinimumHeight(180);
+    hermesLayout->addWidget(m_hermesList);
+
+    m_hermesEmptyLabel = new QLabel("No Hermes Lite 2 devices discovered.\n"
+                                    "Make sure your HL2 is on the same network and powered on.",
+                                    hermesPage);
+    m_hermesEmptyLabel->setAlignment(Qt::AlignCenter);
+    m_hermesEmptyLabel->setStyleSheet("color: #7a8896; padding: 40px 20px;");
+    hermesLayout->addWidget(m_hermesEmptyLabel);
+
+    auto* hermesBtnRow = new QHBoxLayout;
+    hermesBtnRow->addStretch();
+    m_hermesConnectBtn = new QPushButton("Connect to Hermes Lite 2", hermesPage);
+    m_hermesConnectBtn->setEnabled(false);
+    m_hermesConnectBtn->setMinimumHeight(38);
+    m_hermesConnectBtn->setStyleSheet(editStyle);
+    hermesBtnRow->addWidget(m_hermesConnectBtn);
+    hermesBtnRow->addStretch();
+    hermesLayout->addLayout(hermesBtnRow);
+    hermesLayout->addStretch();
+
+    m_modeStack->addWidget(hermesPage);
+
     // ── Contextual options ────────────────────────────────────────────────
     m_linkOptionsWidget = new QFrame(this);
     m_linkOptionsWidget->setObjectName("connectionCallout");
@@ -616,6 +654,15 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
             this, &ConnectionPanel::onManualConnectClicked);
     connect(m_manualIpEdit, &QLineEdit::returnPressed,
             this, &ConnectionPanel::onManualConnectClicked);
+
+    connect(m_hermesList, &QListWidget::itemSelectionChanged,
+            this, &ConnectionPanel::onHermesListSelectionChanged);
+    connect(m_hermesList, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem*) {
+        if (!m_connected)
+            onHermesConnectClicked();
+    });
+    connect(m_hermesConnectBtn, &QPushButton::clicked,
+            this, &ConnectionPanel::onHermesConnectClicked);
     connect(m_manualIpEdit, &QLineEdit::textChanged,
             this, &ConnectionPanel::onManualIpChanged);
     connect(m_manualAdvancedToggle, &QToolButton::toggled,
@@ -1485,6 +1532,66 @@ void ConnectionPanel::probeRadio(const QString& ip)
         m_manualConnectBtn->setText("Connect by IP");
         updateActionState();
     });
+}
+
+void ConnectionPanel::setHermesDiscovery(HermesDiscovery* discovery)
+{
+    m_hermesDiscovery = discovery;
+    if (!m_hermesDiscovery) return;
+
+    connect(m_hermesDiscovery, &HermesDiscovery::radioDiscovered,
+            this, &ConnectionPanel::onHermesDiscovered);
+    connect(m_hermesDiscovery, &HermesDiscovery::radioLost,
+            this, &ConnectionPanel::onHermesLost);
+}
+
+void ConnectionPanel::onHermesDiscovered(const HermesRadioInfo& radio)
+{
+    for (int i = 0; i < m_hermesRadios.size(); ++i) {
+        if (m_hermesRadios[i].ipAddress == radio.ipAddress) {
+            m_hermesRadios[i] = radio;
+            QString label = QString("%1\nMAC: %2  GW: %3  RX: %4")
+                .arg(radio.ipAddress, radio.mac, radio.gatewareVersion)
+                .arg(radio.numReceivers);
+            m_hermesList->item(i)->setText(label);
+            return;
+        }
+    }
+
+    m_hermesRadios.append(radio);
+    QString label = QString("%1\nMAC: %2  GW: %3  RX: %4")
+        .arg(radio.ipAddress, radio.mac, radio.gatewareVersion)
+        .arg(radio.numReceivers);
+    m_hermesList->addItem(label);
+
+    m_hermesEmptyLabel->setVisible(m_hermesList->count() == 0);
+}
+
+void ConnectionPanel::onHermesLost(const QString& ipAddress)
+{
+    for (int i = 0; i < m_hermesRadios.size(); ++i) {
+        if (m_hermesRadios[i].ipAddress == ipAddress) {
+            m_hermesRadios.removeAt(i);
+            delete m_hermesList->takeItem(i);
+            break;
+        }
+    }
+    m_hermesEmptyLabel->setVisible(m_hermesList->count() == 0);
+    updateActionState();
+}
+
+void ConnectionPanel::onHermesListSelectionChanged()
+{
+    m_hermesConnectBtn->setEnabled(!m_connected && m_hermesList->currentItem() != nullptr);
+}
+
+void ConnectionPanel::onHermesConnectClicked()
+{
+    const int row = m_hermesList->currentRow();
+    if (m_connected || row < 0 || row >= m_hermesRadios.size())
+        return;
+
+    emit hermesConnectRequested(m_hermesRadios[row]);
 }
 
 } // namespace MasterSDR
