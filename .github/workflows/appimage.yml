@@ -84,17 +84,21 @@ jobs:
 
       - name: Install to AppDir
         run: |
+          set -e
           DESTDIR=${{ github.workspace }}/AppDir cmake --install build
-          # Resize icon to 256x256 (source is 768x768)
-          ICON_PATH="AppDir/usr/share/icons/hicolor/256x256/apps/mastersdr.png"
-          if [ -f "$ICON_PATH" ]; then
-            convert "$ICON_PATH" -resize 256x256 "$ICON_PATH"
-            # Copy icon to AppDir root so linuxdeploy can find it via desktop file Icon= entry
-            cp "$ICON_PATH" AppDir/mastersdr.png
-          else
-            echo "Icon not found at $ICON_PATH, copying from source"
-            cp docs/logo-circle.png AppDir/mastersdr.png
-          fi
+
+          # Copy icon to AppDir root - linuxdeploy requires the icon matching
+          # the desktop file's Icon= entry to be present in AppDir root.
+          # Source is docs/logo-circle.png (768x768 PNG).
+          cp docs/logo-circle.png AppDir/mastersdr.png
+          echo "Icon copied to AppDir/mastersdr.png ($(file AppDir/mastersdr.png | cut -d, -f1-2))"
+
+          # Also ensure the icon exists in the hicolor theme path
+          ICON_DIR="AppDir/usr/share/icons/hicolor/256x256/apps"
+          mkdir -p "$ICON_DIR"
+          cp AppDir/mastersdr.png "$ICON_DIR/mastersdr.png"
+
+          ls -la AppDir/mastersdr.png "$ICON_DIR/mastersdr.png"
 
           # Bundle DeepFilterNet3 model for DFNR
           if [ -f third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz ]; then
@@ -135,6 +139,11 @@ jobs:
           QT_SELECT: qt6
           EXTRA_QT_PLUGINS: multimedia
         run: |
+          echo "=== Desktop file content ==="
+          cat AppDir/usr/share/applications/MasterSDR.desktop
+          echo "=== Icon files ==="
+          find AppDir -name "mastersdr*" -type f 2>/dev/null || true
+          echo "=== Building AppImage ==="
           if [ "${{ matrix.use_aqt }}" = "true" ]; then
             export QMAKE=${{ github.workspace }}/Qt/6.8.3/gcc_64/bin/qmake
           else
