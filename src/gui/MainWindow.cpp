@@ -6691,34 +6691,34 @@ void MainWindow::buildMenuBar()
         });
         connect(dlg, &DxClusterDialog::connectRequested,
                 this, [this](const QString& host, quint16 port, const QString& call) {
-            QMetaObject::invokeMethod(m_dxCluster, [=] { m_dxCluster->connectToCluster(host, port, call); });
+            QMetaObject::invokeMethod(m_dxCluster, [host, port, call, this] { m_dxCluster->connectToCluster(host, port, call); });
         });
         connect(dlg, &DxClusterDialog::disconnectRequested,
-                this, [this] { QMetaObject::invokeMethod(m_dxCluster, [=] { m_dxCluster->disconnect(); }); });
+                this, [this] { QMetaObject::invokeMethod(m_dxCluster, [this] { m_dxCluster->disconnect(); }); });
         connect(dlg, &DxClusterDialog::rbnConnectRequested,
                 this, [this](const QString& host, quint16 port, const QString& call) {
-            QMetaObject::invokeMethod(m_rbnClient, [=] { m_rbnClient->connectToCluster(host, port, call); });
+            QMetaObject::invokeMethod(m_rbnClient, [host, port, call, this] { m_rbnClient->connectToCluster(host, port, call); });
         });
         connect(dlg, &DxClusterDialog::rbnDisconnectRequested,
-                this, [this] { QMetaObject::invokeMethod(m_rbnClient, [=] { m_rbnClient->disconnect(); }); });
+                this, [this] { QMetaObject::invokeMethod(m_rbnClient, [this] { m_rbnClient->disconnect(); }); });
         connect(dlg, &DxClusterDialog::wsjtxStartRequested,
                 this, [this](const QString& addr, quint16 port) {
-            QMetaObject::invokeMethod(m_wsjtxClient, [=] { m_wsjtxClient->startListening(addr, port); });
+            QMetaObject::invokeMethod(m_wsjtxClient, [addr, port, this] { m_wsjtxClient->startListening(addr, port); });
         });
         connect(dlg, &DxClusterDialog::wsjtxStopRequested,
-                this, [this] { QMetaObject::invokeMethod(m_wsjtxClient, [=] { m_wsjtxClient->stopListening(); }); });
+                this, [this] { QMetaObject::invokeMethod(m_wsjtxClient, [this] { m_wsjtxClient->stopListening(); }); });
         connect(dlg, &DxClusterDialog::spotCollectorStartRequested,
                 this, [this](quint16 port) {
-            QMetaObject::invokeMethod(m_spotCollectorClient, [=] { m_spotCollectorClient->startListening(port); });
+            QMetaObject::invokeMethod(m_spotCollectorClient, [port, this] { m_spotCollectorClient->startListening(port); });
         });
         connect(dlg, &DxClusterDialog::spotCollectorStopRequested,
-                this, [this] { QMetaObject::invokeMethod(m_spotCollectorClient, [=] { m_spotCollectorClient->stopListening(); }); });
+                this, [this] { QMetaObject::invokeMethod(m_spotCollectorClient, [this] { m_spotCollectorClient->stopListening(); }); });
         connect(dlg, &DxClusterDialog::potaStartRequested,
                 this, [this](int interval) {
-            QMetaObject::invokeMethod(m_potaClient, [=] { m_potaClient->startPolling(interval); });
+            QMetaObject::invokeMethod(m_potaClient, [interval, this] { m_potaClient->startPolling(interval); });
         });
         connect(dlg, &DxClusterDialog::potaStopRequested,
-                this, [this] { QMetaObject::invokeMethod(m_potaClient, [=] { m_potaClient->stopPolling(); }); });
+                this, [this] { QMetaObject::invokeMethod(m_potaClient, [this] { m_potaClient->stopPolling(); }); });
 #ifdef HAVE_WEBSOCKETS
         connect(dlg, &DxClusterDialog::freedvStartRequested,
                 this, [this] { QMetaObject::invokeMethod(m_freedvClient, [this] { m_freedvClient->startConnection(); }); });
@@ -8549,7 +8549,7 @@ void MainWindow::onConnectionStateChanged(bool connected)
                 quint16 cPort = static_cast<quint16>(cs.value("DxClusterPort", 7300).toInt());
                 QString call = cs.value("DxClusterCallsign").toString();
                 if (!call.isEmpty() && !m_dxCluster->isConnected())
-                    QMetaObject::invokeMethod(m_dxCluster, [=] { m_dxCluster->connectToCluster(host, cPort, call); });
+                    QMetaObject::invokeMethod(m_dxCluster, [host, cPort, call, this] { m_dxCluster->connectToCluster(host, cPort, call); });
             }
             // Auto-connect RBN if enabled
             if (cs.value("RbnAutoConnect", "False").toString() == "True") {
@@ -8559,26 +8559,26 @@ void MainWindow::onConnectionStateChanged(bool connected)
                 if (call.isEmpty())
                     call = cs.value("DxClusterCallsign").toString();
                 if (!call.isEmpty() && !m_rbnClient->isConnected())
-                    QMetaObject::invokeMethod(m_rbnClient, [=] { m_rbnClient->connectToCluster(host, rPort, call); });
+                    QMetaObject::invokeMethod(m_rbnClient, [host, rPort, call, this] { m_rbnClient->connectToCluster(host, rPort, call); });
             }
             // Auto-start WSJT-X listener if enabled
             if (cs.value("WsjtxAutoStart", "False").toString() == "True") {
                 QString wAddr = cs.value("WsjtxAddress", "224.0.0.1").toString();
                 quint16 wPort = static_cast<quint16>(cs.value("WsjtxPort", 2237).toInt());
                 if (!m_wsjtxClient->isListening())
-                    QMetaObject::invokeMethod(m_wsjtxClient, [=] { m_wsjtxClient->startListening(wAddr, wPort); });
+                    QMetaObject::invokeMethod(m_wsjtxClient, [wAddr, wPort, this] { m_wsjtxClient->startListening(wAddr, wPort); });
             }
             // Auto-start SpotCollector listener if enabled
             if (cs.value("SpotCollectorAutoStart", "False").toString() == "True") {
                 quint16 scPort = static_cast<quint16>(cs.value("SpotCollectorPort", 9999).toInt());
                 if (!m_spotCollectorClient->isListening())
-                    QMetaObject::invokeMethod(m_spotCollectorClient, [=] { m_spotCollectorClient->startListening(scPort); });
+                    QMetaObject::invokeMethod(m_spotCollectorClient, [scPort, this] { m_spotCollectorClient->startListening(scPort); });
             }
             // Auto-start POTA polling if enabled
             if (cs.value("PotaAutoStart", "False").toString() == "True") {
                 int pInterval = cs.value("PotaPollInterval", 30).toInt();
                 if (!m_potaClient->isPolling())
-                    QMetaObject::invokeMethod(m_potaClient, [=] { m_potaClient->startPolling(pInterval); });
+                    QMetaObject::invokeMethod(m_potaClient, [this, pInterval] { m_potaClient->startPolling(pInterval); });
             }
 #ifdef HAVE_WEBSOCKETS
             // Auto-start FreeDV Reporter if enabled
