@@ -7,6 +7,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QApplication>
+#include <QTimer>
 #include <QDebug>
 
 namespace MasterSDR {
