@@ -2,7 +2,7 @@
 Name=MasterSDR
 Comment=Linux-native SDR client for FlexRadio
 Exec=MasterSDR
-Icon=MasterSDR
+Icon=mastersdr
 Type=Application
 Categories=HamRadio;Audio;
 Terminal=false

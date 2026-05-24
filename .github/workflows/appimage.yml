@@ -86,8 +86,8 @@ jobs:
         run: |
           DESTDIR=${{ github.workspace }}/AppDir cmake --install build
           # Resize icon to 256x256 (source is 768x768)
-          convert AppDir/usr/share/icons/hicolor/256x256/apps/MasterSDR.png \
-            -resize 256x256 AppDir/usr/share/icons/hicolor/256x256/apps/MasterSDR.png
+          convert AppDir/usr/share/icons/hicolor/256x256/apps/mastersdr.png \
+            -resize 256x256 AppDir/usr/share/icons/hicolor/256x256/apps/mastersdr.png
 
           # Bundle DeepFilterNet3 model for DFNR
           if [ -f third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz ]; then
@@ -133,7 +133,7 @@ jobs:
             --appdir AppDir \
             --plugin qt \
             --desktop-file AppDir/usr/share/applications/MasterSDR.desktop \
-            --icon-file AppDir/usr/share/icons/hicolor/256x256/apps/MasterSDR.png \
+            --icon-file AppDir/usr/share/icons/hicolor/256x256/apps/mastersdr.png \
             --output appimage
 
       - name: Upload artifact
