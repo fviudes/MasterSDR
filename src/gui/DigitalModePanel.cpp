@@ -221,7 +221,7 @@ void DigitalModePanel::buildDecodePanel(QWidget* container)
     clearRow->addWidget(m_clearBtn);
     decodeLayout->addLayout(clearRow);
 
-    layout->addWidget(decodeGroup, 1);
+    container->layout()->addWidget(decodeGroup, 1);
 }
 
 void DigitalModePanel::buildStatusBar(QVBoxLayout* layout)
@@ -303,8 +303,8 @@ void DigitalModePanel::setAttachedSlice(SliceModel* slice)
     m_attachedSlice = slice;
     if (slice) {
         m_attachedSliceId = slice->sliceId();
-        m_engine->setDialFrequency(static_cast<uint64_t>(slice->frequencyHz()));
-        m_dialFreqLabel->setText(QString("%1 Hz").arg(slice->frequencyHz()));
+        m_engine->setDialFrequency(static_cast<uint64_t>(slice->frequency() * 1e6));
+        m_dialFreqLabel->setText(QString("%1 Hz").arg(static_cast<uint64_t>(slice->frequency() * 1e6)));
     }
 }
 
