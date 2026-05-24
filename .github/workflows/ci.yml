@@ -109,7 +109,7 @@ jobs:
       # puts the MSVC toolchain on PATH (cl.exe, link.exe, etc.) so
       # Ninja can find them.
       - name: Setup MSVC environment
-        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756  # v1
+        uses: ilammy/msvc-dev-cmd@v1  # v1
         with:
           arch: x64
 
