@@ -127,34 +127,34 @@ public:
 inline QByteArray HermesProtocol::buildDiscoveryPacket()
 {
     QByteArray pkt(DISCOVERY_MSG_SIZE, '\0');
-    pkt[0] = 0xEF;
-    pkt[1] = 0xFE;
-    pkt[2] = 0x02;
+    pkt[0] = '\xEF';
+    pkt[1] = '\xFE';
+    pkt[2] = '\x02';
     return pkt;
 }
 
 inline QByteArray HermesProtocol::buildStartPacket(uint8_t flags)
 {
     QByteArray pkt(COMMAND_FRAME_SIZE, '\0');
-    pkt[0] = 0xEF;
-    pkt[1] = 0xFE;
-    pkt[2] = PKT_START;
-    pkt[3] = flags;
+    pkt[0] = '\xEF';
+    pkt[1] = '\xFE';
+    pkt[2] = static_cast<char>(PKT_START);
+    pkt[3] = static_cast<char>(flags);
     return pkt;
 }
 
 inline QByteArray HermesProtocol::buildStopPacket(uint8_t flags)
 {
-    return buildStartPacket(flags & ~(START_RADIO | START_WIDEBAND));
+    return buildStartPacket(static_cast<uint8_t>(flags & ~(START_RADIO | START_WIDEBAND)));
 }
 
 inline QByteArray HermesProtocol::buildCommandPacket(uint8_t addr, uint32_t data)
 {
     QByteArray pkt(COMMAND_FRAME_SIZE, '\0');
-    pkt[0] = 0xEF;
-    pkt[1] = 0xFE;
-    pkt[2] = PKT_COMMAND;
-    pkt[3] = 0x7F;
+    pkt[0] = '\xEF';
+    pkt[1] = '\xFE';
+    pkt[2] = static_cast<char>(PKT_COMMAND);
+    pkt[3] = '\x7F';
     pkt[4] = static_cast<char>(addr << 1);
     qToBigEndian(data, reinterpret_cast<uchar*>(pkt.data()) + 5);
     return pkt;
@@ -163,10 +163,10 @@ inline QByteArray HermesProtocol::buildCommandPacket(uint8_t addr, uint32_t data
 inline QByteArray HermesProtocol::buildCommandPacket(uint8_t addr, const QByteArray& data)
 {
     QByteArray pkt(COMMAND_FRAME_SIZE, '\0');
-    pkt[0] = 0xEF;
-    pkt[1] = 0xFE;
-    pkt[2] = PKT_COMMAND;
-    pkt[3] = 0x7F;
+    pkt[0] = '\xEF';
+    pkt[1] = '\xFE';
+    pkt[2] = static_cast<char>(PKT_COMMAND);
+    pkt[3] = '\x7F';
     pkt[4] = static_cast<char>(addr << 1);
     for (int i = 0; i < std::min(static_cast<int>(data.size()), 4); ++i) {
         pkt[5 + i] = data[i];
