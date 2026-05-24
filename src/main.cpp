@@ -1,7 +1,9 @@
 ﻿#include "gui/MainWindow.h"
 #include "gui/SliceColorManager.h"
+#include "gui/LogbookLoginDialog.h"
 #include "core/AppSettings.h"
 #include "core/LogManager.h"
+#include "core/LogbookClient.h"
 #include "core/MacMicPermission.h"
 
 #include <QApplication>
@@ -12,6 +14,8 @@
 #include <QFile>
 #include <QDateTime>
 #include <QStandardPaths>
+#include <QTimer>
+#include <QEventLoop>
 
 #ifdef _WIN32
 #include <io.h>
@@ -212,6 +216,39 @@ int main(int argc, char* argv[])
     MasterSDR::LogManager::instance().loadSettings();
 
     qDebug() << "Starting MasterSDR" << app.applicationVersion();
+
+    // Verificar configuracao da chave API do logbook
+    {
+        auto& s = MasterSDR::AppSettings::instance();
+        QString savedKey = s.value(MasterSDR::LogbookLoginDialog::SETTINGS_KEY, "").toString();
+
+        MasterSDR::LogbookClient tempClient;
+        bool needsConfig = savedKey.isEmpty();
+
+        if (!needsConfig) {
+            tempClient.setApiKey(savedKey);
+            QEventLoop loop;
+            bool keyValid = false;
+            tempClient.validateKey([&](bool valid, const QString&) {
+                keyValid = valid;
+                loop.quit();
+            });
+            QTimer::singleShot(5000, &loop, &QEventLoop::quit);
+            loop.exec();
+            needsConfig = !keyValid;
+            if (!keyValid) {
+                qDebug() << "Logbook API key expired or invalid, requesting reconfiguration";
+                s.remove(MasterSDR::LogbookLoginDialog::SETTINGS_KEY);
+                s.save();
+            }
+        }
+
+        if (needsConfig) {
+            MasterSDR::LogbookLoginDialog loginDialog;
+            loginDialog.setApiKey(savedKey);
+            loginDialog.exec();
+        }
+    }
 
     int exitCode = 0;
     {

@@ -507,6 +507,7 @@ set(CORE_SOURCES
     src/core/MemoryRecallPolicy.cpp
     src/core/HermesDiscovery.cpp
     src/core/HermesConnection.cpp
+    src/core/LogbookClient.cpp
     src/core/tnc/MasterAx25LibmodemShim.cpp
     src/core/tnc/Ax25FrameFormatter.cpp
 )
@@ -677,6 +678,7 @@ set(GUI_SOURCES
     src/gui/MultiFlexDialog.cpp
     src/gui/HelpDialog.cpp
     src/gui/WhatsNewDialog.cpp
+    src/gui/LogbookLoginDialog.cpp
 )
 
 set(ALL_SOURCES
