@@ -8657,11 +8657,11 @@ void MainWindow::onConnectionStateChanged(bool connected)
         }
         if (m_swrSweep.running)
             finishSwrSweep(true, QStringLiteral("SWR sweep stopped on disconnect"));
-        QMetaObject::invokeMethod(m_dxCluster, [=] { m_dxCluster->disconnect(); });
-        QMetaObject::invokeMethod(m_rbnClient, [=] { m_rbnClient->disconnect(); });
-        QMetaObject::invokeMethod(m_wsjtxClient, [=] { m_wsjtxClient->stopListening(); });
-        QMetaObject::invokeMethod(m_spotCollectorClient, [=] { m_spotCollectorClient->stopListening(); });
-        QMetaObject::invokeMethod(m_potaClient, [=] { m_potaClient->stopPolling(); });
+        QMetaObject::invokeMethod(m_dxCluster, [this] { m_dxCluster->disconnect(); });
+        QMetaObject::invokeMethod(m_rbnClient, [this] { m_rbnClient->disconnect(); });
+        QMetaObject::invokeMethod(m_wsjtxClient, [this] { m_wsjtxClient->stopListening(); });
+        QMetaObject::invokeMethod(m_spotCollectorClient, [this] { m_spotCollectorClient->stopListening(); });
+        QMetaObject::invokeMethod(m_potaClient, [this] { m_potaClient->stopPolling(); });
 #ifdef HAVE_WEBSOCKETS
         QMetaObject::invokeMethod(m_freedvClient, [this] { m_freedvClient->stopConnection(); });
 #endif
