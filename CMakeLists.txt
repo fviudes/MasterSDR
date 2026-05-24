@@ -508,6 +508,9 @@ set(CORE_SOURCES
     src/core/HermesDiscovery.cpp
     src/core/HermesConnection.cpp
     src/core/LogbookClient.cpp
+    src/core/IcomCivProtocol.cpp
+    src/core/KenwoodCatProtocol.cpp
+    src/core/SerialCatPort.cpp
     src/core/tnc/MasterAx25LibmodemShim.cpp
     src/core/tnc/Ax25FrameFormatter.cpp
 )
