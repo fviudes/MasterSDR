@@ -3,6 +3,7 @@
 #include "core/HermesProtocol.h"
 
 #include <QHostAddress>
+#include <QMap>
 #include <QObject>
 #include <QList>
 #include <QTimer>
