@@ -1,5 +1,6 @@
 ﻿#include "ConnectionPanel.h"
 #include "core/AppSettings.h"
+#include "core/IcomCivProtocol.h"
 #include "core/NetworkPathResolver.h"
 #include "FramelessResizer.h"
 #include "FramelessWindowTitleBar.h"
