@@ -184,7 +184,11 @@ void LogbookLoginDialog::onValidateClicked()
             s.save();
 
             m_accepted = true;
-            QTimer::singleShot(1200, this, &QDialog::accept);
+            auto* timer = new QTimer(this);
+            timer->setSingleShot(true);
+            connect(timer, &QTimer::timeout, this, &QDialog::accept);
+            connect(timer, &QTimer::timeout, timer, &QObject::deleteLater);
+            timer->start(1200);
         } else {
             m_statusLabel->setText("Falha na validacao: " + message);
             m_statusLabel->setStyleSheet("color: #d84848; font-size: 12px; padding: 6px;");
