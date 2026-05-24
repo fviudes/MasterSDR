@@ -51,7 +51,20 @@ jobs:
           git archive --format=tar.gz --prefix="MasterSDR-${{ steps.tag.outputs.tag }}/" \
             HEAD > "artifacts/MasterSDR-${{ steps.tag.outputs.tag }}-source.tar.gz"
 
+      - name: Check if GPG signing secrets are available
+        id: gpg
+        run: |
+          if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ] && \
+             [ -n "${{ secrets.GPG_PASSPHRASE }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "GPG secrets found — artifacts will be signed"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "GPG secrets not configured — skipping signing"
+          fi
+
       - name: Import GPG key
+        if: steps.gpg.outputs.enabled == 'true'
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
@@ -66,6 +79,7 @@ jobs:
           sha256sum * > SHA256SUMS.txt
 
       - name: Sign artifacts (detached .asc)
+        if: steps.gpg.outputs.enabled == 'true'
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         working-directory: artifacts
@@ -81,11 +95,19 @@ jobs:
             --passphrase "$GPG_PASSPHRASE" \
             --detach-sign --armor SHA256SUMS.txt
 
-      - name: Upload signatures to release
+      - name: Upload source archive and checksums to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ steps.tag.outputs.tag }}" \
+            artifacts/*-source.tar.gz artifacts/SHA256SUMS.txt \
+            --clobber
+
+      - name: Upload GPG signatures to release
+        if: steps.gpg.outputs.enabled == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${{ steps.tag.outputs.tag }}" \
             artifacts/*.asc artifacts/SHA256SUMS.txt \
-            artifacts/*-source.tar.gz \
             --clobber
