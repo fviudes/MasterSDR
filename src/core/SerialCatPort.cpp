@@ -6,7 +6,7 @@ namespace MasterSDR {
 
 SerialCatPort::SerialCatPort(QObject* parent)
     : QObject(parent)
-    , m_civProto(DEFAULT_CI_V_ADDR)
+    , m_civProto(IcomCivProtocol::DEFAULT_CI_V_ADDR)
 {
     m_serialPort = new QSerialPort(this);
     connect(m_serialPort, &QSerialPort::readyRead, this, &SerialCatPort::onReadyRead);
