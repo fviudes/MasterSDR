@@ -511,6 +511,7 @@ set(CORE_SOURCES
     src/core/IcomCivProtocol.cpp
     src/core/KenwoodCatProtocol.cpp
     src/core/SerialCatPort.cpp
+    src/core/DigitalModeEngine.cpp
     src/core/tnc/MasterAx25LibmodemShim.cpp
     src/core/tnc/Ax25FrameFormatter.cpp
 )
@@ -682,6 +683,7 @@ set(GUI_SOURCES
     src/gui/HelpDialog.cpp
     src/gui/WhatsNewDialog.cpp
     src/gui/LogbookLoginDialog.cpp
+    src/gui/DigitalModePanel.cpp
 )
 
 set(ALL_SOURCES
