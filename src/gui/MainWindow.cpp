@@ -190,6 +190,7 @@
 #else
 #include <sys/resource.h>
 #endif
+#include "gui/LogbookLoginDialog.h"
 #include <QLocale>
 #include <QFile>
 #include <QStandardPaths>
@@ -6883,22 +6884,20 @@ void MainWindow::buildMenuBar()
     }
 
     auto* dspAction = settingsMenu->addAction("MasterDsp Settings...");
-    dspAction->setMenuRole(QAction::NoRole);        // prevent macOS auto-reparenting (#883)
+    dspAction->setMenuRole(QAction::NoRole);
     connect(dspAction, &QAction::triggered, this, [this] {
         ensureMasterDspDialog();
     });
-    // RX chain DSP tile double-click also opens the full MasterDsp
-    // Settings dialog — same entry point as the Settings menu action.
-    if (m_appletPanel && m_appletPanel->clientChainApplet()) {
-        connect(m_appletPanel->clientChainApplet(),
-                &ClientChainApplet::rxDspEditRequested,
-                this, [dspAction]() { dspAction->trigger(); });
-        // Single-click re-enable of NR2 from LastClientNr also runs
-        // through enableNr2WithWisdom (#2275 — direct enable can crash).
-        connect(m_appletPanel->clientChainApplet(),
-                &ClientChainApplet::rxNr2EnableWithWisdomRequested,
-                this, &MainWindow::enableNr2WithWisdom);
-    }
+
+    auto* logbookKeyAction = settingsMenu->addAction("Logbook Portal API Key...");
+    logbookKeyAction->setMenuRole(QAction::NoRole);
+    connect(logbookKeyAction, &QAction::triggered, this, [this] {
+        LogbookLoginDialog dlg(this);
+        auto& s = AppSettings::instance();
+        QString savedKey = s.value(LogbookLoginDialog::SETTINGS_KEY, "").toString();
+        dlg.setApiKey(savedKey);
+        dlg.exec();
+    });
 
     settingsMenu->addSeparator();
 
