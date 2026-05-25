@@ -106,19 +106,23 @@ void DigitalModePanel::buildLeftPanel(QVBoxLayout* leftLayout)
 void DigitalModePanel::buildBandButtons(QGroupBox* group)
 {
     auto* grid = new QGridLayout(group);
-    grid->setSpacing(1);
+    grid->setSpacing(2);
     for (int i = 0; i < 10; ++i) {
         m_bandBtns[i] = new QPushButton(BAND_NAMES[i], group);
         m_bandBtns[i]->setMinimumHeight(22);
-        m_bandBtns[i]->setMaximumWidth(48);
+        m_bandBtns[i]->setMinimumWidth(44);
         m_bandBtns[i]->setCheckable(true);
+        m_bandBtns[i]->setFont(QFont("Arial", 8));
         grid->addWidget(m_bandBtns[i], i / 2, i % 2);
     }
+    grid->setColumnStretch(0, 1);
+    grid->setColumnStretch(1, 1);
 }
 
 void DigitalModePanel::buildModeButtons(QGroupBox* group)
 {
-    auto* gl = new QVBoxLayout(group);
+    auto* gl = new QHBoxLayout(group);
+    gl->setSpacing(2);
     m_modeGroup = new QButtonGroup(this);
 
     m_ft8Btn   = new QRadioButton("FT8",  group);
@@ -142,12 +146,15 @@ void DigitalModePanel::buildModeButtons(QGroupBox* group)
     m_ft8Btn->setChecked(true);
 
     m_trPeriodLabel = new QLabel("T/R: 15s", group);
-    gl->addWidget(m_trPeriodLabel);
+    m_trPeriodLabel->setAlignment(Qt::AlignCenter);
+    m_trPeriodLabel->setStyleSheet("font-size: 10px; color: #a0b4c4;");
+    group->layout()->addWidget(m_trPeriodLabel);
 }
 
 void DigitalModePanel::buildPeriodSelector(QGroupBox* group)
 {
-    auto* gl = new QVBoxLayout(group);
+    auto* gl = new QHBoxLayout(group);
+    gl->setSpacing(2);
     m_periodGroup = new QButtonGroup(this);
 
     m_period15s  = new QRadioButton("15s", group);
@@ -440,12 +447,52 @@ void DigitalModePanel::setAttachedSlice(SliceModel* slice)
 void DigitalModePanel::onBandButtonClicked(int bandIndex)
 {
     if (bandIndex < 0 || bandIndex > 9) return;
+
+    // Auto-select frequency based on band + current mode
     double mhz = BAND_FREQS[bandIndex];
+    DigitalModeEngine::Mode mode = m_engine->mode();
+
+    // Adjust frequency per mode per band (standard WSJT-X frequencies)
+    struct BandModeFreq { double mhz; };
+    static const BandModeFreq ft8Freqs[10] = {
+        {1.840}, {3.573}, {5.357}, {7.074}, {10.136}, {14.074},
+        {18.100}, {21.074}, {24.915}, {28.074}
+    };
+    static const BandModeFreq ft4Freqs[10] = {
+        {1.844}, {3.575}, {5.359}, {7.047}, {10.140}, {14.080},
+        {18.104}, {21.080}, {24.919}, {28.180}
+    };
+    static const BandModeFreq jt65Freqs[10] = {
+        {1.838}, {3.576}, {5.366}, {7.076}, {10.139}, {14.076},
+        {18.102}, {21.076}, {24.917}, {28.076}
+    };
+    static const BandModeFreq wsprFreqs[10] = {
+        {1.838}, {3.594}, {5.366}, {7.040}, {10.140}, {14.097},
+        {18.106}, {21.096}, {24.926}, {28.126}
+    };
+
+    switch (mode) {
+    case DigitalModeEngine::Mode::FT4:  mhz = ft4Freqs[bandIndex].mhz; break;
+    case DigitalModeEngine::Mode::JT65:
+    case DigitalModeEngine::Mode::JT9:  mhz = jt65Freqs[bandIndex].mhz; break;
+    case DigitalModeEngine::Mode::WSPR: mhz = wsprFreqs[bandIndex].mhz; break;
+    default: mhz = ft8Freqs[bandIndex].mhz; break;
+    }
+
     m_engine->setDialFrequency(static_cast<uint64_t>(mhz * 1e6));
     m_dialFreqLabel->setText(QString::number(mhz, 'f', 3));
 
     if (m_attachedSlice) m_attachedSlice->tuneAndRecenter(mhz);
     else if (auto* s = m_radio->slice(0)) s->tuneAndRecenter(mhz);
+
+    // Update the frequency combo to match
+    for (int i = 0; i < m_freqPresetCombo->count(); ++i) {
+        double itemMhz = m_freqPresetCombo->itemData(i).toDouble() / 1e6;
+        if (qAbs(itemMhz - mhz) < 0.001) {
+            m_freqPresetCombo->setCurrentIndex(i);
+            break;
+        }
+    }
 
     for (int i = 0; i < 10; ++i) m_bandBtns[i]->setChecked(i == bandIndex);
 }
