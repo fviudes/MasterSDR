@@ -519,6 +519,7 @@ set(CORE_SOURCES
     src/core/HermesConnection.cpp
     src/core/LogbookClient.cpp
     src/core/IcomCivProtocol.cpp
+    src/core/IcomIpConnection.cpp
     src/core/KenwoodCatProtocol.cpp
     src/core/SerialCatPort.cpp
     src/core/DigitalModeEngine.cpp
