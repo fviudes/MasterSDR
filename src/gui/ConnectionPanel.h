@@ -80,6 +80,8 @@ private slots:
     void onHermesManualConnectClicked();
     void onSerialCatConnectClicked();
     void onSerialCatProtocolChanged(int index);
+    void onSerialPortRefreshClicked();
+    void onIcomModelChanged(int index);
 
 private:
     enum ConnectionMode {
@@ -171,6 +173,7 @@ private:
     // Serial CAT (Icom/Kenwood/Yaesu)
     QCommandLinkButton* m_serialCatModeBtn{nullptr};
     QComboBox* m_serialPortCombo{nullptr};
+    QPushButton* m_serialRefreshBtn{nullptr};
     QComboBox* m_serialBaudCombo{nullptr};
     QComboBox* m_serialProtocolCombo{nullptr};
     QComboBox* m_icomModelCombo{nullptr};

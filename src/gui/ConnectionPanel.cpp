@@ -627,6 +627,15 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     }
     serialForm->addRow("Serial Port:", m_serialPortCombo);
 
+    // Refresh button for serial ports
+    auto* portRow = new QHBoxLayout;
+    m_serialRefreshBtn = new QPushButton("Refresh Ports", serialCatPage);
+    m_serialRefreshBtn->setMinimumHeight(24);
+    m_serialRefreshBtn->setStyleSheet(editStyle);
+    portRow->addStretch();
+    portRow->addWidget(m_serialRefreshBtn);
+    serialForm->addRow("", portRow);
+
     m_serialBaudCombo = new QComboBox(serialCatPage);
     m_serialBaudCombo->addItems({"9600", "19200", "38400", "57600", "115200"});
     m_serialBaudCombo->setCurrentIndex(1);
@@ -824,6 +833,10 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
             this, &ConnectionPanel::onSerialCatConnectClicked);
     connect(m_serialProtocolCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &ConnectionPanel::onSerialCatProtocolChanged);
+    connect(m_serialRefreshBtn, &QPushButton::clicked,
+            this, &ConnectionPanel::onSerialPortRefreshClicked);
+    connect(m_icomModelCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &ConnectionPanel::onIcomModelChanged);
     connect(m_manualIpEdit, &QLineEdit::textChanged,
             this, &ConnectionPanel::onManualIpChanged);
     connect(m_manualAdvancedToggle, &QToolButton::toggled,
@@ -933,6 +946,27 @@ void ConnectionPanel::onSerialCatProtocolChanged(int index)
     } else if (protoType == "YaesuCat") {
         m_serialBaudCombo->setCurrentText("38400");
         m_icomConfigWidget->setVisible(false);
+    }
+}
+
+void ConnectionPanel::onSerialPortRefreshClicked()
+{
+    m_serialPortCombo->clear();
+    const auto ports = QSerialPortInfo::availablePorts();
+    for (const auto& port : ports) {
+        QString label = QString("%1 (%2)").arg(port.portName(), port.description());
+        m_serialPortCombo->addItem(label, port.portName());
+    }
+    if (m_serialPortCombo->count() == 0) {
+        m_serialPortCombo->addItem("No serial ports found");
+    }
+}
+
+void ConnectionPanel::onIcomModelChanged(int index)
+{
+    if (index >= 0) {
+        uint8_t addr = static_cast<uint8_t>(m_icomModelCombo->currentData().toUInt());
+        m_civAddrSpin->setValue(addr);
     }
 }
 
