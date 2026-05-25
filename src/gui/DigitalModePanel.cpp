@@ -585,12 +585,8 @@ QStringList DigitalModePanel::generateStandardMessages() const
         return msgs;
     }
 
-    msgs << QString("%1 %2 %3").arg(call, grid.isEmpty() ? "CQ" : call, grid);
-    msgs << QString("CQ %1 %2").arg(call, grid.isEmpty() ? "" : grid).simplified();
-    msgs << QString("%1 %2 -10").arg(call, grid.isEmpty() ? "" : grid).simplified();
-    msgs << QString("%1 %2 R-10").arg(call, grid.isEmpty() ? "" : grid).simplified();
-    msgs << QString("%1 %2 RR73").arg(call, grid.isEmpty() ? "" : grid).simplified();
-    msgs << QString("%1 %2 73").arg(call, grid.isEmpty() ? "" : grid).simplified();
+    msgs << QString("%1 %2").arg(call).arg(grid);
+    msgs << QString("CQ %1 %2").arg(call).arg(grid);
 
     return msgs;
 }
