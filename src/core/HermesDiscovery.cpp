@@ -3,6 +3,7 @@
 #include <QDateTime>
 #include <QNetworkInterface>
 #include <QDebug>
+#include <QUdpSocket>
 
 namespace MasterSDR {
 
@@ -27,17 +28,31 @@ void HermesDiscovery::startDiscovery()
     if (m_running) return;
     m_running = true;
 
-    m_socket->bind(QHostAddress::AnyIPv4, 0, QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint);
-
-    // Also bind to each interface explicitly for reliable broadcast
+    // Bind to each interface explicitly (HL2 discovery requires binding to specific interface)
+    bool bound = false;
     const auto ifaces = QNetworkInterface::allInterfaces();
     for (const auto& iface : ifaces) {
         if (iface.flags() & QNetworkInterface::IsLoopBack) continue;
         for (const auto& entry : iface.addressEntries()) {
             if (entry.ip().protocol() != QAbstractSocket::IPv4Protocol) continue;
             if (entry.ip() == QHostAddress::LocalHost) continue;
-            qDebug() << "Hermes discovery: probing on" << entry.ip().toString();
+
+            QHostAddress bindAddr = entry.ip();
+            qDebug() << "Hermes discovery: binding to" << bindAddr.toString();
+
+            m_socket->close();
+            if (m_socket->bind(bindAddr, 0, QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint)) {
+                bound = true;
+                break; // Bind to first valid interface
+            }
         }
+        if (bound) break;
+    }
+
+    if (!bound) {
+        // Fallback: bind to any
+        qDebug() << "Hermes discovery: fallback bind to AnyIPv4";
+        m_socket->bind(QHostAddress::AnyIPv4, 0, QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint);
     }
 
     m_staleTimer->start();
@@ -48,7 +63,6 @@ void HermesDiscovery::stopDiscovery()
 {
     if (!m_running) return;
     m_running = false;
-
     m_staleTimer->stop();
     m_socket->close();
     m_radios.clear();
@@ -63,13 +77,13 @@ QList<HermesRadioInfo> HermesDiscovery::discoveredRadios() const
 void HermesDiscovery::sendDiscoveryProbe()
 {
     QByteArray pkt = HermesProtocol::buildDiscoveryPacket();
+
+    // Send to broadcast on both known HL2 ports
     m_socket->writeDatagram(pkt, QHostAddress::Broadcast, HermesProtocol::DISCOVERY_PORT);
     m_socket->writeDatagram(pkt, QHostAddress::Broadcast, HermesProtocol::DISCOVERY_PORT_ALT);
 
-    // Also send to 255.255.255.255 explicitly
-    m_socket->writeDatagram(pkt, QHostAddress(QStringLiteral("255.255.255.255")), HermesProtocol::DISCOVERY_PORT);
-
-    qDebug() << "Hermes: sent discovery probes on ports 1024/1025";
+    qDebug() << "Hermes: sent probes to" << HermesProtocol::DISCOVERY_PORT
+             << "and" << HermesProtocol::DISCOVERY_PORT_ALT;
 }
 
 void HermesDiscovery::onReadyRead()
@@ -81,13 +95,19 @@ void HermesDiscovery::onReadyRead()
         quint16 senderPort = 0;
         m_socket->readDatagram(data.data(), data.size(), &sender, &senderPort);
 
-        if (!HermesProtocol::isValidReply(data)) continue;
+        qDebug() << "Hermes: received" << data.size() << "bytes from"
+                 << sender.toString() << ":" << senderPort;
 
-        HermesRadioInfo info;
+        if (!HermesProtocol::isValidReply(data)) {
+            qDebug() << "Hermes: invalid reply from" << sender.toString();
+            continue;
+        }
+
         auto reply = HermesProtocol::decodeDiscoveryReply(data, sender.toString(), HermesProtocol::COMMAND_PORT);
 
+        HermesRadioInfo info;
         info.ipAddress      = reply.ipAddress;
-        info.udpPort        = reply.udpPort;
+        info.udpPort        = HermesProtocol::COMMAND_PORT;
         info.mac            = reply.mac;
         info.gatewareVersion = reply.gateware;
         info.boardId        = reply.boardId;
@@ -105,7 +125,8 @@ void HermesDiscovery::onReadyRead()
             qDebug() << "Hermes Lite 2 discovered:" << info.ipAddress
                      << "MAC:" << info.mac
                      << "GW:" << info.gatewareVersion
-                     << "RX:" << info.numReceivers;
+                     << "RX:" << info.numReceivers
+                     << "Running:" << info.isRunning;
             emit radioDiscovered(info);
         }
     }
