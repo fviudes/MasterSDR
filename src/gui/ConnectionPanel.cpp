@@ -556,7 +556,7 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     auto* icomIpInfo = new QLabel(
         "Connect to Icom radios with built-in LAN interface:<br>"
         "<b>Supported models:</b> IC-705, IC-7300MK2, IC-7610, IC-7760, IC-9700, IC-7850/51<br><br>"
-        "Default ports: Control 50001, RX Audio 50002, TX Audio 50003<br>"
+        "Default UDP ports: Control 50001, Serial 50002, Audio 50003<br>"
         "The radio requires username and password for authentication.",
         m_icomIpPage);
     icomIpInfo->setWordWrap(true);
@@ -599,7 +599,7 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     m_icomRxPort->setValue(50002);
     m_icomRxPort->setMinimumHeight(28);
     m_icomRxPort->setStyleSheet(editStyle);
-    icomPortRow->addWidget(new QLabel("RX:", m_icomIpPage));
+    icomPortRow->addWidget(new QLabel("Serial:", m_icomIpPage));
     icomPortRow->addWidget(m_icomRxPort);
 
     m_icomTxPort = new QSpinBox(m_icomIpPage);
@@ -607,9 +607,9 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     m_icomTxPort->setValue(50003);
     m_icomTxPort->setMinimumHeight(28);
     m_icomTxPort->setStyleSheet(editStyle);
-    icomPortRow->addWidget(new QLabel("TX:", m_icomIpPage));
+    icomPortRow->addWidget(new QLabel("Audio:", m_icomIpPage));
     icomPortRow->addWidget(m_icomTxPort);
-    icomIpForm->addRow("Ports:", icomPortRow);
+    icomIpForm->addRow("UDP Ports:", icomPortRow);
 
     m_icomUsername = new QLineEdit(m_icomIpPage);
     m_icomUsername->setPlaceholderText("Radio username (default: admin)");
