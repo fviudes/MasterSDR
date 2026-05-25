@@ -87,27 +87,23 @@ jobs:
           set -e
           DESTDIR=${{ github.workspace }}/AppDir cmake --install build
 
-          ICON_SRC="docs/logo-circle.png"
-          ICON_DST="AppDir/mastersdr.png"
+          # Resize icon installed by CMake at hicolor path (matches original AetherSDR pattern)
+          ICON_PATH="AppDir/usr/share/icons/hicolor/256x256/apps/mastersdr.png"
+          if [ -f "$ICON_PATH" ]; then
+            convert "$ICON_PATH" -resize 256x256 "$ICON_PATH"
+            echo "Icon resized at $ICON_PATH"
+          else
+            echo "Icon not found at hicolor path, creating from source"
+            mkdir -p "$(dirname "$ICON_PATH")"
+            convert docs/logo-circle.png -resize 256x256 "$ICON_PATH"
+          fi
 
-          # Create standard 256x256 icon for linuxdeploy
-          convert "$ICON_SRC" -resize 256x256 "$ICON_DST"
-          echo "Icon: 256x256 at $ICON_DST"
-
-          # Copy to XDG hicolor tree
-          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
-          cp "$ICON_DST" AppDir/usr/share/icons/hicolor/256x256/apps/mastersdr.png
-
-          # Create .DirIcon (linuxdeploy uses this)
-          cp "$ICON_DST" AppDir/.DirIcon
-
-          # Fix desktop file: linuxdeploy needs the icon present before processing
-          # Update the Icon= to use the full path as a fallback
-          sed -i 's|^Icon=.*|Icon=mastersdr|' AppDir/usr/share/applications/MasterSDR.desktop
+          # Also copy to AppDir root for --icon-file flag
+          cp "$ICON_PATH" AppDir/mastersdr.png
 
           echo "=== Verify ==="
-          ls -la AppDir/mastersdr.png AppDir/.DirIcon 2>/dev/null || true
-          cat AppDir/usr/share/applications/MasterSDR.desktop
+          grep "^Icon=" AppDir/usr/share/applications/MasterSDR.desktop
+          ls -la "$ICON_PATH" AppDir/mastersdr.png
 
           # Bundle DeepFilterNet3 model for DFNR
           if [ -f third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz ]; then
@@ -134,47 +130,31 @@ jobs:
 
       - name: Download linuxdeploy + Qt plugin
         run: |
-          echo "Downloading linuxdeploy..."
           curl -sL --retry 3 --retry-delay 10 \
             -o linuxdeploy-${{ matrix.arch }}.AppImage \
             https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${{ matrix.arch }}.AppImage
-          chmod +x linuxdeploy-${{ matrix.arch }}.AppImage
+          curl -sL --retry 3 --retry-delay 10 \
+            -o linuxdeploy-plugin-qt-${{ matrix.arch }}.AppImage \
+            https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${{ matrix.arch }}.AppImage
+          chmod +x linuxdeploy-${{ matrix.arch }}.AppImage linuxdeploy-plugin-qt-${{ matrix.arch }}.AppImage
 
       - name: Build AppImage
         env:
           LDAI_OUTPUT: MasterSDR-${{ github.ref_name }}-${{ matrix.arch }}.AppImage
+          QT_SELECT: qt6
+          EXTRA_QT_PLUGINS: multimedia
         run: |
-          echo "=== Desktop file content ==="
-          cat AppDir/usr/share/applications/MasterSDR.desktop
-          echo "=== Icon files ==="
-          find AppDir -name "mastersdr*" -type f 2>/dev/null || true
           echo "=== Building AppImage ==="
-
-          # Manually deploy Qt plugins (linuxdeploy-plugin-qt equivalent)
-          mkdir -p AppDir/usr/plugins
           if [ "${{ matrix.use_aqt }}" = "true" ]; then
-            QT_PLUGIN_DIR=${{ github.workspace }}/Qt/6.8.3/gcc_64/plugins
-            QT_LIB_DIR=${{ github.workspace }}/Qt/6.8.3/gcc_64/lib
+            export QMAKE=${{ github.workspace }}/Qt/6.8.3/gcc_64/bin/qmake
           else
-            QT_PLUGIN_DIR=$(qmake6 -query QT_INSTALL_PLUGINS)
-            QT_LIB_DIR=$(qmake6 -query QT_INSTALL_LIBS)
+            export QMAKE=$(which qmake6 2>/dev/null || which qmake)
           fi
-
-          # Copy Qt platform plugin
-          mkdir -p AppDir/usr/plugins/platforms
-          cp "$QT_PLUGIN_DIR"/platforms/libqxcb.so AppDir/usr/plugins/platforms/ 2>/dev/null || true
-
-          # Copy Qt libs needed
-          mkdir -p AppDir/usr/lib
-          for lib in libQt6Core.so.6 libQt6Gui.so.6 libQt6Widgets.so.6 libQt6Network.so.6 libQt6Multimedia.so.6; do
-            cp "$QT_LIB_DIR/$lib" AppDir/usr/lib/ 2>/dev/null || true
-          done
-
-          # Run linuxdeploy without Qt plugin
           ./linuxdeploy-${{ matrix.arch }}.AppImage \
             --appdir AppDir \
-            --desktop-file AppDir/usr/share/applications/MasterSDR.desktop \
+            --plugin qt \
             --icon-file AppDir/mastersdr.png \
+            --desktop-file AppDir/usr/share/applications/MasterSDR.desktop \
             --output appimage
 
       - name: Upload artifact
