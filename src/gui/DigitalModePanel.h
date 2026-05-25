@@ -50,6 +50,7 @@ private slots:
     void onClearDecodes();
     void onRxFrequencyChanged(int dfHz);
     void onTxFrequencyChanged(int dfHz);
+    void onFreqPresetChanged(int index);
 
     void handleDecode(const DigitalDecode& decode);
     void handleSnrUpdated(float snrDb);
@@ -66,6 +67,7 @@ private:
     void buildDecodePanel(QWidget* container);
     void buildStatusBar(QVBoxLayout* layout);
     void wireSignals();
+    void populateFreqPresets();
     QStringList generateStandardMessages() const;
 
     AudioEngine* m_audio{nullptr};
@@ -79,6 +81,7 @@ private:
     QLabel* m_trPeriodLabel{nullptr};
 
     // Frequency panel
+    QComboBox* m_freqPresetCombo{nullptr};
     QLabel* m_dialFreqLabel{nullptr};
     QSpinBox* m_rxFreqSpin{nullptr};
     QSpinBox* m_txFreqSpin{nullptr};

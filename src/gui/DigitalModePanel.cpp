@@ -35,6 +35,7 @@ DigitalModePanel::DigitalModePanel(AudioEngine* audio,
     setupUi();
     applyStyles();
     wireSignals();
+    populateFreqPresets();
     setAttachedSlice(initialSlice);
 
     FramelessResizer::install(this);
@@ -112,6 +113,10 @@ void DigitalModePanel::buildFrequencyPanel(QVBoxLayout* layout)
 {
     auto* freqGroup = new QGroupBox("Frequency", bodyWidget());
     auto* freqLayout = new QFormLayout(freqGroup);
+
+    m_freqPresetCombo = new QComboBox(freqGroup);
+    m_freqPresetCombo->setMinimumHeight(30);
+    freqLayout->addRow("Band/Mode:", m_freqPresetCombo);
 
     m_dialFreqLabel = new QLabel("14.074.000 Hz", freqGroup);
     m_dialFreqLabel->setStyleSheet("font-size: 16px; font-weight: bold; font-family: monospace;");
@@ -284,6 +289,9 @@ void DigitalModePanel::wireSignals()
     connect(m_txFreqSpin, QOverload<int>::of(&QSpinBox::valueChanged),
             this, &DigitalModePanel::onTxFrequencyChanged);
 
+    connect(m_freqPresetCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &DigitalModePanel::onFreqPresetChanged);
+
     connect(m_engine, &DigitalModeEngine::decodeReady,
             this, &DigitalModePanel::handleDecode);
 
@@ -308,12 +316,78 @@ void DigitalModePanel::setAttachedSlice(SliceModel* slice)
     }
 }
 
+void DigitalModePanel::populateFreqPresets()
+{
+    m_freqPresetCombo->blockSignals(true);
+    m_freqPresetCombo->clear();
+
+    struct FreqPreset { QString band; double mhz; };
+    QVector<FreqPreset> presets;
+
+    switch (m_engine->mode()) {
+    case DigitalModeEngine::Mode::FT8:
+        presets = {{"160m FT8", 1.840}, {"80m FT8", 3.573}, {"60m FT8", 5.357},
+                   {"40m FT8", 7.074}, {"30m FT8", 10.136}, {"20m FT8", 14.074},
+                   {"17m FT8", 18.100}, {"15m FT8", 21.074}, {"12m FT8", 24.915},
+                   {"10m FT8", 28.074}, {"6m FT8", 50.313}, {"2m FT8", 144.174}};
+        break;
+    case DigitalModeEngine::Mode::FT4:
+        presets = {{"80m FT4", 3.575}, {"40m FT4", 7.047}, {"30m FT4", 10.140},
+                   {"20m FT4", 14.080}, {"17m FT4", 18.104}, {"15m FT4", 21.080},
+                   {"12m FT4", 24.919}, {"10m FT4", 28.180}, {"6m FT4", 50.318},
+                   {"2m FT4", 144.170}};
+        break;
+    case DigitalModeEngine::Mode::JT65:
+        presets = {{"160m JT65", 1.838}, {"80m JT65", 3.576}, {"40m JT65", 7.076},
+                   {"30m JT65", 10.139}, {"20m JT65", 14.076}, {"17m JT65", 18.102},
+                   {"15m JT65", 21.076}, {"12m JT65", 24.917}, {"10m JT65", 28.076}};
+        break;
+    case DigitalModeEngine::Mode::JT9:
+        presets = {{"160m JT9", 1.839}, {"80m JT9", 3.572}, {"40m JT9", 7.078},
+                   {"30m JT9", 10.130}, {"20m JT9", 14.078}, {"17m JT9", 18.104},
+                   {"15m JT9", 21.078}, {"12m JT9", 24.920}, {"10m JT9", 28.078}};
+        break;
+    case DigitalModeEngine::Mode::WSPR:
+        presets = {{"160m WSPR", 1.838}, {"80m WSPR", 3.594}, {"60m WSPR", 5.366},
+                   {"40m WSPR", 7.040}, {"30m WSPR", 10.140}, {"20m WSPR", 14.097},
+                   {"17m WSPR", 18.106}, {"15m WSPR", 21.096}, {"12m WSPR", 24.926},
+                   {"10m WSPR", 28.126}, {"6m WSPR", 50.293}, {"2m WSPR", 144.489}};
+        break;
+    default:
+        presets = {{"20m FT8", 14.074}, {"40m FT8", 7.074}, {"30m FT8", 10.136}};
+        break;
+    }
+
+    for (const auto& p : presets) {
+        m_freqPresetCombo->addItem(QString("%1  %2 MHz").arg(p.band, -14).arg(p.mhz, 7, 'f', 3), p.mhz * 1e6);
+    }
+    m_freqPresetCombo->blockSignals(false);
+}
+
+void DigitalModePanel::onFreqPresetChanged(int index)
+{
+    if (index < 0 || !m_radio) return;
+
+    double mhz = m_freqPresetCombo->itemData(index).toDouble() / 1e6;
+    uint64_t freqHz = static_cast<uint64_t>(mhz * 1e6);
+
+    m_engine->setDialFrequency(freqHz);
+    m_dialFreqLabel->setText(QString("%1 Hz").arg(freqHz));
+
+    if (m_attachedSlice) {
+        m_attachedSlice->setFrequency(mhz);
+    } else if (auto* s = m_radio->slice(0)) {
+        s->setFrequency(mhz);
+    }
+}
+
 void DigitalModePanel::onModeChanged(int index)
 {
     auto mode = static_cast<DigitalModeEngine::Mode>(m_modeCombo->itemData(index).toInt());
     m_engine->setMode(mode);
     m_trPeriodLabel->setText(QString("T/R Period: %1s").arg(m_engine->trPeriodSeconds()));
 
+    populateFreqPresets();
     m_engine->reset();
 }
 
