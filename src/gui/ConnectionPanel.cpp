@@ -269,45 +269,55 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
         m_modeButtons->addButton(button, static_cast<int>(mode));
     };
 
-    auto* modeRow = new QHBoxLayout;
-    modeRow->setSpacing(8);
+    // ── Mode buttons in 2-row x 3-col grid ─────────────────────────
+    auto* modeGrid = new QGridLayout;
+    modeGrid->setSpacing(8);
 
-    m_localModeBtn = new QCommandLinkButton(this);
-    configureModeButton(m_localModeBtn,
-                        "On This Network",
-                        "Recommended for new users when the radio and computer are on the same LAN.",
-                        LocalMode);
-    modeRow->addWidget(m_localModeBtn);
+    // Row 1: FlexRadio modes
+    m_flexLocalBtn = new QCommandLinkButton(this);
+    configureModeButton(m_flexLocalBtn,
+                        "Flex - On This Network",
+                        "Discover FlexRadio on your local LAN.",
+                        FlexLocal);
+    modeGrid->addWidget(m_flexLocalBtn, 0, 0);
 
-    m_smartLinkModeBtn = new QCommandLinkButton(this);
-    configureModeButton(m_smartLinkModeBtn,
-                        "Remote with SmartLink",
-                        "Use FlexRadio SmartLink when the radio is away from this computer.",
-                        SmartLinkMode);
-    modeRow->addWidget(m_smartLinkModeBtn);
+    m_smartLinkBtn = new QCommandLinkButton(this);
+    configureModeButton(m_smartLinkBtn,
+                        "Flex - SmartLink",
+                        "Remote operation via FlexRadio SmartLink.",
+                        SmartLink);
+    modeGrid->addWidget(m_smartLinkBtn, 0, 1);
 
-    m_manualModeBtn = new QCommandLinkButton(this);
-    configureModeButton(m_manualModeBtn,
-                        "Connect by IP",
-                        "Best for VPN or routed station access when you already know the radio IP.",
-                        ManualMode);
-    modeRow->addWidget(m_manualModeBtn);
+    m_flexManualBtn = new QCommandLinkButton(this);
+    configureModeButton(m_flexManualBtn,
+                        "Flex - Connect by IP",
+                        "VPN or routed access with known radio IP.",
+                        FlexManual);
+    modeGrid->addWidget(m_flexManualBtn, 0, 2);
 
-    m_hermesModeBtn = new QCommandLinkButton(this);
-    configureModeButton(m_hermesModeBtn,
+    // Row 2: Non-FlexRadio modes
+    m_icomIpBtn = new QCommandLinkButton(this);
+    configureModeButton(m_icomIpBtn,
+                        "Icom via IP",
+                        "Connect to Icom radios with LAN interface (IC-705, IC-7610, IC-7300MK2).",
+                        IcomIp);
+    modeGrid->addWidget(m_icomIpBtn, 1, 0);
+
+    m_hermesBtn = new QCommandLinkButton(this);
+    configureModeButton(m_hermesBtn,
                         "Hermes Lite 2",
                         "Discover and connect to a Hermes Lite 2 SDR on your network.",
-                        HermesMode);
-    modeRow->addWidget(m_hermesModeBtn);
+                        Hermes);
+    modeGrid->addWidget(m_hermesBtn, 1, 1);
 
-    m_serialCatModeBtn = new QCommandLinkButton(this);
-    configureModeButton(m_serialCatModeBtn,
-                        "Serial CAT (Icom / Kenwood)",
-                        "Connect to an Icom or Kenwood transceiver via serial CAT port (CI-V / CAT).",
-                        SerialCatMode);
-    modeRow->addWidget(m_serialCatModeBtn);
+    m_serialCatBtn = new QCommandLinkButton(this);
+    configureModeButton(m_serialCatBtn,
+                        "Serial CAT",
+                        "Icom CI-V, Kenwood or Yaesu via serial COM port.",
+                        SerialCat);
+    modeGrid->addWidget(m_serialCatBtn, 1, 2);
 
-    root->addLayout(modeRow);
+    root->addLayout(modeGrid);
 
     m_modeStack = new QStackedWidget(this);
     root->addWidget(m_modeStack, 1);
@@ -536,6 +546,103 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     manualLayout->addStretch();
 
     m_modeStack->addWidget(manualPage);
+
+    // ── Icom via IP page ─────────────────────────────────────────────────
+    m_icomIpPage = new QWidget(m_modeStack);
+    auto* icomIpLayout = new QVBoxLayout(m_icomIpPage);
+    icomIpLayout->setContentsMargins(0, 4, 0, 0);
+    icomIpLayout->setSpacing(10);
+
+    auto* icomIpInfo = new QLabel(
+        "Connect to Icom radios with built-in LAN interface:<br>"
+        "<b>Supported models:</b> IC-705, IC-7300MK2, IC-7610, IC-7760, IC-9700, IC-7850/51<br><br>"
+        "Default ports: Control 50001, RX Audio 50002, TX Audio 50003<br>"
+        "The radio requires username and password for authentication.",
+        m_icomIpPage);
+    icomIpInfo->setWordWrap(true);
+    icomIpInfo->setStyleSheet("color: #a0b4c4; font-size: 11px; padding: 4px 0;");
+    icomIpLayout->addWidget(icomIpInfo);
+
+    auto* icomIpForm = new QFormLayout;
+    icomIpForm->setSpacing(8);
+
+    m_icomIpModelCombo = new QComboBox(m_icomIpPage);
+    m_icomIpModelCombo->addItem("Auto Detect");
+    m_icomIpModelCombo->addItem("IC-705");
+    m_icomIpModelCombo->addItem("IC-7300MK2");
+    m_icomIpModelCombo->addItem("IC-7610");
+    m_icomIpModelCombo->addItem("IC-7760");
+    m_icomIpModelCombo->addItem("IC-9700");
+    m_icomIpModelCombo->addItem("IC-7850/7851");
+    m_icomIpModelCombo->addItem("IC-R8600");
+    m_icomIpModelCombo->setMinimumHeight(32);
+    m_icomIpModelCombo->setStyleSheet(editStyle);
+    icomIpForm->addRow("Model:", m_icomIpModelCombo);
+
+    m_icomIpAddr = new QLineEdit(m_icomIpPage);
+    m_icomIpAddr->setPlaceholderText("192.168.1.100");
+    m_icomIpAddr->setMinimumHeight(30);
+    m_icomIpAddr->setStyleSheet(editStyle);
+    icomIpForm->addRow("IP Address:", m_icomIpAddr);
+
+    auto* portRow = new QHBoxLayout;
+    m_icomCtrlPort = new QSpinBox(m_icomIpPage);
+    m_icomCtrlPort->setRange(1, 65535);
+    m_icomCtrlPort->setValue(50001);
+    m_icomCtrlPort->setMinimumHeight(28);
+    m_icomCtrlPort->setStyleSheet(editStyle);
+    portRow->addWidget(new QLabel("Ctrl:", m_icomIpPage));
+    portRow->addWidget(m_icomCtrlPort);
+
+    m_icomRxPort = new QSpinBox(m_icomIpPage);
+    m_icomRxPort->setRange(1, 65535);
+    m_icomRxPort->setValue(50002);
+    m_icomRxPort->setMinimumHeight(28);
+    m_icomRxPort->setStyleSheet(editStyle);
+    portRow->addWidget(new QLabel("RX:", m_icomIpPage));
+    portRow->addWidget(m_icomRxPort);
+
+    m_icomTxPort = new QSpinBox(m_icomIpPage);
+    m_icomTxPort->setRange(1, 65535);
+    m_icomTxPort->setValue(50003);
+    m_icomTxPort->setMinimumHeight(28);
+    m_icomTxPort->setStyleSheet(editStyle);
+    portRow->addWidget(new QLabel("TX:", m_icomIpPage));
+    portRow->addWidget(m_icomTxPort);
+    icomIpForm->addRow("Ports:", portRow);
+
+    m_icomUsername = new QLineEdit(m_icomIpPage);
+    m_icomUsername->setPlaceholderText("Radio username (default: admin)");
+    m_icomUsername->setMinimumHeight(30);
+    m_icomUsername->setStyleSheet(editStyle);
+    icomIpForm->addRow("Username:", m_icomUsername);
+
+    m_icomPassword = new QLineEdit(m_icomIpPage);
+    m_icomPassword->setPlaceholderText("Radio password");
+    m_icomPassword->setEchoMode(QLineEdit::Password);
+    m_icomPassword->setMinimumHeight(30);
+    m_icomPassword->setStyleSheet(editStyle);
+    icomIpForm->addRow("Password:", m_icomPassword);
+
+    icomIpLayout->addLayout(icomIpForm);
+
+    m_icomIpStatusLabel = new QLabel("", m_icomIpPage);
+    m_icomIpStatusLabel->setAlignment(Qt::AlignCenter);
+    m_icomIpStatusLabel->setStyleSheet("color: #20c060; font-size: 12px; padding: 8px;");
+    m_icomIpStatusLabel->setVisible(false);
+    icomIpLayout->addWidget(m_icomIpStatusLabel);
+
+    auto* icomIpBtnRow = new QHBoxLayout;
+    icomIpBtnRow->addStretch();
+    m_icomIpConnectBtn = new QPushButton("Connect via IP", m_icomIpPage);
+    m_icomIpConnectBtn->setMinimumHeight(38);
+    m_icomIpConnectBtn->setStyleSheet(editStyle);
+    icomIpBtnRow->addWidget(m_icomIpConnectBtn);
+    icomIpBtnRow->addStretch();
+    icomIpLayout->addLayout(icomIpBtnRow);
+    icomIpLayout->addStretch();
+
+    m_modeStack->addWidget(m_icomIpPage);
 
     // ── Hermes Lite 2 page ──────────────────────────────────────────────────
     auto* hermesPage = new QWidget(m_modeStack);
@@ -778,12 +885,12 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
         emit retryDiscoveryRequested();
     });
     connect(connectByIpBtn, &QPushButton::clicked, this, [this] {
-        setCurrentMode(ManualMode);
+        setCurrentMode(FlexManual);
         m_manualIpEdit->setFocus();
         m_manualIpEdit->selectAll();
     });
     connect(useSmartLinkBtn, &QPushButton::clicked, this, [this] {
-        setCurrentMode(SmartLinkMode);
+        setCurrentMode(SmartLink);
         if (m_loginForm->isVisible())
             m_emailEdit->setFocus();
     });
@@ -829,6 +936,9 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     connect(m_hermesManualConnectBtn, &QPushButton::clicked,
             this, &ConnectionPanel::onHermesManualConnectClicked);
 
+    connect(m_icomIpConnectBtn, &QPushButton::clicked,
+            this, &ConnectionPanel::onIcomIpConnectClicked);
+
     connect(m_serialCatConnectBtn, &QPushButton::clicked,
             this, &ConnectionPanel::onSerialCatConnectClicked);
     connect(m_serialProtocolCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -870,7 +980,7 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     });
 
     setConnected(false);
-    setCurrentMode(LocalMode);
+    setCurrentMode(FlexLocal);
     updateLocalPageState();
     updateSmartLinkUi();
     updateManualAdvancedVisibility();
@@ -979,6 +1089,30 @@ void ConnectionPanel::onHermesManualConnectClicked()
     if (port == 0) port = 1025;
 
     emit hermesManualConnectRequested(ip, port);
+}
+
+void ConnectionPanel::onIcomIpConnectClicked()
+{
+    QString ip = m_icomIpAddr->text().trimmed();
+    if (ip.isEmpty()) {
+        m_icomIpStatusLabel->setText("Enter the radio IP address");
+        m_icomIpStatusLabel->setStyleSheet("color: #e8a040; font-size: 12px; padding: 8px;");
+        m_icomIpStatusLabel->setVisible(true);
+        return;
+    }
+
+    uint16_t ctrlPort = static_cast<uint16_t>(m_icomCtrlPort->value());
+    uint16_t rxPort   = static_cast<uint16_t>(m_icomRxPort->value());
+    uint16_t txPort   = static_cast<uint16_t>(m_icomTxPort->value());
+    QString username  = m_icomUsername->text().trimmed();
+    QString password  = m_icomPassword->text().trimmed();
+    QString model     = m_icomIpModelCombo->currentText();
+
+    m_icomIpStatusLabel->setText(QString("Connecting to %1:%2...").arg(ip).arg(ctrlPort));
+    m_icomIpStatusLabel->setStyleSheet("color: #a0b4c4; font-size: 12px; padding: 8px;");
+    m_icomIpStatusLabel->setVisible(true);
+
+    emit icomIpConnectRequested(ip, ctrlPort, rxPort, txPort, username, password, model);
 }
 
 void ConnectionPanel::setConnected(bool connected)
@@ -1146,13 +1280,13 @@ void ConnectionPanel::updateActionState()
 void ConnectionPanel::updateLowBandwidthVisibility()
 {
     const auto mode = static_cast<ConnectionMode>(m_modeStack->currentIndex());
-    const bool visible = mode == SmartLinkMode || mode == ManualMode;
+    const bool visible = mode == SmartLink || mode == FlexManual;
     m_linkOptionsWidget->setVisible(visible);
 
     if (!visible)
         return;
 
-    if (mode == SmartLinkMode) {
+    if (mode == SmartLink) {
         m_lowBwHintLabel->setText(
             "Recommended for SmartLink, hotel Wi-Fi, LTE, or other internet paths where "
             "waterfall and FFT traffic may feel heavy.");
