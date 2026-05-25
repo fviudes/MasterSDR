@@ -134,35 +134,45 @@ jobs:
 
       - name: Download linuxdeploy + Qt plugin
         run: |
+          echo "Downloading linuxdeploy..."
           curl -sL --retry 3 --retry-delay 10 \
             -o linuxdeploy-${{ matrix.arch }}.AppImage \
             https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${{ matrix.arch }}.AppImage
-          curl -sL --retry 3 --retry-delay 10 \
-            -o linuxdeploy-plugin-qt-${{ matrix.arch }}.AppImage \
-            https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${{ matrix.arch }}.AppImage
-          chmod +x linuxdeploy-${{ matrix.arch }}.AppImage linuxdeploy-plugin-qt-${{ matrix.arch }}.AppImage
+          chmod +x linuxdeploy-${{ matrix.arch }}.AppImage
 
       - name: Build AppImage
         env:
           LDAI_OUTPUT: MasterSDR-${{ github.ref_name }}-${{ matrix.arch }}.AppImage
-          QT_SELECT: qt6
-          EXTRA_QT_PLUGINS: multimedia
         run: |
           echo "=== Desktop file content ==="
           cat AppDir/usr/share/applications/MasterSDR.desktop
-          echo "=== Validate desktop file ==="
-          desktop-file-validate AppDir/usr/share/applications/MasterSDR.desktop 2>&1 || true
           echo "=== Icon files ==="
           find AppDir -name "mastersdr*" -type f 2>/dev/null || true
           echo "=== Building AppImage ==="
+
+          # Manually deploy Qt plugins (linuxdeploy-plugin-qt equivalent)
+          mkdir -p AppDir/usr/plugins
           if [ "${{ matrix.use_aqt }}" = "true" ]; then
-            export QMAKE=${{ github.workspace }}/Qt/6.8.3/gcc_64/bin/qmake
+            QT_PLUGIN_DIR=${{ github.workspace }}/Qt/6.8.3/gcc_64/plugins
+            QT_LIB_DIR=${{ github.workspace }}/Qt/6.8.3/gcc_64/lib
           else
-            export QMAKE=$(which qmake6 2>/dev/null || which qmake)
+            QT_PLUGIN_DIR=$(qmake6 -query QT_INSTALL_PLUGINS)
+            QT_LIB_DIR=$(qmake6 -query QT_INSTALL_LIBS)
           fi
+
+          # Copy Qt platform plugin
+          mkdir -p AppDir/usr/plugins/platforms
+          cp "$QT_PLUGIN_DIR"/platforms/libqxcb.so AppDir/usr/plugins/platforms/ 2>/dev/null || true
+
+          # Copy Qt libs needed
+          mkdir -p AppDir/usr/lib
+          for lib in libQt6Core.so.6 libQt6Gui.so.6 libQt6Widgets.so.6 libQt6Network.so.6 libQt6Multimedia.so.6; do
+            cp "$QT_LIB_DIR/$lib" AppDir/usr/lib/ 2>/dev/null || true
+          done
+
+          # Run linuxdeploy without Qt plugin
           ./linuxdeploy-${{ matrix.arch }}.AppImage \
             --appdir AppDir \
-            --plugin qt \
             --desktop-file AppDir/usr/share/applications/MasterSDR.desktop \
             --icon-file AppDir/mastersdr.png \
             --output appimage
