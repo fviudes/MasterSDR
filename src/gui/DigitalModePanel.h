@@ -79,6 +79,8 @@ private:
     void buildMessageSlots(QGroupBox* group);
     void buildTxRxControls(QGroupBox* group);
     void buildRightPanel(QVBoxLayout* rightLayout);
+    void buildDxCallPanel(QGroupBox* group);
+    void buildDecodePanels(QGroupBox* group);
     void wireSignals();
     void populateFreqPresets();
     QStringList generateStandardMessages() const;
