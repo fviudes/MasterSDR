@@ -47,18 +47,6 @@ public slots:
     // SmartLink
     void setSmartLinkClient(SmartLinkClient* client);
 
-    // Icom via IP
-    QWidget* m_icomIpPage{nullptr};
-    QLineEdit* m_icomIpAddr{nullptr};
-    QSpinBox* m_icomCtrlPort{nullptr};
-    QSpinBox* m_icomRxPort{nullptr};
-    QSpinBox* m_icomTxPort{nullptr};
-    QLineEdit* m_icomUsername{nullptr};
-    QLineEdit* m_icomPassword{nullptr};
-    QComboBox* m_icomIpModelCombo{nullptr};
-    QPushButton* m_icomIpConnectBtn{nullptr};
-    QLabel* m_icomIpStatusLabel{nullptr};
-
     // Hermes Lite 2
     void onHermesDiscovered(const HermesRadioInfo& radio);
     void onHermesLost(const QString& ipAddress);
@@ -149,6 +137,18 @@ private:
     QWidget* m_icomConfigWidget{nullptr};
     QPushButton* m_serialCatConnectBtn{nullptr};
     QLabel* m_serialCatStatusLabel{nullptr};
+
+    // Icom via IP
+    QWidget* m_icomIpPage{nullptr};
+    QLineEdit* m_icomIpAddr{nullptr};
+    QSpinBox* m_icomCtrlPort{nullptr};
+    QSpinBox* m_icomRxPort{nullptr};
+    QSpinBox* m_icomTxPort{nullptr};
+    QLineEdit* m_icomUsername{nullptr};
+    QLineEdit* m_icomPassword{nullptr};
+    QComboBox* m_icomIpModelCombo{nullptr};
+    QPushButton* m_icomIpConnectBtn{nullptr};
+    QLabel* m_icomIpStatusLabel{nullptr};
 
     QWidget*     m_linkOptionsWidget{nullptr};
     QLabel*      m_lowBwHintLabel{nullptr};
