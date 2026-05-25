@@ -15401,7 +15401,7 @@ void MainWindow::toggleDigitalModePanel()
 {
     if (!m_digitalModePanel) {
         m_digitalModePanel = new DigitalModePanel(m_audio, &m_radioModel,
-                                                   m_radioModel.sliceModel(0), this);
+                                                   m_radioModel.slice(0), this);
         m_digitalModePanel->setAttribute(Qt::WA_QuitOnClose, false);
         connect(m_digitalModePanel, &DigitalModePanel::txStateChanged, this, [this](bool tx) {
             m_digiBtn->setStyleSheet(tx
