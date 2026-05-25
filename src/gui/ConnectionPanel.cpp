@@ -2,6 +2,7 @@
 #include "core/AppSettings.h"
 #include "core/IcomCivProtocol.h"
 #include "core/NetworkPathResolver.h"
+#include <QSerialPortInfo>
 #include "FramelessResizer.h"
 #include "FramelessWindowTitleBar.h"
 
@@ -614,6 +615,16 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     m_serialPortCombo->setEditable(true);
     m_serialPortCombo->setMinimumHeight(32);
     m_serialPortCombo->setStyleSheet(editStyle);
+
+    // Populate with available system COM ports
+    const auto ports = QSerialPortInfo::availablePorts();
+    for (const auto& port : ports) {
+        QString label = QString("%1 (%2)").arg(port.portName(), port.description());
+        m_serialPortCombo->addItem(label, port.portName());
+    }
+    if (m_serialPortCombo->count() == 0) {
+        m_serialPortCombo->addItem("No serial ports found");
+    }
     serialForm->addRow("Serial Port:", m_serialPortCombo);
 
     m_serialBaudCombo = new QComboBox(serialCatPage);
@@ -823,8 +834,16 @@ void ConnectionPanel::setFramelessMode(bool on)
 
 void ConnectionPanel::onSerialCatConnectClicked()
 {
-    QString portName = m_serialPortCombo->currentText().trimmed();
-    if (portName.isEmpty()) {
+    QString portName;
+    if (m_serialPortCombo->currentIndex() >= 0 && !m_serialPortCombo->currentData().toString().isEmpty()) {
+        portName = m_serialPortCombo->currentData().toString();
+    } else {
+        portName = m_serialPortCombo->currentText().trimmed();
+        // Strip description if present: "COM3 (USB Serial)" -> "COM3"
+        int paren = portName.indexOf('(');
+        if (paren > 0) portName = portName.left(paren).trimmed();
+    }
+    if (portName.isEmpty() || portName == "No serial ports found") {
         m_serialCatStatusLabel->setText("Select a serial port first");
         m_serialCatStatusLabel->setStyleSheet("color: #e8a040; font-size: 12px; padding: 8px;");
         m_serialCatStatusLabel->setVisible(true);
