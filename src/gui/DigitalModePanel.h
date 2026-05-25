@@ -11,6 +11,7 @@
 #include <QTextEdit>
 #include <QCheckBox>
 #include <QSpinBox>
+#include <QProgressBar>
 
 class QVBoxLayout;
 class QHBoxLayout;
@@ -55,6 +56,8 @@ private slots:
     void handleDecode(const DigitalDecode& decode);
     void handleSnrUpdated(float snrDb);
     void handleSyncDetected(bool synced);
+    void handleTrStateChanged(DigitalModeEngine::TrState state);
+    void handleSequenceProgress(int secondsRemaining, double progress);
 
 private:
     void setupUi();
@@ -100,6 +103,8 @@ private:
     QCheckBox* m_txEnableCheck{nullptr};
     QPushButton* m_tuneBtn{nullptr};
     QLabel* m_txStatusLabel{nullptr};
+    QProgressBar* m_sequenceProgress{nullptr};
+    QLabel* m_timerLabel{nullptr};
 
     // Decode panel
     QTextEdit* m_decodeLog{nullptr};

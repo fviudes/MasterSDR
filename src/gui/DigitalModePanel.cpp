@@ -186,23 +186,40 @@ void DigitalModePanel::buildMessagePanel(QVBoxLayout* layout)
 void DigitalModePanel::buildTxPanel(QVBoxLayout* layout)
 {
     auto* txGroup = new QGroupBox("Transmit", bodyWidget());
-    auto* txLayout = new QHBoxLayout(txGroup);
+    auto* txLayout = new QVBoxLayout(txGroup);
 
+    auto* txRow = new QHBoxLayout;
     m_txEnableCheck = new QCheckBox("Enable TX", txGroup);
     m_txEnableCheck->setMinimumHeight(28);
-    txLayout->addWidget(m_txEnableCheck);
+    txRow->addWidget(m_txEnableCheck);
 
     m_tuneBtn = new QPushButton("Tune", txGroup);
     m_tuneBtn->setCheckable(true);
     m_tuneBtn->setMinimumHeight(28);
     m_tuneBtn->setFixedWidth(80);
-    txLayout->addWidget(m_tuneBtn);
+    txRow->addWidget(m_tuneBtn);
 
     m_txStatusLabel = new QLabel("RX", txGroup);
     m_txStatusLabel->setAlignment(Qt::AlignCenter);
     m_txStatusLabel->setMinimumHeight(28);
-    m_txStatusLabel->setStyleSheet("font-weight: bold; font-size: 14px; padding: 4px;");
-    txLayout->addWidget(m_txStatusLabel);
+    m_txStatusLabel->setStyleSheet("font-weight: bold; font-size: 14px; padding: 4px; color: #20c060; background: #102810; border-radius: 4px;");
+    txRow->addWidget(m_txStatusLabel);
+
+    m_timerLabel = new QLabel("Next TX: --", txGroup);
+    m_timerLabel->setAlignment(Qt::AlignCenter);
+    m_timerLabel->setStyleSheet("font-size: 10px; color: #a0b4c4;");
+    txLayout->addLayout(txRow);
+    txLayout->addWidget(m_timerLabel);
+
+    m_sequenceProgress = new QProgressBar(txGroup);
+    m_sequenceProgress->setRange(0, 1000);
+    m_sequenceProgress->setValue(0);
+    m_sequenceProgress->setMaximumHeight(8);
+    m_sequenceProgress->setTextVisible(false);
+    m_sequenceProgress->setStyleSheet(
+        "QProgressBar { border: none; background: #1a2530; border-radius: 4px; }"
+        "QProgressBar::chunk { background: #00b4d8; border-radius: 4px; }");
+    txLayout->addWidget(m_sequenceProgress);
 
     layout->addWidget(txGroup);
 }
@@ -318,8 +335,21 @@ void DigitalModePanel::wireSignals()
     connect(m_engine, &DigitalModeEngine::syncDetected,
             this, &DigitalModePanel::handleSyncDetected);
 
-    connect(m_engine, &DigitalModeEngine::statusChanged, this, [this]() {
-        m_statusLabel->setText(m_engine->isTxEnabled() ? "TX Enabled" : "Ready");
+    connect(m_engine, &DigitalModeEngine::trStateChanged,
+            this, &DigitalModePanel::handleTrStateChanged);
+
+    connect(m_engine, &DigitalModeEngine::sequenceProgressUpdated,
+            this, &DigitalModePanel::handleSequenceProgress);
+
+    connect(m_engine, &DigitalModeEngine::pttRequested, this, [this](bool on) {
+        if (m_radio && m_radio->txSlice()) {
+            if (on) {
+                m_radio->transmitModel().setMox(true);
+            } else {
+                m_radio->transmitModel().setMox(false);
+            }
+        }
+        emit txStateChanged(on);
     });
 }
 
@@ -510,6 +540,41 @@ void DigitalModePanel::handleSyncDetected(bool synced)
     m_syncLabel->setStyleSheet(synced
         ? "color: #20c060; font-size: 11px;"
         : "color: #d84848; font-size: 11px;");
+}
+
+void DigitalModePanel::handleTrStateChanged(DigitalModeEngine::TrState state)
+{
+    switch (state) {
+    case DigitalModeEngine::TrState::Rx:
+        m_txStatusLabel->setText("RX");
+        m_txStatusLabel->setStyleSheet("font-weight: bold; font-size: 14px; padding: 4px; color: #20c060; background: #102810; border-radius: 4px;");
+        m_sequenceProgress->setStyleSheet(
+            "QProgressBar { border: none; background: #1a2530; border-radius: 4px; }"
+            "QProgressBar::chunk { background: #00b4d8; border-radius: 4px; }");
+        break;
+    case DigitalModeEngine::TrState::PreTx:
+        m_txStatusLabel->setText("PRE-TX");
+        m_txStatusLabel->setStyleSheet("font-weight: bold; font-size: 14px; padding: 4px; color: #e8a040; background: #302010; border-radius: 4px;");
+        m_sequenceProgress->setStyleSheet(
+            "QProgressBar { border: none; background: #1a2530; border-radius: 4px; }"
+            "QProgressBar::chunk { background: #e8a040; border-radius: 4px; }");
+        break;
+    case DigitalModeEngine::TrState::Tx:
+        m_txStatusLabel->setText("TX");
+        m_txStatusLabel->setStyleSheet("font-weight: bold; font-size: 14px; padding: 4px; color: #d84848; background: #3a1010; border-radius: 4px;");
+        m_sequenceProgress->setStyleSheet(
+            "QProgressBar { border: none; background: #1a2530; border-radius: 4px; }"
+            "QProgressBar::chunk { background: #d84848; border-radius: 4px; }");
+        break;
+    default:
+        break;
+    }
+}
+
+void DigitalModePanel::handleSequenceProgress(int secondsRemaining, double progress)
+{
+    m_timerLabel->setText(QString("Next TX: %1s").arg(secondsRemaining));
+    m_sequenceProgress->setValue(static_cast<int>(progress * 1000.0));
 }
 
 QStringList DigitalModePanel::generateStandardMessages() const
