@@ -56,34 +56,22 @@ void DigitalModePanel::setupUi()
     root->setContentsMargins(0, 0, 0, 0);
     root->setSpacing(4);
 
-    // Left panel
+    // Left panel (takes more space - no center spectrum)
     auto* leftWidget = new QWidget(body);
     auto* leftLayout = new QVBoxLayout(leftWidget);
     leftLayout->setContentsMargins(4, 4, 2, 4);
-    leftLayout->setSpacing(4);
+    leftLayout->setSpacing(3);
     buildLeftPanel(leftLayout);
 
-    // Center + Right split
-    auto* rightSplit = new QSplitter(Qt::Horizontal, body);
-
-    auto* centerWidget = new QWidget(rightSplit);
-    auto* centerLayout = new QVBoxLayout(centerWidget);
-    centerLayout->setContentsMargins(2, 4, 2, 4);
-    buildCenterPanel(centerLayout);
-
-    auto* rightWidget = new QWidget(rightSplit);
+    // Right panel (decode windows + DX call)
+    auto* rightWidget = new QWidget(body);
     auto* rightLayout = new QVBoxLayout(rightWidget);
     rightLayout->setContentsMargins(2, 4, 4, 4);
     rightLayout->setSpacing(4);
     buildRightPanel(rightLayout);
 
-    rightSplit->addWidget(centerWidget);
-    rightSplit->addWidget(rightWidget);
-    rightSplit->setStretchFactor(0, 2);
-    rightSplit->setStretchFactor(1, 3);
-
-    root->addWidget(leftWidget, 1);
-    root->addWidget(rightSplit, 5);
+    root->addWidget(leftWidget, 3);
+    root->addWidget(rightWidget, 4);
 }
 
 void DigitalModePanel::buildLeftPanel(QVBoxLayout* leftLayout)
@@ -289,28 +277,24 @@ void DigitalModePanel::buildTxRxControls(QGroupBox* group)
     m_timerLabel = new QLabel("Next: --", group);
     m_timerLabel->setAlignment(Qt::AlignCenter);
     gl->addWidget(m_timerLabel);
-}
 
-void DigitalModePanel::buildCenterPanel(QVBoxLayout* centerLayout)
-{
-    auto* infoLabel = new QLabel("Spectrum (use main panadapter for wide view)", bodyWidget());
-    infoLabel->setAlignment(Qt::AlignCenter);
-    infoLabel->setStyleSheet("color: #a0b4c4; font-size: 10px; padding: 20px;");
-    centerLayout->addWidget(infoLabel);
-
-    m_snrLabel = new QLabel("SNR: --- dB", bodyWidget());
+    // SNR and Sync display
+    m_snrLabel = new QLabel("SNR: --- dB", group);
     m_snrLabel->setAlignment(Qt::AlignCenter);
-    centerLayout->addWidget(m_snrLabel);
+    m_snrLabel->setStyleSheet("font-size: 10px; color: #a0b4c4;");
+    gl->addWidget(m_snrLabel);
 
-    m_syncLabel = new QLabel("Sync: --", bodyWidget());
+    m_syncLabel = new QLabel("Sync: --", group);
     m_syncLabel->setAlignment(Qt::AlignCenter);
-    centerLayout->addWidget(m_syncLabel);
+    m_syncLabel->setStyleSheet("font-size: 10px;");
+    gl->addWidget(m_syncLabel);
 
-    m_statusLabel = new QLabel("Ready", bodyWidget());
+    m_statusLabel = new QLabel("Ready", group);
     m_statusLabel->setAlignment(Qt::AlignCenter);
-    centerLayout->addWidget(m_statusLabel);
+    m_statusLabel->setStyleSheet("font-size: 10px; color: #a0b4c4;");
+    gl->addWidget(m_statusLabel);
 
-    centerLayout->addStretch();
+    layout->addWidget(txGroup);
 }
 
 void DigitalModePanel::buildRightPanel(QVBoxLayout* rightLayout)
