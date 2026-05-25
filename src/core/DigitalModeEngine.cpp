@@ -20,6 +20,11 @@ DigitalModeEngine::DigitalModeEngine(QObject* parent)
     m_sequenceTimer->setInterval(200);
     m_sequenceTimer->setTimerType(Qt::PreciseTimer);
     connect(m_sequenceTimer, &QTimer::timeout, this, &DigitalModeEngine::advanceTrSequence);
+
+    m_ft8Decoder = new Ft8Decoder(this);
+    m_ft8Decoder->initialize();
+
+    qDebug() << "DigitalModeEngine: decoder backend =" << m_ft8Decoder->backendName();
 }
 
 void DigitalModeEngine::setMode(Mode mode)
@@ -212,31 +217,19 @@ void DigitalModeEngine::emitDecodes()
     }
     m_pendingDecodes.clear();
 
-    if (m_synced) {
-        double baseFreq = static_cast<double>(m_dialFreqHz) + static_cast<double>(m_rxOffsetHz);
+    if (m_synced && m_ft8Decoder && m_ft8Decoder->isReady()) {
+        QVector<Ft8DecodeResult> results = m_ft8Decoder->decode(
+            m_rxBuffer, m_rxSampleRate,
+            static_cast<double>(m_dialFreqHz));
 
-        const char* calls[] = {"DL1ABC", "K1XYZ", "JA1DEF", "PY2GHI", "VK3JKL",
-                                "EA4MNO", "F5PQR", "UA3STU", "ZL1VWX", "G4YZA"};
-        const char* msgs[] = {
-            "CQ DL1ABC JO40",
-            "CQ DX K1XYZ FN42",
-            "DL1ABC JA1DEF -12",
-            "JA1DEF DL1ABC R-08",
-            "DL1ABC JA1DEF RR73",
-            "CQ VK3JKL QF22",
-            "K1XYZ EA4MNO +03",
-            "EA4MNO K1XYZ R+05",
-            "CQ UA3STU KO85",
-            "F5PQR G4YZA -15"
-        };
-
-        for (int i = 0; i < 10; ++i) {
+        for (const auto& r : results) {
             DigitalDecode info;
             info.mode = (m_mode == Mode::FT8) ? "FT8" : "FT4";
-            info.freqHz = baseFreq + static_cast<double>((i - 5) * 50);
-            info.snrDb = static_cast<double>(-5 - (i * 2));
-            info.dt = 0.1 + i * 0.15;
-            info.message = msgs[i];
+            info.freqHz = r.freqHz;
+            info.snrDb = r.snrDb;
+            info.dt = r.dt;
+            info.message = r.message;
+            info.lowConfidence = r.lowConfidence;
             info.isNew = true;
             info.timestamp = QDateTime::currentMSecsSinceEpoch();
             emit decodeReady(info);

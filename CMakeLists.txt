@@ -127,6 +127,7 @@ endif()
 # Opus (with FARGAN/LPCNet) is built from a vendored local snapshot via ExternalProject
 set(RADE_DIR ${CMAKE_SOURCE_DIR}/third_party/radae)
 option(ENABLE_RADE "Build with RADE digital voice support (uses vendored Opus snapshot)" ON)
+option(ENABLE_FT8_DECODER "Build with native FT8 decoder (requires Fortran compiler and WSJT-X decoder library)" OFF)
 if(ENABLE_RADE AND EXISTS "${RADE_DIR}/src/rade_api.h")
     # macOS universal binary: build Opus for both architectures
     if(APPLE AND CMAKE_OSX_ARCHITECTURES MATCHES "x86_64.*arm64|arm64.*x86_64")
@@ -173,6 +174,15 @@ else()
     else()
         message(STATUS "RADE disabled by ENABLE_RADE=OFF.")
     endif()
+endif()
+
+# Native FT8 decoder from WSJT-X (Fortran)
+if(ENABLE_FT8_DECODER)
+    enable_language(Fortran)
+    message(STATUS "FT8 native decoder: Fortran compiler enabled")
+    target_compile_definitions(MasterSDR PRIVATE HAVE_FT8_NATIVE)
+else()
+    message(STATUS "FT8 native decoder disabled (use -DENABLE_FT8_DECODER=ON and install gfortran + WSJT-X decoder library)")
 endif()
 
 # Opus codec — required for SmartLink compressed audio, independent of RADE.
@@ -512,6 +522,7 @@ set(CORE_SOURCES
     src/core/KenwoodCatProtocol.cpp
     src/core/SerialCatPort.cpp
     src/core/DigitalModeEngine.cpp
+    src/core/Ft8Decoder.cpp
     src/core/tnc/MasterAx25LibmodemShim.cpp
     src/core/tnc/Ax25FrameFormatter.cpp
 )

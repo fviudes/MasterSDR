@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/Ft8Decoder.h"
+
 #include <QObject>
 #include <QByteArray>
 #include <QString>
@@ -114,6 +116,7 @@ private:
     QVector<DigitalDecode> m_pendingDecodes;
     QElapsedTimer m_elapsed;
     QTimer* m_sequenceTimer{nullptr};
+    Ft8Decoder* m_ft8Decoder{nullptr};
 };
 
 inline double DigitalModeEngine::trPeriodSeconds() const
