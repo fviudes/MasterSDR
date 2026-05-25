@@ -554,10 +554,14 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     icomIpLayout->setSpacing(10);
 
     auto* icomIpInfo = new QLabel(
-        "Connect to Icom radios with built-in LAN interface:<br>"
+        "Connect to Icom radios with built-in LAN/WLAN interface.<br>"
         "<b>Supported models:</b> IC-705, IC-7300MK2, IC-7610, IC-7760, IC-9700, IC-7850/51<br><br>"
-        "Default UDP ports: Control 50001, Serial 50002, Audio 50003<br>"
-        "The radio requires username and password for authentication.",
+        "Icom uses <b>UDP</b> protocol (not TCP). Default ports:<br>"
+        "<b>50001 = Control</b> (auth + keep-alive)<br>"
+        "<b>50002 = Serial</b> (CI-V commands)<br>"
+        "<b>50003 = Audio</b> (IQ/Audio streaming)<br><br>"
+        "Enter the radio's network name or IP address.<br>"
+        "Use the radio's 'Network User1' credentials for authentication.",
         m_icomIpPage);
     icomIpInfo->setWordWrap(true);
     icomIpInfo->setStyleSheet("color: #a0b4c4; font-size: 11px; padding: 4px 0;");
