@@ -221,7 +221,7 @@ void DigitalModePanel::buildDecodePanel(QWidget* container)
     clearRow->addWidget(m_clearBtn);
     decodeLayout->addLayout(clearRow);
 
-    container->layout()->addWidget(decodeGroup, 1);
+    container->layout()->addWidget(decodeGroup);
 }
 
 void DigitalModePanel::buildStatusBar(QVBoxLayout* layout)
