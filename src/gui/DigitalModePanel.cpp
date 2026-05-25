@@ -261,7 +261,7 @@ void DigitalModePanel::buildDecodePanel(QWidget* container)
     clearRow->addWidget(m_clearBtn);
     decodeLayout->addLayout(clearRow);
 
-    container->layout()->addWidget(decodeGroup, 1);
+    container->layout()->addWidget(decodeGroup);
 }
 
 void DigitalModePanel::buildStatusBar(QVBoxLayout* layout)
@@ -343,13 +343,7 @@ void DigitalModePanel::wireSignals()
             this, &DigitalModePanel::handleSequenceProgress);
 
     connect(m_engine, &DigitalModeEngine::pttRequested, this, [this](bool on) {
-        if (m_radio && m_radio->txSlice()) {
-            if (on) {
-                m_radio->transmitModel().setMox(true);
-            } else {
-                m_radio->transmitModel().setMox(false);
-            }
-        }
+        m_radio->transmitModel().setMox(on);
         emit txStateChanged(on);
     });
 }
@@ -476,12 +470,12 @@ void DigitalModePanel::onTxMessageSelected(int index)
 
 void DigitalModePanel::onRxFrequencyChanged(int dfHz)
 {
-    m_engine->setRxFrequency(static_cast<uint32_t>(dfHz));
+    m_engine->setRxOffset(static_cast<uint32_t>(dfHz));
 }
 
 void DigitalModePanel::onTxFrequencyChanged(int dfHz)
 {
-    m_engine->setTxFrequency(static_cast<uint32_t>(dfHz));
+    m_engine->setTxOffset(static_cast<uint32_t>(dfHz));
 }
 
 void DigitalModePanel::handleDecode(const DigitalDecode& decode)
@@ -519,10 +513,6 @@ void DigitalModePanel::onClearDecodes()
 {
     m_decodeLog->clear();
     m_rxMsgLog->clear();
-}
-
-    auto* sb = m_decodeLog->verticalScrollBar();
-    if (sb) sb->setValue(sb->maximum());
 }
 
 void DigitalModePanel::handleSnrUpdated(float snrDb)
