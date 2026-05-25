@@ -93,6 +93,7 @@ class Ax25HfPacketDecodeDialog;
 class MidiMappingDialog;
 class CwxPanel;
 class DvkPanel;
+class DigitalModePanel;
 #ifdef HAVE_RADE
 class RADEEngine;
 #endif
@@ -556,6 +557,8 @@ private:
     DvkPanel* m_dvkPanel{nullptr};
     QLabel* m_dvkIndicator{nullptr};
     QLabel* m_fdxIndicator{nullptr};
+    QLabel* m_digiBtn{nullptr};
+    DigitalModePanel* m_digitalModePanel{nullptr};
     QLabel* m_radioInfoLabel{nullptr};
     QLabel* m_radioVersionLabel{nullptr};
     QLabel* m_stationLabel{nullptr};
@@ -595,6 +598,7 @@ private:
     bool m_panadapterUiPreparedForShutdown{false};
     void preparePanadapterUiForShutdown();
     void toggleConnectionDialog();
+    void toggleDigitalModePanel();
     bool m_useSystemClock{true};     // true when no GPS installed
     bool m_paTempUseFahrenheit{true};
     bool m_hasPaTempTelemetry{false};

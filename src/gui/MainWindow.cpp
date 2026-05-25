@@ -191,6 +191,7 @@
 #include <sys/resource.h>
 #endif
 #include "gui/LogbookLoginDialog.h"
+#include "gui/DigitalModePanel.h"
 #include <QLocale>
 #include <QFile>
 #include <QStandardPaths>
@@ -6060,9 +6061,11 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
     if (obj == m_fdxIndicator && event->type() == QEvent::MouseButtonPress) {
         bool on = !m_radioModel.fullDuplexEnabled();
         m_radioModel.sendCommand(QString("radio set full_duplex_enabled=%1").arg(on ? 1 : 0));
-        // Optimistic update — radio accepts this command (R|0) but doesn't
-        // echo back a status update with the new value.
         m_radioModel.setFullDuplex(on);
+        return true;
+    }
+    if (obj == m_digiBtn && event->type() == QEvent::MouseButtonPress) {
+        toggleDigitalModePanel();
         return true;
     }
     if (obj == m_bandStackIndicator && event->type() == QEvent::MouseButtonPress) {
@@ -8056,9 +8059,16 @@ void MainWindow::buildUI()
     m_fdxIndicator = new QLabel("FDX");
     m_fdxIndicator->setStyleSheet(greyIndLg);
     m_fdxIndicator->setCursor(Qt::PointingHandCursor);
-    m_fdxIndicator->setToolTip("Full Duplex — RX stays active during TX (click to toggle)");
+    m_fdxIndicator->setToolTip("Full Duplex - RX stays active during TX (click to toggle)");
     m_fdxIndicator->installEventFilter(this);
     hbox->addWidget(m_fdxIndicator);
+
+    m_digiBtn = new QLabel("DIGI");
+    m_digiBtn->setStyleSheet(greyIndLg);
+    m_digiBtn->setCursor(Qt::PointingHandCursor);
+    m_digiBtn->setToolTip("Digital Modes - FT8/FT4/JT65/WSPR (click to open)");
+    m_digiBtn->installEventFilter(this);
+    hbox->addWidget(m_digiBtn);
 
     addSep();
 
@@ -10583,6 +10593,9 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
     connect(&m_radioModel, &RadioModel::infoChanged, this, [this]() {
         bool fdx = m_radioModel.fullDuplexEnabled();
         m_fdxIndicator->setStyleSheet(fdx
+            ? "QLabel { color: #00b4d8; font-weight: bold; font-size: 24px; }"
+            : "QLabel { color: #404858; font-weight: bold; font-size: 24px; }");
+        m_digiBtn->setStyleSheet(m_digitalModePanel && m_digitalModePanel->isVisible()
             ? "QLabel { color: #00b4d8; font-weight: bold; font-size: 24px; }"
             : "QLabel { color: #404858; font-weight: bold; font-size: 24px; }");
     });
@@ -15381,6 +15394,30 @@ void MainWindow::onSpectrumReadyForSHistory(quint32 streamId, const QVector<floa
         } else {
             PerfTelemetry::instance().recordSHistorySkipped();
         }
+    }
+}
+
+void MainWindow::toggleDigitalModePanel()
+{
+    if (!m_digitalModePanel) {
+        m_digitalModePanel = new DigitalModePanel(m_audio, &m_radioModel,
+                                                   m_radioModel.sliceModel(0), this);
+        m_digitalModePanel->setAttribute(Qt::WA_QuitOnClose, false);
+        connect(m_digitalModePanel, &DigitalModePanel::txStateChanged, this, [this](bool tx) {
+            m_digiBtn->setStyleSheet(tx
+                ? "QLabel { color: #d84848; font-weight: bold; font-size: 24px; }"
+                : "QLabel { color: #00b4d8; font-weight: bold; font-size: 24px; }");
+        });
+    }
+
+    if (m_digitalModePanel->isVisible()) {
+        m_digitalModePanel->hide();
+        m_digiBtn->setStyleSheet("QLabel { color: #404858; font-weight: bold; font-size: 24px; }");
+    } else {
+        m_digitalModePanel->show();
+        m_digitalModePanel->raise();
+        m_digitalModePanel->activateWindow();
+        m_digiBtn->setStyleSheet("QLabel { color: #00b4d8; font-weight: bold; font-size: 24px; }");
     }
 }
 
