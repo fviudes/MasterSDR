@@ -8,7 +8,7 @@ namespace MasterSDR {
 
 IcomIpConnection::IcomIpConnection(QObject* parent)
     : QObject(parent)
-    , m_civProto(DEFAULT_CI_V_ADDR)
+    , m_civProto(IcomCivProtocol::DEFAULT_CI_V_ADDR)
 {
 }
 
