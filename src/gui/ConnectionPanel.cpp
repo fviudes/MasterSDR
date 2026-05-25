@@ -635,11 +635,63 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     serialForm->addRow("Baud Rate:", m_serialBaudCombo);
 
     m_serialProtocolCombo = new QComboBox(serialCatPage);
-    m_serialProtocolCombo->addItem("Icom CI-V (default addr 0x70)", "IcomCiv");
+    m_serialProtocolCombo->addItem("Icom CI-V", "IcomCiv");
     m_serialProtocolCombo->addItem("Kenwood CAT", "KenwoodCat");
+    m_serialProtocolCombo->addItem("Yaesu CAT", "YaesuCat");
     m_serialProtocolCombo->setMinimumHeight(32);
     m_serialProtocolCombo->setStyleSheet(editStyle);
     serialForm->addRow("Protocol:", m_serialProtocolCombo);
+
+    // Icom model selector (visible only when Icom CI-V selected)
+    m_icomConfigWidget = new QWidget(serialCatPage);
+    auto* icomLayout = new QFormLayout(m_icomConfigWidget);
+    icomLayout->setContentsMargins(0, 0, 0, 0);
+
+    m_icomModelCombo = new QComboBox(m_icomConfigWidget);
+    m_icomModelCombo->addItem("Auto detect", 0x70);
+    m_icomModelCombo->addItem("IC-706", 0x48);
+    m_icomModelCombo->addItem("IC-706MKII", 0x4E);
+    m_icomModelCombo->addItem("IC-706MKIIG", 0x58);
+    m_icomModelCombo->addItem("IC-7000 (default 0x70)", 0x70);
+    m_icomModelCombo->addItem("IC-7100", 0x88);
+    m_icomModelCombo->addItem("IC-718", 0x5E);
+    m_icomModelCombo->addItem("IC-7200", 0x76);
+    m_icomModelCombo->addItem("IC-7300 (default 0x94)", 0x94);
+    m_icomModelCombo->addItem("IC-7410", 0x80);
+    m_icomModelCombo->addItem("IC-746", 0x56);
+    m_icomModelCombo->addItem("IC-746PRO", 0x66);
+    m_icomModelCombo->addItem("IC-756", 0x50);
+    m_icomModelCombo->addItem("IC-756PRO / PROII", 0x5C);
+    m_icomModelCombo->addItem("IC-756PROIII", 0x6E);
+    m_icomModelCombo->addItem("IC-7600", 0x7A);
+    m_icomModelCombo->addItem("IC-7610", 0x98);
+    m_icomModelCombo->addItem("IC-7700", 0x74);
+    m_icomModelCombo->addItem("IC-7800", 0x6A);
+    m_icomModelCombo->addItem("IC-7850/7851", 0x8E);
+    m_icomModelCombo->addItem("IC-9100", 0x7C);
+    m_icomModelCombo->addItem("IC-9700", 0xA2);
+    m_icomModelCombo->addItem("IC-705 (default 0xA4)", 0xA4);
+    m_icomModelCombo->addItem("IC-905", 0x8C);
+    m_icomModelCombo->addItem("IC-703", 0x68);
+    m_icomModelCombo->addItem("IC-78", 0x62);
+    m_icomModelCombo->addItem("IC-910", 0x60);
+    m_icomModelCombo->addItem("IC-820H", 0x46);
+    m_icomModelCombo->addItem("IC-PCR1000", 0x9C);
+    m_icomModelCombo->setMinimumHeight(32);
+    m_icomModelCombo->setStyleSheet(editStyle);
+    icomLayout->addRow("Icom Model:", m_icomModelCombo);
+
+    m_civAddrSpin = new QSpinBox(m_icomConfigWidget);
+    m_civAddrSpin->setRange(0x00, 0xFF);
+    m_civAddrSpin->setValue(0x70);
+    m_civAddrSpin->setPrefix("0x");
+    m_civAddrSpin->setDisplayIntegerBase(16);
+    m_civAddrSpin->setMinimumHeight(32);
+    m_civAddrSpin->setStyleSheet(editStyle);
+    icomLayout->addRow("CI-V Address:", m_civAddrSpin);
+
+    m_icomConfigWidget->setVisible(false);
+    serialForm->addRow(m_icomConfigWidget);
 
     serialCatLayout->addLayout(serialForm);
 
@@ -852,7 +904,13 @@ void ConnectionPanel::onSerialCatConnectClicked()
 
     qint32 baud = m_serialBaudCombo->currentText().toInt();
     QString protoType = m_serialProtocolCombo->currentData().toString();
-    uint8_t civAddr = IcomCivProtocol::DEFAULT_CI_V_ADDR;
+    uint8_t civAddr = static_cast<uint8_t>(m_civAddrSpin->value());
+
+    // Update CI-V address from Icom model selection
+    if (protoType == "IcomCiv" && m_icomModelCombo->currentIndex() >= 0) {
+        civAddr = static_cast<uint8_t>(m_icomModelCombo->currentData().toUInt());
+        m_civAddrSpin->setValue(civAddr);
+    }
 
     m_serialCatStatusLabel->setText(QString("Connecting to %1 @ %2 baud...").arg(portName).arg(baud));
     m_serialCatStatusLabel->setStyleSheet("color: #a0b4c4; font-size: 12px; padding: 8px;");
@@ -865,10 +923,16 @@ void ConnectionPanel::onSerialCatProtocolChanged(int index)
 {
     Q_UNUSED(index);
     QString protoType = m_serialProtocolCombo->currentData().toString();
+
     if (protoType == "IcomCiv") {
         m_serialBaudCombo->setCurrentText("19200");
+        m_icomConfigWidget->setVisible(true);
     } else if (protoType == "KenwoodCat") {
         m_serialBaudCombo->setCurrentText("38400");
+        m_icomConfigWidget->setVisible(false);
+    } else if (protoType == "YaesuCat") {
+        m_serialBaudCombo->setCurrentText("38400");
+        m_icomConfigWidget->setVisible(false);
     }
 }
 

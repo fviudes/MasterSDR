@@ -166,11 +166,14 @@ private:
     QPushButton* m_hermesManualConnectBtn{nullptr};
     QList<HermesRadioInfo> m_hermesRadios;
 
-    // Serial CAT (Icom/Kenwood)
+    // Serial CAT (Icom/Kenwood/Yaesu)
     QCommandLinkButton* m_serialCatModeBtn{nullptr};
     QComboBox* m_serialPortCombo{nullptr};
     QComboBox* m_serialBaudCombo{nullptr};
     QComboBox* m_serialProtocolCombo{nullptr};
+    QComboBox* m_icomModelCombo{nullptr};
+    QSpinBox* m_civAddrSpin{nullptr};
+    QWidget* m_icomConfigWidget{nullptr};
     QPushButton* m_serialCatConnectBtn{nullptr};
     QLabel* m_serialCatStatusLabel{nullptr};
 
