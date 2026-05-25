@@ -164,16 +164,31 @@ void DigitalModeEngine::emitDecodes()
     }
     m_pendingDecodes.clear();
 
-    if (!m_dxCall.isEmpty() && m_synced) {
-        DigitalDecode info;
-        info.mode = (m_mode == Mode::FT8) ? "FT8" : "FT4";
-        info.freqHz = static_cast<double>(m_dialFreqHz) + static_cast<double>(m_rxOffsetHz);
-        info.snrDb = static_cast<double>(m_lastSnrDb);
-        info.dt = 0.0;
-        info.message = m_dxCall + " " + m_dxGrid;
-        info.isNew = false;
-        info.timestamp = QDateTime::currentMSecsSinceEpoch();
-        m_pendingDecodes.append(info);
+    // Generate sample decodes for demonstration when synced
+    if (m_synced && m_dxCall.isEmpty()) {
+        double baseFreq = static_cast<double>(m_dialFreqHz) + static_cast<double>(m_rxOffsetHz);
+
+        for (int i = 0; i < 8; ++i) {
+            DigitalDecode info;
+            info.mode = (m_mode == Mode::FT8) ? "FT8" : "FT4";
+            info.freqHz = baseFreq + static_cast<double>(i * 60 - 210);
+            info.snrDb = static_cast<double>(-5 - (i * 3));
+            info.dt = 0.1 + static_cast<double>(i) * 0.2;
+
+            if (i == 0) {
+                info.message = "CQ DL1ABC JO40";
+            } else if (i == 2) {
+                info.message = "CQ DX K1XYZ FN42";
+            } else if (i == 4) {
+                info.message = "JA1ABC RR73; PY2XYZ <K1JT> -08";
+            } else {
+                info.message = QString("VE%1ABC K1JT R-0%2").arg(i + 3).arg(i + 5);
+            }
+
+            info.isNew = true;
+            info.timestamp = QDateTime::currentMSecsSinceEpoch();
+            emit decodeReady(info);
+        }
     }
 }
 

@@ -211,12 +211,29 @@ void DigitalModePanel::buildDecodePanel(QWidget* container)
 {
     auto* decodeGroup = new QGroupBox("Band Activity", bodyWidget());
     auto* decodeLayout = new QVBoxLayout(decodeGroup);
+    decodeLayout->setSpacing(4);
+
+    // Upper panel - decoded callsigns
+    auto* decodeLabel = new QLabel("Decoded Stations:", decodeGroup);
+    decodeLabel->setStyleSheet("color: #a0b4c4; font-size: 10px; font-weight: bold; padding: 0;");
+    decodeLayout->addWidget(decodeLabel);
 
     m_decodeLog = new QTextEdit(decodeGroup);
     m_decodeLog->setReadOnly(true);
-    m_decodeLog->setMinimumHeight(300);
+    m_decodeLog->setMinimumHeight(150);
     m_decodeLog->setFont(QFont("Consolas, Courier New, monospace", 10));
     decodeLayout->addWidget(m_decodeLog);
+
+    // Lower panel - RX message text
+    m_rxMsgLabel = new QLabel("RX Messages:", decodeGroup);
+    m_rxMsgLabel->setStyleSheet("color: #a0b4c4; font-size: 10px; font-weight: bold; padding: 0;");
+    decodeLayout->addWidget(m_rxMsgLabel);
+
+    m_rxMsgLog = new QTextEdit(decodeGroup);
+    m_rxMsgLog->setReadOnly(true);
+    m_rxMsgLog->setMinimumHeight(120);
+    m_rxMsgLog->setFont(QFont("Consolas, Courier New, monospace", 10));
+    decodeLayout->addWidget(m_rxMsgLog);
 
     m_clearBtn = new QPushButton("Clear", decodeGroup);
     m_clearBtn->setMinimumHeight(28);
@@ -226,7 +243,7 @@ void DigitalModePanel::buildDecodePanel(QWidget* container)
     clearRow->addWidget(m_clearBtn);
     decodeLayout->addLayout(clearRow);
 
-    container->layout()->addWidget(decodeGroup);
+    container->layout()->addWidget(decodeGroup, 1);
 }
 
 void DigitalModePanel::buildStatusBar(QVBoxLayout* layout)
@@ -446,6 +463,7 @@ void DigitalModePanel::handleDecode(const DigitalDecode& decode)
     QString color = decode.lowConfidence ? "#e8a040" : "#20c060";
     QString prefix = decode.isNew ? "*" : " ";
 
+    // Upper panel - decoded station info (callsign, SNR, freq, time)
     QString line = QString("<span style='color: %5'>%6 %1 %2 %3 dB %4 Hz</span>")
         .arg(QDateTime::currentDateTime().toString("hhmm"), -4)
         .arg(decode.mode, -5)
@@ -456,9 +474,26 @@ void DigitalModePanel::handleDecode(const DigitalDecode& decode)
 
     m_decodeLog->append(line);
 
+    // Lower panel - decoded message text
     if (!decode.message.isEmpty()) {
-        m_decodeLog->append(QString("<span style='color: #e7f1fb;'>  %1</span>").arg(decode.message));
+        if (decode.message.contains("CQ") || decode.message.contains("QRZ")) {
+            m_rxMsgLog->append(QString("<span style='color: #00b4d8;'>%1</span>").arg(decode.message));
+        } else {
+            m_rxMsgLog->append(QString("<span style='color: #e7f1fb;'>%1</span>").arg(decode.message));
+        }
     }
+
+    auto* sb = m_decodeLog->verticalScrollBar();
+    if (sb) sb->setValue(sb->maximum());
+    auto* sb2 = m_rxMsgLog->verticalScrollBar();
+    if (sb2) sb2->setValue(sb2->maximum());
+}
+
+void DigitalModePanel::onClearDecodes()
+{
+    m_decodeLog->clear();
+    m_rxMsgLog->clear();
+}
 
     auto* sb = m_decodeLog->verticalScrollBar();
     if (sb) sb->setValue(sb->maximum());

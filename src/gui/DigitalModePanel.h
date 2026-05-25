@@ -103,6 +103,8 @@ private:
 
     // Decode panel
     QTextEdit* m_decodeLog{nullptr};
+    QTextEdit* m_rxMsgLog{nullptr};
+    QLabel* m_rxMsgLabel{nullptr};
     QPushButton* m_clearBtn{nullptr};
 
     // Status
