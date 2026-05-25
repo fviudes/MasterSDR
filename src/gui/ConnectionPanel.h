@@ -150,6 +150,51 @@ private:
     QPushButton* m_icomIpConnectBtn{nullptr};
     QLabel* m_icomIpStatusLabel{nullptr};
 
+    QLabel*      m_statusLabel;
+    QPushButton* m_disconnectBtn{nullptr};
+    QListWidget* m_radioList{nullptr};
+    QStackedWidget* m_localStateStack{nullptr};
+    QWidget* m_localEmptyState{nullptr};
+    QPushButton* m_localConnectBtn{nullptr};
+    QList<RadioInfo> m_radios;
+    bool m_connected{false};
+
+    // SmartLink
+    QWidget*     m_loginForm{nullptr};
+    QLineEdit*   m_emailEdit{nullptr};
+    QLineEdit*   m_passwordEdit{nullptr};
+    QPushButton* m_loginBtn{nullptr};
+    QPushButton* m_logoutBtn{nullptr};
+    QLabel*      m_slUserLabel{nullptr};
+    QListWidget* m_wanList{nullptr};
+    QLabel*      m_smartLinkEmptyLabel{nullptr};
+    QPushButton* m_wanDisconnectClientsBtn{nullptr};
+    QPushButton* m_wanConnectBtn{nullptr};
+    QList<WanRadioInfo> m_wanRadios;
+
+    // Manual Flex
+    QComboBox*   m_manualIpCombo{nullptr};
+    QLineEdit*   m_manualIpEdit{nullptr};
+    QLabel*      m_manualResultLabel{nullptr};
+    QToolButton* m_manualAdvancedToggle{nullptr};
+    QWidget*     m_manualAdvancedWidget{nullptr};
+    QComboBox*   m_manualSourceCombo{nullptr};
+    QLabel*      m_manualSourceWarningLabel{nullptr};
+    QPushButton* m_manualConnectBtn{nullptr};
+    QString      m_manualProfileIp;
+    bool         m_manualConnectPending{false};
+
+    QCheckBox*   m_autoConnectCheck{nullptr};
+
+    // Hermes
+    QListWidget* m_hermesList{nullptr};
+    QPushButton* m_hermesConnectBtn{nullptr};
+    QLabel* m_hermesEmptyLabel{nullptr};
+    QLineEdit* m_hermesManualIp{nullptr};
+    QLineEdit* m_hermesManualPort{nullptr};
+    QPushButton* m_hermesManualConnectBtn{nullptr};
+    QList<HermesRadioInfo> m_hermesRadios;
+
     QWidget*     m_linkOptionsWidget{nullptr};
     QLabel*      m_lowBwHintLabel{nullptr};
     QCheckBox*   m_lowBwCheck{nullptr};
