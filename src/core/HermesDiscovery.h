@@ -43,7 +43,6 @@ private slots:
 
 private:
     void sendDiscoveryProbe();
-    void sendDiscoveryProbe(const QHostAddress& bindAddr);
 
     QUdpSocket* m_socket{nullptr};
     QTimer* m_staleTimer{nullptr};

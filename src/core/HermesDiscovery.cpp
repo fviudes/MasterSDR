@@ -71,16 +71,6 @@ void HermesDiscovery::sendDiscoveryProbe()
 
     qDebug() << "Hermes: sent discovery probes on ports 1024/1025";
 }
-    }
-}
-
-void HermesDiscovery::sendDiscoveryProbe(const QHostAddress& bindAddr)
-{
-    QByteArray pkt = HermesProtocol::buildDiscoveryPacket();
-    m_socket->writeDatagram(pkt, QHostAddress::Broadcast, HermesProtocol::DISCOVERY_PORT);
-    m_socket->writeDatagram(pkt, QHostAddress::Broadcast, HermesProtocol::DISCOVERY_PORT_ALT);
-    Q_UNUSED(bindAddr);
-}
 
 void HermesDiscovery::onReadyRead()
 {
