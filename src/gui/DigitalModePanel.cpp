@@ -293,8 +293,6 @@ void DigitalModePanel::buildTxRxControls(QGroupBox* group)
     m_statusLabel->setAlignment(Qt::AlignCenter);
     m_statusLabel->setStyleSheet("font-size: 10px; color: #a0b4c4;");
     gl->addWidget(m_statusLabel);
-
-    layout->addWidget(txGroup);
 }
 
 void DigitalModePanel::buildRightPanel(QVBoxLayout* rightLayout)
