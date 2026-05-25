@@ -554,6 +554,32 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     m_hermesEmptyLabel->setStyleSheet("color: #7a8896; padding: 40px 20px;");
     hermesLayout->addWidget(m_hermesEmptyLabel);
 
+    // Manual IP/Port connection
+    auto* hermesManualLabel = new QLabel("Manual connection (if auto-discovery fails):", hermesPage);
+    hermesManualLabel->setStyleSheet("color: #a0b4c4; font-size: 11px; padding-top: 8px;");
+    hermesLayout->addWidget(hermesManualLabel);
+
+    auto* hermesManualRow = new QHBoxLayout;
+    m_hermesManualIp = new QLineEdit(hermesPage);
+    m_hermesManualIp->setPlaceholderText("IP address (e.g. 192.168.1.100)");
+    m_hermesManualIp->setMinimumHeight(30);
+    m_hermesManualIp->setStyleSheet(editStyle);
+    hermesManualRow->addWidget(m_hermesManualIp, 3);
+
+    m_hermesManualPort = new QLineEdit("1025", hermesPage);
+    m_hermesManualPort->setPlaceholderText("Port");
+    m_hermesManualPort->setMaximumWidth(70);
+    m_hermesManualPort->setMinimumHeight(30);
+    m_hermesManualPort->setStyleSheet(editStyle);
+    hermesManualRow->addWidget(m_hermesManualPort, 1);
+
+    hermesLayout->addLayout(hermesManualRow);
+
+    m_hermesManualConnectBtn = new QPushButton("Connect by IP", hermesPage);
+    m_hermesManualConnectBtn->setMinimumHeight(32);
+    m_hermesManualConnectBtn->setStyleSheet(editStyle);
+    hermesLayout->addWidget(m_hermesManualConnectBtn);
+
     auto* hermesBtnRow = new QHBoxLayout;
     hermesBtnRow->addStretch();
     m_hermesConnectBtn = new QPushButton("Connect to Hermes Lite 2", hermesPage);
@@ -728,6 +754,8 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     });
     connect(m_hermesConnectBtn, &QPushButton::clicked,
             this, &ConnectionPanel::onHermesConnectClicked);
+    connect(m_hermesManualConnectBtn, &QPushButton::clicked,
+            this, &ConnectionPanel::onHermesManualConnectClicked);
 
     connect(m_serialCatConnectBtn, &QPushButton::clicked,
             this, &ConnectionPanel::onSerialCatConnectClicked);
@@ -823,6 +851,17 @@ void ConnectionPanel::onSerialCatProtocolChanged(int index)
     } else if (protoType == "KenwoodCat") {
         m_serialBaudCombo->setCurrentText("38400");
     }
+}
+
+void ConnectionPanel::onHermesManualConnectClicked()
+{
+    QString ip = m_hermesManualIp->text().trimmed();
+    if (ip.isEmpty()) return;
+
+    uint16_t port = static_cast<uint16_t>(m_hermesManualPort->text().trimmed().toUInt());
+    if (port == 0) port = 1025;
+
+    emit hermesManualConnectRequested(ip, port);
 }
 
 void ConnectionPanel::setConnected(bool connected)

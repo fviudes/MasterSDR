@@ -1612,6 +1612,30 @@ MainWindow::MainWindow(QWidget* parent)
         m_smartLink.login(email, pass);
     });
 
+    // Hermes Lite 2 connections
+    if (!m_hermes) {
+        m_hermes = new HermesModel(this);
+        m_connPanel->setHermesDiscovery(m_hermes->discovery());
+        m_hermes->discovery()->startDiscovery();
+    }
+    connect(m_connPanel, &ConnectionPanel::hermesConnectRequested,
+            this, [this](const HermesRadioInfo& info) {
+        m_hermes->connectToRadio(info);
+        m_connPanel->setConnected(true);
+    });
+    connect(m_connPanel, &ConnectionPanel::hermesManualConnectRequested,
+            this, [this](const QString& ip, uint16_t port) {
+        HermesRadioInfo info;
+        info.ipAddress = ip;
+        info.udpPort = port;
+        info.mac = "Manual";
+        info.gatewareVersion = "?";
+        info.boardId = HermesProtocol::BOARD_ID_HL2;
+        info.numReceivers = 1;
+        m_hermes->connectToRadio(info);
+        m_connPanel->setConnected(true);
+    });
+
     // WAN radio connect: ask SmartLink server for a handle, then TLS to radio
     connect(m_connPanel, &ConnectionPanel::wanConnectRequested,
             this, [this](const WanRadioInfo& info) {

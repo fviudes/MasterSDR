@@ -28,8 +28,19 @@ void HermesDiscovery::startDiscovery()
     m_running = true;
 
     m_socket->bind(QHostAddress::AnyIPv4, 0, QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint);
-    m_staleTimer->start();
 
+    // Also bind to each interface explicitly for reliable broadcast
+    const auto ifaces = QNetworkInterface::allInterfaces();
+    for (const auto& iface : ifaces) {
+        if (iface.flags() & QNetworkInterface::IsLoopBack) continue;
+        for (const auto& entry : iface.addressEntries()) {
+            if (entry.ip().protocol() != QAbstractSocket::IPv4Protocol) continue;
+            if (entry.ip() == QHostAddress::LocalHost) continue;
+            qDebug() << "Hermes discovery: probing on" << entry.ip().toString();
+        }
+    }
+
+    m_staleTimer->start();
     sendDiscoveryProbe();
 }
 
@@ -51,14 +62,15 @@ QList<HermesRadioInfo> HermesDiscovery::discoveredRadios() const
 
 void HermesDiscovery::sendDiscoveryProbe()
 {
-    const auto ifaces = QNetworkInterface::allInterfaces();
-    for (const auto& iface : ifaces) {
-        if (iface.flags() & QNetworkInterface::IsLoopBack) continue;
-        const auto entries = iface.addressEntries();
-        for (const auto& entry : entries) {
-            if (entry.ip().protocol() != QAbstractSocket::IPv4Protocol) continue;
-            sendDiscoveryProbe(entry.ip());
-        }
+    QByteArray pkt = HermesProtocol::buildDiscoveryPacket();
+    m_socket->writeDatagram(pkt, QHostAddress::Broadcast, HermesProtocol::DISCOVERY_PORT);
+    m_socket->writeDatagram(pkt, QHostAddress::Broadcast, HermesProtocol::DISCOVERY_PORT_ALT);
+
+    // Also send to 255.255.255.255 explicitly
+    m_socket->writeDatagram(pkt, QHostAddress(QStringLiteral("255.255.255.255")), HermesProtocol::DISCOVERY_PORT);
+
+    qDebug() << "Hermes: sent discovery probes on ports 1024/1025";
+}
     }
 }
 

@@ -59,6 +59,7 @@ signals:
     void networkDiagnosticsRequested();
     void smartLinkLoginRequested(const QString& email, const QString& password);
     void hermesConnectRequested(const HermesRadioInfo& radio);
+    void hermesManualConnectRequested(const QString& ip, uint16_t port);
     void serialCatConnectRequested(const QString& portName, qint32 baudRate,
                                    const QString& protocolType, uint8_t civAddr = 0x70);
 
@@ -74,6 +75,7 @@ private slots:
     void onManualAdvancedToggled(bool checked);
     void onHermesConnectClicked();
     void onHermesListSelectionChanged();
+    void onHermesManualConnectClicked();
     void onSerialCatConnectClicked();
     void onSerialCatProtocolChanged(int index);
 
@@ -159,6 +161,9 @@ private:
     QListWidget* m_hermesList{nullptr};
     QPushButton* m_hermesConnectBtn{nullptr};
     QLabel* m_hermesEmptyLabel{nullptr};
+    QLineEdit* m_hermesManualIp{nullptr};
+    QLineEdit* m_hermesManualPort{nullptr};
+    QPushButton* m_hermesManualConnectBtn{nullptr};
     QList<HermesRadioInfo> m_hermesRadios;
 
     // Serial CAT (Icom/Kenwood)
