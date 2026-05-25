@@ -585,31 +585,31 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     m_icomIpAddr->setStyleSheet(editStyle);
     icomIpForm->addRow("IP Address:", m_icomIpAddr);
 
-    auto* portRow = new QHBoxLayout;
+    auto* icomPortRow = new QHBoxLayout;
     m_icomCtrlPort = new QSpinBox(m_icomIpPage);
     m_icomCtrlPort->setRange(1, 65535);
     m_icomCtrlPort->setValue(50001);
     m_icomCtrlPort->setMinimumHeight(28);
     m_icomCtrlPort->setStyleSheet(editStyle);
-    portRow->addWidget(new QLabel("Ctrl:", m_icomIpPage));
-    portRow->addWidget(m_icomCtrlPort);
+    icomPortRow->addWidget(new QLabel("Ctrl:", m_icomIpPage));
+    icomPortRow->addWidget(m_icomCtrlPort);
 
     m_icomRxPort = new QSpinBox(m_icomIpPage);
     m_icomRxPort->setRange(1, 65535);
     m_icomRxPort->setValue(50002);
     m_icomRxPort->setMinimumHeight(28);
     m_icomRxPort->setStyleSheet(editStyle);
-    portRow->addWidget(new QLabel("RX:", m_icomIpPage));
-    portRow->addWidget(m_icomRxPort);
+    icomPortRow->addWidget(new QLabel("RX:", m_icomIpPage));
+    icomPortRow->addWidget(m_icomRxPort);
 
     m_icomTxPort = new QSpinBox(m_icomIpPage);
     m_icomTxPort->setRange(1, 65535);
     m_icomTxPort->setValue(50003);
     m_icomTxPort->setMinimumHeight(28);
     m_icomTxPort->setStyleSheet(editStyle);
-    portRow->addWidget(new QLabel("TX:", m_icomIpPage));
-    portRow->addWidget(m_icomTxPort);
-    icomIpForm->addRow("Ports:", portRow);
+    icomPortRow->addWidget(new QLabel("TX:", m_icomIpPage));
+    icomPortRow->addWidget(m_icomTxPort);
+    icomIpForm->addRow("Ports:", icomPortRow);
 
     m_icomUsername = new QLineEdit(m_icomIpPage);
     m_icomUsername->setPlaceholderText("Radio username (default: admin)");

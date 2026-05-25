@@ -150,6 +150,9 @@ private:
     QPushButton* m_icomIpConnectBtn{nullptr};
     QLabel* m_icomIpStatusLabel{nullptr};
 
+    SmartLinkClient* m_smartLink{nullptr};
+    HermesDiscovery* m_hermesDiscovery{nullptr};
+
     QLabel*      m_statusLabel;
     QPushButton* m_disconnectBtn{nullptr};
     QListWidget* m_radioList{nullptr};
