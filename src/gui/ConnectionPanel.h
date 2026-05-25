@@ -15,6 +15,8 @@
 #include <QCommandLinkButton>
 #include <QStackedWidget>
 #include <QToolButton>
+#include <QSpinBox>
+#include <QFormLayout>
 
 class QVBoxLayout;
 
