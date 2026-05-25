@@ -87,18 +87,27 @@ jobs:
           set -e
           DESTDIR=${{ github.workspace }}/AppDir cmake --install build
 
-          # Resize icon to 256x256 (standard XDG icon size required by linuxdeploy)
           ICON_SRC="docs/logo-circle.png"
           ICON_DST="AppDir/mastersdr.png"
+
+          # Create standard 256x256 icon for linuxdeploy
           convert "$ICON_SRC" -resize 256x256 "$ICON_DST"
-          echo "Icon resized to 256x256: $(file $ICON_DST | cut -d, -f1-2)"
+          echo "Icon: 256x256 at $ICON_DST"
 
-          # Also ensure the icon exists in the hicolor theme path
-          ICON_DIR="AppDir/usr/share/icons/hicolor/256x256/apps"
-          mkdir -p "$ICON_DIR"
-          cp "$ICON_DST" "$ICON_DIR/mastersdr.png"
+          # Copy to XDG hicolor tree
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          cp "$ICON_DST" AppDir/usr/share/icons/hicolor/256x256/apps/mastersdr.png
 
-          ls -la "$ICON_DST" "$ICON_DIR/mastersdr.png"
+          # Create .DirIcon (linuxdeploy uses this)
+          cp "$ICON_DST" AppDir/.DirIcon
+
+          # Fix desktop file: linuxdeploy needs the icon present before processing
+          # Update the Icon= to use the full path as a fallback
+          sed -i 's|^Icon=.*|Icon=mastersdr|' AppDir/usr/share/applications/MasterSDR.desktop
+
+          echo "=== Verify ==="
+          ls -la AppDir/mastersdr.png AppDir/.DirIcon 2>/dev/null || true
+          cat AppDir/usr/share/applications/MasterSDR.desktop
 
           # Bundle DeepFilterNet3 model for DFNR
           if [ -f third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz ]; then
@@ -141,6 +150,8 @@ jobs:
         run: |
           echo "=== Desktop file content ==="
           cat AppDir/usr/share/applications/MasterSDR.desktop
+          echo "=== Validate desktop file ==="
+          desktop-file-validate AppDir/usr/share/applications/MasterSDR.desktop 2>&1 || true
           echo "=== Icon files ==="
           find AppDir -name "mastersdr*" -type f 2>/dev/null || true
           echo "=== Building AppImage ==="
