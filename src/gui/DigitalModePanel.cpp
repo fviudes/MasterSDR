@@ -3,6 +3,7 @@
 #include "core/AudioEngine.h"
 #include "models/RadioModel.h"
 #include "models/SliceModel.h"
+#include "models/TransmitModel.h"
 #include "gui/FramelessResizer.h"
 
 #include <QVBoxLayout>
