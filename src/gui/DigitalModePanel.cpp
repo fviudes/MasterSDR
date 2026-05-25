@@ -474,11 +474,6 @@ void DigitalModePanel::onTxMessageSelected(int index)
     }
 }
 
-void DigitalModePanel::onClearDecodes()
-{
-    m_decodeLog->clear();
-}
-
 void DigitalModePanel::onRxFrequencyChanged(int dfHz)
 {
     m_engine->setRxFrequency(static_cast<uint32_t>(dfHz));
