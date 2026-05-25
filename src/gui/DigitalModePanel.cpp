@@ -375,9 +375,9 @@ void DigitalModePanel::onFreqPresetChanged(int index)
     m_dialFreqLabel->setText(QString("%1 Hz").arg(freqHz));
 
     if (m_attachedSlice) {
-        m_attachedSlice->setFrequency(mhz);
+        m_attachedSlice->tuneAndRecenter(mhz);
     } else if (auto* s = m_radio->slice(0)) {
-        s->setFrequency(mhz);
+        s->tuneAndRecenter(mhz);
     }
 }
 
