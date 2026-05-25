@@ -96,7 +96,7 @@ void LogbookClient::validateKey(std::function<void(bool, const QString&)> callba
     QNetworkRequest request = buildRequest("/api/rest/stats");
     QNetworkReply* reply = m_nam->get(request);
 
-    handleReply(reply, [callback](bool ok, const QJsonDocument& doc, const QString& message) {
+    handleReply(reply, [callback](bool ok, const QJsonDocument& /*doc*/, const QString& message) {
         if (ok) {
             callback(true, "Chave API valida");
         } else {
@@ -133,7 +133,7 @@ void LogbookClient::listQsos(std::function<void(bool, const QJsonArray&, const Q
     QNetworkRequest request = buildRequest("/api/rest/qso");
     QNetworkReply* reply = m_nam->get(request);
 
-    handleReply(reply, [callback](bool ok, const QJsonDocument& doc, const QString& message) {
+    handleReply(reply, [callback](bool ok, const QJsonDocument& /*doc*/, const QString& message) {
         QJsonArray arr;
         if (ok && doc.isArray()) {
             arr = doc.array();
@@ -147,7 +147,7 @@ void LogbookClient::getStats(std::function<void(bool, const QJsonObject&, const 
     QNetworkRequest request = buildRequest("/api/rest/stats");
     QNetworkReply* reply = m_nam->get(request);
 
-    handleReply(reply, [callback](bool ok, const QJsonDocument& doc, const QString& message) {
+    handleReply(reply, [callback](bool ok, const QJsonDocument& /*doc*/, const QString& message) {
         QJsonObject stats;
         if (ok && doc.isObject()) {
             stats = doc.object();
