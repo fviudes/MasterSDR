@@ -1,5 +1,6 @@
 #include "core/Ft8Decoder.h"
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QDateTime>
 #include <QLibrary>
