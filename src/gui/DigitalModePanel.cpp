@@ -342,6 +342,9 @@ void DigitalModePanel::wireSignals()
     connect(m_engine, &DigitalModeEngine::sequenceProgressUpdated,
             this, &DigitalModePanel::handleSequenceProgress);
 
+    connect(m_engine, &DigitalModeEngine::syncQualityChanged,
+            this, &DigitalModePanel::handleSyncQuality);
+
     connect(m_engine, &DigitalModeEngine::pttRequested, this, [this](bool on) {
         m_radio->transmitModel().setMox(on);
         emit txStateChanged(on);
@@ -559,8 +562,13 @@ void DigitalModePanel::handleTrStateChanged(DigitalModeEngine::TrState state)
 
 void DigitalModePanel::handleSequenceProgress(int secondsRemaining, double progress)
 {
-    m_timerLabel->setText(QString("Next TX: %1s").arg(secondsRemaining));
+    m_timerLabel->setText(QString("Next TX: %1s  Sync: %2/21").arg(secondsRemaining).arg(m_engine->nsync()));
     m_sequenceProgress->setValue(static_cast<int>(progress * 1000.0));
+}
+
+void DigitalModePanel::handleSyncQuality(int quality)
+{
+    Q_UNUSED(quality);
 }
 
 QStringList DigitalModePanel::generateStandardMessages() const

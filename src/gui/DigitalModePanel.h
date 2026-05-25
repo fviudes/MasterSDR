@@ -58,6 +58,7 @@ private slots:
     void handleSyncDetected(bool synced);
     void handleTrStateChanged(DigitalModeEngine::TrState state);
     void handleSequenceProgress(int secondsRemaining, double progress);
+    void handleSyncQuality(int quality);
 
 private:
     void setupUi();

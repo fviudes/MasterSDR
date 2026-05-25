@@ -9,7 +9,9 @@
 #include <QElapsedTimer>
 #include <QVector>
 #include <QDateTime>
+#include <complex>
 #include <cmath>
+#include <array>
 
 namespace MasterSDR {
 
@@ -40,33 +42,22 @@ public:
 
     void setMode(Mode mode);
     Mode mode() const { return m_mode; }
-
-    void setDialFrequency(uint64_t hz);
+    void setDialFrequency(uint64_t hz) { m_dialFreqHz = hz; }
     uint64_t dialFrequency() const { return m_dialFreqHz; }
-
-    void setRxOffset(uint32_t dfHz);
+    void setRxOffset(uint32_t dfHz) { m_rxOffsetHz = dfHz; }
     uint32_t rxOffset() const { return m_rxOffsetHz; }
-
-    void setTxOffset(uint32_t dfHz);
-    uint32_t txOffset() const { return m_txOffsetHz; }
-
-    void setTxMessage(const QString& msg);
+    void setTxOffset(uint32_t dfHz) { m_txOffsetHz = dfHz; }
+    void setTxMessage(const QString& msg) { m_txMessage = msg; }
     QString txMessage() const { return m_txMessage; }
-
-    void setDxCall(const QString& call);
-    QString dxCall() const { return m_dxCall; }
-
-    void setDxGrid(const QString& grid);
-    QString dxGrid() const { return m_dxGrid; }
-
+    void setDxCall(const QString& call) { m_dxCall = call; }
+    void setDxGrid(const QString& grid) { m_dxGrid = grid; }
     void enableTx(bool on);
     bool isTxEnabled() const { return m_txEnabled; }
-
     double trPeriodSeconds() const;
     TrState trState() const { return m_trState; }
-
     double sequenceProgress() const;
     int secondsToNextTx() const;
+    int nsync() const { return m_nsync; }
 
 public slots:
     void feedRxAudio(const QByteArray& float32Pcm, int sampleRate);
@@ -82,6 +73,7 @@ signals:
     void syncDetected(bool synced);
     void snrUpdated(float snrDb);
     void sequenceProgressUpdated(int secondsRemaining, double progress);
+    void syncQualityChanged(int quality);
 
 private:
     void advanceTrSequence();
@@ -89,10 +81,12 @@ private:
     void emitDecodes();
     QByteArray generateTxAudio();
     int positionInSequenceMs() const;
-    double toneSpacing() const;
-    double symbolRate() const;
-    int symbolsPerMessage() const;
-    double nominalTxStartMs() const;
+
+    // FT8 signal processing (matches WSJT-X architecture)
+    void ft8DownsampleAndSync(const float* audio, int samples, double& fEst, int& iBest);
+    void ft8Demodulate(const float* audio, int iBest, double fEst,
+                       std::array<double, 79*8>& softSymbols);
+    QVector<int> ft8GenerateTones(const QString& message, int& nSym);
 
     Mode m_mode{Mode::FT8};
     TrState m_trState{TrState::Rx};
@@ -105,11 +99,13 @@ private:
     bool m_txEnabled{false};
     bool m_running{false};
 
+    // RX buffer
     QByteArray m_rxBuffer;
     int m_rxSampleRate{12000};
     double m_lastSnrDb{-99.0};
     bool m_synced{false};
 
+    // TX audio
     QByteArray m_txAudio;
     int m_txAudioPos{0};
 
@@ -117,59 +113,30 @@ private:
     QElapsedTimer m_elapsed;
     QTimer* m_sequenceTimer{nullptr};
     Ft8Decoder* m_ft8Decoder{nullptr};
+
+    // Signal processing state (matches dec_data_t)
+    std::array<std::complex<double>, 180000> m_cd0;
+    int m_cd0Samples{0};
+    double m_fEst{0.0};
+    int m_iBest{0};
+    int m_nsync{0};
+    int m_nhardErrors{-1};
+
+    // FT8 constants (from ft8_params.f90)
+    static constexpr int FT8_NSYM = 79;
+    static constexpr int FT8_NDOWN = 4;
+    static constexpr double FT8_FS2 = 12000.0 / FT8_NDOWN;
+    static constexpr double FT8_DT2 = 1.0 / FT8_FS2;
+    static constexpr double FT8_TONE_SPACING = 6.25;
+    static constexpr int FT8_NP2 = 2812;
+    static constexpr int FT8_FFT_SIZE = 32;
+    static constexpr int FT8_NBINS = 8;
+
+    // FT8 Costas sync array (flipped from original: 3,1,4,0,6,5,2)
+    static constexpr int FT8_SYNC_ARRAY[7] = {3, 1, 4, 0, 6, 5, 2};
+
+    // FT8 Gray coding map
+    static constexpr int FT8_GRAY[8] = {0, 1, 3, 2, 6, 4, 7, 5};
 };
-
-inline double DigitalModeEngine::trPeriodSeconds() const
-{
-    switch (m_mode) {
-    case Mode::FT8:     return 15.0;
-    case Mode::FT4:     return 7.5;
-    case Mode::JT65:    return 60.0;
-    case Mode::JT9:     return 60.0;
-    case Mode::WSPR:    return 120.0;
-    case Mode::Q65:     return 30.0;
-    case Mode::FST4:    return 60.0;
-    case Mode::MSK144:  return 15.0;
-    default:            return 15.0;
-    }
-}
-
-inline double DigitalModeEngine::toneSpacing() const
-{
-    switch (m_mode) {
-    case Mode::FT8:     return 6.25;
-    case Mode::FT4:     return 23.4375;
-    case Mode::JT65:    return 2.6917;
-    case Mode::JT9:     return 1.7361;
-    default:            return 6.25;
-    }
-}
-
-inline double DigitalModeEngine::symbolRate() const
-{
-    return toneSpacing();
-}
-
-inline int DigitalModeEngine::symbolsPerMessage() const
-{
-    switch (m_mode) {
-    case Mode::FT8:  return 79;
-    case Mode::FT4:  return 105;
-    case Mode::JT65: return 126;
-    case Mode::JT9:  return 85;
-    default:         return 79;
-    }
-}
-
-inline double DigitalModeEngine::nominalTxStartMs() const
-{
-    switch (m_mode) {
-    case Mode::FT8:  return 500.0;
-    case Mode::FT4:  return 300.0;
-    case Mode::JT65: return 1000.0;
-    case Mode::JT9:  return 1000.0;
-    default:         return 500.0;
-    }
-}
 
 } // namespace MasterSDR
