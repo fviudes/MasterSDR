@@ -68,6 +68,10 @@ public:
     // CI-V addresses (defaults from wfview)
     static constexpr uint8_t BROADCAST_ADDR  = 0x00;  // All radios respond
 
+    // Legacy command aliases (for compatibility)
+    static constexpr uint8_t CMD_SPLIT       = 0x0F;
+    static constexpr uint8_t CMD_VFO_B_FREQ  = 0x25;
+
     // CI-V mode codes (subset)
     enum class CivMode : uint8_t {
         LSB = 0x00, USB = 0x01, AM = 0x02, CW = 0x03,
