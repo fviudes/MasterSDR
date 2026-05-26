@@ -6,8 +6,11 @@
 #include <QComboBox>
 #include <QFile>
 #include <QLabel>
+#include <QLineEdit>
 #include <QObject>
+#include <QProcess>
 #include <QSet>
+#include <QTextEdit>
 #include <QTimer>
 #include <QVector>
 
@@ -83,6 +86,7 @@ private:
     void refresh();
     void updateCharts();
     QWidget* buildLogsTab();
+    QWidget* buildNetworkToolsTab();
     void initializeLogTail();
     bool reopenLogFile(bool keepExistingLines);
     void appendNewLogData();
@@ -94,6 +98,13 @@ private:
     void setLogFollowLive(bool on);
     void setAllLogCategoriesVisible(bool visible);
     int selectedRangeSeconds() const;
+
+    void startPing();
+    void startTrace();
+    void startNetstat();
+    void onPingFinished(int exitCode, QProcess::ExitStatus status);
+    void onTraceFinished(int exitCode, QProcess::ExitStatus status);
+    void onNetstatFinished(int exitCode, QProcess::ExitStatus status);
 
     RadioModel* m_model;
     AudioEngine* m_audio;
@@ -153,6 +164,16 @@ private:
     QPushButton* m_logLiveToggle{nullptr};
     QVector<QCheckBox*> m_logCategoryCheckboxes;
     QVector<LogLine> m_logLines;
+
+    // Network Tools tab
+    QLineEdit* m_toolsIpEdit{nullptr};
+    QPushButton* m_pingBtn{nullptr};
+    QPushButton* m_traceBtn{nullptr};
+    QPushButton* m_netstatBtn{nullptr};
+    QTextEdit* m_toolsOutput{nullptr};
+    QLabel* m_toolsStatus{nullptr};
+    QProcess* m_netProcess{nullptr};
+
     QSet<QString> m_visibleLogCategories;
     QFile m_logFile;
     QByteArray m_logPartialLine;

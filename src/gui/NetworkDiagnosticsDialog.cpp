@@ -4,6 +4,8 @@
 #include "models/RadioModel.h"
 
 #include <algorithm>
+#include <QDateTime>
+#include <QFileInfo>
 #include <cmath>
 #include <utility>
 
@@ -912,6 +914,9 @@ NetworkDiagnosticsDialog::NetworkDiagnosticsDialog(RadioModel* model,
     QWidget* logsTab = buildLogsTab();
     tabs->addTab(logsTab, "Logs");
 
+    // Network Tools tab
+    tabs->addTab(buildNetworkToolsTab(), "Network Tools");
+
     // ── Close button ─────────────────────────────────────────────────────
     auto* closeBtn = new QPushButton("Close");
     closeBtn->setFixedWidth(80);
@@ -1702,6 +1707,174 @@ void NetworkDiagnosticsDialog::updateCharts()
     m_ratesGraph->setSeries(rateSeries, rangeSeconds);
     m_lossGraph->setSeries(lossSeries, rangeSeconds);
     m_audioGraph->setSeries(audioBufferSeries, rangeSeconds);
+}
+
+QWidget* NetworkDiagnosticsDialog::buildNetworkToolsTab()
+{
+    auto* page = new QWidget(this);
+    auto* layout = new QVBoxLayout(page);
+    layout->setContentsMargins(8, 8, 8, 8);
+    layout->setSpacing(8);
+
+    // IP Address input row
+    auto* ipRow = new QHBoxLayout;
+    ipRow->addWidget(new QLabel("Target IP/Host:", page));
+    m_toolsIpEdit = new QLineEdit(page);
+    m_toolsIpEdit->setPlaceholderText("e.g. 192.168.1.1 or google.com");
+    m_toolsIpEdit->setMinimumHeight(28);
+    ipRow->addWidget(m_toolsIpEdit, 1);
+    layout->addLayout(ipRow);
+
+    // Action buttons
+    auto* btnRow = new QHBoxLayout;
+    m_pingBtn = new QPushButton("Ping", page);
+    m_pingBtn->setMinimumHeight(32);
+    m_pingBtn->setToolTip("Send ICMP echo requests to the target");
+    btnRow->addWidget(m_pingBtn);
+
+    m_traceBtn = new QPushButton("Trace Route", page);
+    m_traceBtn->setMinimumHeight(32);
+    m_traceBtn->setToolTip("Trace the network path to the target");
+    btnRow->addWidget(m_traceBtn);
+
+    m_netstatBtn = new QPushButton("Netstat", page);
+    m_netstatBtn->setMinimumHeight(32);
+    m_netstatBtn->setToolTip("Show active network connections and listening ports");
+    btnRow->addWidget(m_netstatBtn);
+
+    btnRow->addStretch();
+    layout->addLayout(btnRow);
+
+    // Status label
+    m_toolsStatus = new QLabel("Ready. Enter an IP or hostname and click a tool.", page);
+    m_toolsStatus->setStyleSheet("color: #a0b4c4; font-size: 11px; padding: 4px 0;");
+    layout->addWidget(m_toolsStatus);
+
+    // Output text area
+    m_toolsOutput = new QTextEdit(page);
+    m_toolsOutput->setReadOnly(true);
+    m_toolsOutput->setFont(QFont("Consolas, Courier New, monospace", 10));
+    m_toolsOutput->setStyleSheet("QTextEdit { background: #0d1520; color: #e7f1fb; border: 1px solid #2a3540; border-radius: 4px; }");
+    layout->addWidget(m_toolsOutput, 1);
+
+    // Wire signals
+    connect(m_pingBtn, &QPushButton::clicked, this, &NetworkDiagnosticsDialog::startPing);
+    connect(m_traceBtn, &QPushButton::clicked, this, &NetworkDiagnosticsDialog::startTrace);
+    connect(m_netstatBtn, &QPushButton::clicked, this, &NetworkDiagnosticsDialog::startNetstat);
+
+    m_netProcess = new QProcess(this);
+    connect(m_netProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this](int exitCode, QProcess::ExitStatus status) {
+        if (m_netProcess->property("toolType").toString() == "ping")
+            onPingFinished(exitCode, status);
+        else if (m_netProcess->property("toolType").toString() == "trace")
+            onTraceFinished(exitCode, status);
+        else
+            onNetstatFinished(exitCode, status);
+    });
+
+    return page;
+}
+
+void NetworkDiagnosticsDialog::startPing()
+{
+    QString target = m_toolsIpEdit->text().trimmed();
+    if (target.isEmpty()) {
+        m_toolsStatus->setText("Enter a target IP or hostname first.");
+        return;
+    }
+
+    m_toolsOutput->clear();
+    m_toolsStatus->setText(QString("Pinging %1...").arg(target));
+    m_pingBtn->setEnabled(false);
+
+    m_netProcess->setProperty("toolType", "ping");
+    m_netProcess->setProperty("startTime", QDateTime::currentMSecsSinceEpoch());
+
+#ifdef Q_OS_WIN
+    m_netProcess->start("ping", QStringList() << "-n" << "4" << target);
+#else
+    m_netProcess->start("ping", QStringList() << "-c" << "4" << target);
+#endif
+}
+
+void NetworkDiagnosticsDialog::onPingFinished(int exitCode, QProcess::ExitStatus status)
+{
+    Q_UNUSED(exitCode);
+    Q_UNUSED(status);
+    m_pingBtn->setEnabled(true);
+
+    qint64 elapsed = QDateTime::currentMSecsSinceEpoch() - m_netProcess->property("startTime").toLongLong();
+    QString output = QString::fromUtf8(m_netProcess->readAllStandardOutput());
+    QString errOutput = QString::fromUtf8(m_netProcess->readAllStandardError());
+
+    m_toolsOutput->setPlainText(output.isEmpty() ? errOutput : output);
+    m_toolsStatus->setText(QString("Ping completed in %1 ms").arg(elapsed));
+}
+
+void NetworkDiagnosticsDialog::startTrace()
+{
+    QString target = m_toolsIpEdit->text().trimmed();
+    if (target.isEmpty()) {
+        m_toolsStatus->setText("Enter a target IP or hostname first.");
+        return;
+    }
+
+    m_toolsOutput->clear();
+    m_toolsStatus->setText(QString("Tracing route to %1...").arg(target));
+    m_traceBtn->setEnabled(false);
+
+    m_netProcess->setProperty("toolType", "trace");
+    m_netProcess->setProperty("startTime", QDateTime::currentMSecsSinceEpoch());
+
+#ifdef Q_OS_WIN
+    m_netProcess->start("tracert", QStringList() << target);
+#else
+    m_netProcess->start("traceroute", QStringList() << target);
+#endif
+}
+
+void NetworkDiagnosticsDialog::onTraceFinished(int exitCode, QProcess::ExitStatus status)
+{
+    Q_UNUSED(exitCode);
+    Q_UNUSED(status);
+    m_traceBtn->setEnabled(true);
+
+    qint64 elapsed = QDateTime::currentMSecsSinceEpoch() - m_netProcess->property("startTime").toLongLong();
+    QString output = QString::fromUtf8(m_netProcess->readAllStandardOutput());
+    QString errOutput = QString::fromUtf8(m_netProcess->readAllStandardError());
+
+    m_toolsOutput->setPlainText(output.isEmpty() ? errOutput : output);
+    m_toolsStatus->setText(QString("Trace completed in %1 ms").arg(elapsed));
+}
+
+void NetworkDiagnosticsDialog::startNetstat()
+{
+    m_toolsOutput->clear();
+    m_toolsStatus->setText("Retrieving active network connections...");
+    m_netstatBtn->setEnabled(false);
+
+    m_netProcess->setProperty("toolType", "netstat");
+    m_netProcess->setProperty("startTime", QDateTime::currentMSecsSinceEpoch());
+
+#ifdef Q_OS_WIN
+    m_netProcess->start("netstat", QStringList() << "-ano");
+#else
+    m_netProcess->start("netstat", QStringList() << "-tulpn");
+#endif
+}
+
+void NetworkDiagnosticsDialog::onNetstatFinished(int exitCode, QProcess::ExitStatus status)
+{
+    Q_UNUSED(exitCode);
+    Q_UNUSED(status);
+    m_netstatBtn->setEnabled(true);
+
+    qint64 elapsed = QDateTime::currentMSecsSinceEpoch() - m_netProcess->property("startTime").toLongLong();
+    QString output = QString::fromUtf8(m_netProcess->readAllStandardOutput());
+
+    m_toolsOutput->setPlainText(output);
+    m_toolsStatus->setText(QString("Netstat completed in %1 ms").arg(elapsed));
 }
 
 } // namespace MasterSDR
