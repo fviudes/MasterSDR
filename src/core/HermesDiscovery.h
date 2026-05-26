@@ -44,7 +44,7 @@ private slots:
 private:
     void sendDiscoveryProbe();
 
-    QUdpSocket* m_socket{nullptr};
+    QUdpSocket* m_replySocket{nullptr};
     QTimer* m_staleTimer{nullptr};
     QMap<QString, HermesRadioInfo> m_radios;
     QMap<QString, qint64> m_lastSeen;
