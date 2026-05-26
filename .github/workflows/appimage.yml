@@ -87,23 +87,13 @@ jobs:
           set -e
           DESTDIR=${{ github.workspace }}/AppDir cmake --install build
 
-          # Resize icon installed by CMake at hicolor path (matches original AetherSDR pattern)
+          # Resize the icon that CMake installed to standard 256x256
           ICON_PATH="AppDir/usr/share/icons/hicolor/256x256/apps/mastersdr.png"
-          if [ -f "$ICON_PATH" ]; then
-            convert "$ICON_PATH" -resize 256x256 "$ICON_PATH"
-            echo "Icon resized at $ICON_PATH"
-          else
-            echo "Icon not found at hicolor path, creating from source"
-            mkdir -p "$(dirname "$ICON_PATH")"
-            convert docs/logo-circle.png -resize 256x256 "$ICON_PATH"
-          fi
+          convert "$ICON_PATH" -resize 256x256 "$ICON_PATH"
+          echo "Icon ready at $ICON_PATH"
 
-          # Also copy to AppDir root for --icon-file flag
-          cp "$ICON_PATH" AppDir/mastersdr.png
-
-          echo "=== Verify ==="
-          grep "^Icon=" AppDir/usr/share/applications/MasterSDR.desktop
-          ls -la "$ICON_PATH" AppDir/mastersdr.png
+          # Verify desktop file
+          grep "^Icon=" AppDir/usr/share/applications/MasterSDR.desktop || echo "Icon=mastersdr" >> AppDir/usr/share/applications/MasterSDR.desktop
 
           # Bundle DeepFilterNet3 model for DFNR
           if [ -f third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz ]; then
@@ -153,7 +143,6 @@ jobs:
           ./linuxdeploy-${{ matrix.arch }}.AppImage \
             --appdir AppDir \
             --plugin qt \
-            --icon-file AppDir/mastersdr.png \
             --desktop-file AppDir/usr/share/applications/MasterSDR.desktop \
             --output appimage
 
