@@ -66,7 +66,6 @@ public:
     static constexpr uint8_t SUB_PTT_RX      = 0x01;
 
     // CI-V addresses (defaults from wfview)
-    static constexpr uint8_t HOST_ADDR       = 0xE0;  // Controller address
     static constexpr uint8_t BROADCAST_ADDR  = 0x00;  // All radios respond
 
     // CI-V mode codes (subset)
