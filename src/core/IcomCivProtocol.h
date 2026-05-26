@@ -25,25 +25,49 @@ public:
     static constexpr uint8_t PREAMBLE2 = 0xFE;
     static constexpr uint8_t TERMINATOR = 0xFD;
 
-    // CI-V commands
+    // CI-V commands (from wfview/IC-9700 CI-V reference)
     static constexpr uint8_t CMD_FREQ        = 0x00;
-    static constexpr uint8_t CMD_MODE        = 0x04;
-    static constexpr uint8_t CMD_VFO         = 0x07;
-    static constexpr uint8_t CMD_SPLIT       = 0x0F;
-    static constexpr uint8_t CMD_READ_SPLIT  = 0x15;
+    static constexpr uint8_t CMD_MODE        = 0x06;
+    static constexpr uint8_t CMD_ATTENUATOR  = 0x11;
+    static constexpr uint8_t CMD_MIC_GAIN    = 0x14;
+    static constexpr uint8_t CMD_S_METER     = 0x15;
+    static constexpr uint8_t CMD_PREAMP      = 0x16;
+    static constexpr uint8_t CMD_RIG_ID      = 0x19;
     static constexpr uint8_t CMD_PTT         = 0x1C;
-    static constexpr uint8_t CMD_OP_COND     = 0x1A;
-    static constexpr uint8_t CMD_S_METER     = 0x1B;
-    static constexpr uint8_t CMD_VFO_B_FREQ  = 0x25;
-    static constexpr uint8_t CMD_SCOPE       = 0x27;
+    static constexpr uint8_t CMD_SPECTRUM    = 0x27;
+    static constexpr uint8_t CMD_BROADCAST   = 0x00;  // Address 0x00 = all radios respond
 
-    // Sub commands for CMD_PTT (0x1C)
-    static constexpr uint8_t SUB_PTT_TX  = 0x00;
-    static constexpr uint8_t SUB_PTT_RX  = 0x01;
+    // Sub-commands for CMD_MODE (0x06)
+    static constexpr uint8_t SUB_MODE_SET    = 0x01;
 
-    // Sub commands for CMD_MODE (0x04 read, 0x05 write pending)
-    static constexpr uint8_t SUB_MODE_READ  = 0x00;
-    static constexpr uint8_t SUB_MODE_WRITE = 0x01;
+    // Sub-commands for CMD_S_METER (0x15)
+    static constexpr uint8_t SUB_SMETER      = 0x02;
+    static constexpr uint8_t SUB_POWER_METER = 0x11;
+
+    // Sub-commands for CMD_PREAMP (0x16)
+    static constexpr uint8_t SUB_PREAMP      = 0x02;
+
+    // Sub-commands for CMD_MIC_GAIN (0x14)
+    static constexpr uint8_t SUB_MIC_GAIN    = 0x0B;
+    static constexpr uint8_t SUB_RF_GAIN     = 0x02;
+    static constexpr uint8_t SUB_TX_POWER    = 0x0A;
+    static constexpr uint8_t SUB_SQUELCH     = 0x03;
+
+    // Sub-commands for CMD_SPECTRUM (0x27)
+    static constexpr uint8_t SUB_SCOPE_DATA  = 0x00;
+    static constexpr uint8_t SUB_SCOPE_ENABLE = 0x11;
+    static constexpr uint8_t SUB_SCOPE_MODE  = 0x15;
+    static constexpr uint8_t SUB_SCOPE_SPAN  = 0x15;
+    static constexpr uint8_t SUB_SCOPE_EDGE  = 0x16;
+    static constexpr uint8_t SUB_SCOPE_REF   = 0x19;
+
+    // Sub-commands for CMD_PTT (0x1C)
+    static constexpr uint8_t SUB_PTT_TX      = 0x00;
+    static constexpr uint8_t SUB_PTT_RX      = 0x01;
+
+    // CI-V addresses (defaults from wfview)
+    static constexpr uint8_t HOST_ADDR       = 0xE0;  // Controller address
+    static constexpr uint8_t BROADCAST_ADDR  = 0x00;  // All radios respond
 
     // CI-V mode codes (subset)
     enum class CivMode : uint8_t {
