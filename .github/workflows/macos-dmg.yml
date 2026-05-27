@@ -61,9 +61,17 @@ jobs:
       - name: Build Qt from source (Intel only, fallback)
         if: matrix.label == 'intel' && steps.qt-download.outputs.downloaded != 'true'
         run: |
+          # Increase git buffer to handle large Qt submodules
+          git config --global http.postBuffer 524288000
+          git config --global core.compression 0
           git clone --depth 1 --branch v6.8.3 https://code.qt.io/qt/qt5.git qt-src
           cd qt-src
-          perl init-repository --module-subset=qtbase,qtmultimedia,qtwebsockets,qtserialport,qtshadertools
+          # Retry init-repository up to 3 times for network resilience
+          for i in 1 2 3; do
+            perl init-repository --module-subset=qtbase,qtmultimedia,qtwebsockets,qtserialport,qtshadertools && break
+            echo "init-repository attempt $i failed, retrying..."
+            sleep 10
+          done
           cd ..
           mkdir qt-build && cd qt-build
           ../qt-src/configure -prefix $PWD/../qt-install \
