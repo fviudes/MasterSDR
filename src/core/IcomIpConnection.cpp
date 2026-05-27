@@ -1,4 +1,5 @@
-#include "core/IcomIpConnection.h"
+﻿#include "core/IcomIpConnection.h"
+#include "core/LogManager.h"
 
 #include <QDebug>
 #include <QDateTime>
@@ -48,7 +49,7 @@ void IcomIpConnection::connectToRadio(const QString& host, uint16_t ctrlPort,
     m_socket->close();
     m_socket->bind();
 
-    qDebug() << "IcomIpConnection: connecting to" << host
+    qCDebug(lcConnection) << "IcomIpConnection: connecting to" << host
              << "ctrl:" << ctrlPort << "serial:" << serialPort << "audio:" << audioPort;
 
     sendAuthPacket();
@@ -67,7 +68,7 @@ void IcomIpConnection::sendAuthPacket()
 
     sendCtrlPacket(payload);
 
-    qDebug() << "IcomIpConnection: auth sent, username:" << m_username
+    qCDebug(lcConnection) << "IcomIpConnection: auth sent, username:" << m_username
              << "attempt:" << (m_authRetries + 1);
 
     m_authRetryTimer->start();
@@ -79,11 +80,11 @@ void IcomIpConnection::retryAuth()
 
     m_authRetries++;
     if (m_authRetries < MAX_AUTH_RETRIES) {
-        qDebug() << "IcomIpConnection: auth retry" << m_authRetries;
+        qCDebug(lcConnection) << "IcomIpConnection: auth retry" << m_authRetries;
         sendAuthPacket();
     } else {
         m_errorString = "Authentication failed after " + QString::number(MAX_AUTH_RETRIES) + " attempts";
-        qDebug() << "IcomIpConnection:" << m_errorString;
+        qCDebug(lcConnection) << "IcomIpConnection:" << m_errorString;
         m_state.store(State::Error);
         emit stateChanged(State::Error);
         emit errorOccurred(m_errorString);
@@ -114,7 +115,7 @@ void IcomIpConnection::sendCtrlPacket(const QByteArray& payload)
 
     if (m_socket->state() == QAbstractSocket::BoundState) {
         qint64 sent = m_socket->writeDatagram(pkt, m_host, m_ctrlPort);
-        qDebug() << "IcomIpConnection: sent" << sent << "bytes to" << m_host.toString() << ":" << m_ctrlPort;
+        qCDebug(lcConnection) << "IcomIpConnection: sent" << sent << "bytes to" << m_host.toString() << ":" << m_ctrlPort;
     }
 }
 
@@ -149,12 +150,12 @@ void IcomIpConnection::onReadyRead()
         quint16 senderPort = 0;
         m_socket->readDatagram(data.data(), data.size(), &sender, &senderPort);
 
-        qDebug() << "IcomIpConnection: received" << data.size() << "bytes from"
+        qCDebug(lcConnection) << "IcomIpConnection: received" << data.size() << "bytes from"
                  << sender.toString() << ":" << senderPort
                  << "hex:" << data.toHex().left(40);
 
         if (sender != m_host) {
-            qDebug() << "IcomIpConnection: ignoring packet from" << sender.toString() << "(expected" << m_host.toString() << ")";
+            qCDebug(lcConnection) << "IcomIpConnection: ignoring packet from" << sender.toString() << "(expected" << m_host.toString() << ")";
             continue;
         }
 
@@ -169,17 +170,17 @@ void IcomIpConnection::onReadyRead()
 void IcomIpConnection::processCtrlData(const QByteArray& data)
 {
     if (data.size() < 4) {
-        qDebug() << "IcomIpConnection: ctrl data too short:" << data.size();
+        qCDebug(lcConnection) << "IcomIpConnection: ctrl data too short:" << data.size();
         return;
     }
 
     uint8_t b0 = static_cast<uint8_t>(data[0]);
     uint8_t b1 = static_cast<uint8_t>(data[1]);
 
-    qDebug() << "IcomIpConnection: ctrl data header:" << Qt::hex << b0 << b1;
+    qCDebug(lcConnection) << "IcomIpConnection: ctrl data header:" << Qt::hex << b0 << b1;
 
     if (b0 != 0xFE || b1 != 0xFE) {
-        qDebug() << "IcomIpConnection: invalid ctrl header, raw:" << data.toHex().left(20);
+        qCDebug(lcConnection) << "IcomIpConnection: invalid ctrl header, raw:" << data.toHex().left(20);
         return;
     }
 
@@ -187,7 +188,7 @@ void IcomIpConnection::processCtrlData(const QByteArray& data)
         reinterpret_cast<const uchar*>(data.constData()) + 2);
 
     if (static_cast<int>(pktLen + 4) > data.size()) {
-        qDebug() << "IcomIpConnection: partial packet, need" << pktLen + 4 << "have" << data.size();
+        qCDebug(lcConnection) << "IcomIpConnection: partial packet, need" << pktLen + 4 << "have" << data.size();
         return;
     }
 
@@ -195,7 +196,7 @@ void IcomIpConnection::processCtrlData(const QByteArray& data)
     if (payload.isEmpty()) return;
 
     uint8_t type = static_cast<uint8_t>(payload[0]);
-    qDebug() << "IcomIpConnection: ctrl payload type:" << Qt::hex << type;
+    qCDebug(lcConnection) << "IcomIpConnection: ctrl payload type:" << Qt::hex << type;
 
     if (!m_authenticated) {
         // Any valid response from the radio on the control port means auth succeeded
@@ -206,7 +207,7 @@ void IcomIpConnection::processCtrlData(const QByteArray& data)
         emit connected();
         m_keepAliveTimer->start();
 
-        qDebug() << "IcomIpConnection: authenticated and connected";
+        qCDebug(lcConnection) << "IcomIpConnection: authenticated and connected";
 
         // Start polling
         sendCivCommand(IcomCivProtocol::CMD_FREQ, 0);
@@ -225,33 +226,33 @@ void IcomIpConnection::processSerialData(const QByteArray& data)
 
     QByteArray civPayload = data.mid(4, len);
 
-    qDebug() << "IcomIpConnection: serial data" << civPayload.toHex().left(30);
+    qCDebug(lcConnection) << "IcomIpConnection: serial data" << civPayload.toHex().left(30);
 
     CivResponse resp = m_civProto.parseResponse(civPayload);
     if (!resp.valid) {
-        qDebug() << "IcomIpConnection: invalid CI-V response";
+        qCDebug(lcConnection) << "IcomIpConnection: invalid CI-V response";
         return;
     }
 
-    qDebug() << "IcomIpConnection: CI-V cmd:" << Qt::hex << static_cast<int>(resp.cmd);
+    qCDebug(lcConnection) << "IcomIpConnection: CI-V cmd:" << Qt::hex << static_cast<int>(resp.cmd);
 
     switch (resp.cmd) {
     case IcomCivProtocol::CMD_FREQ: {
         uint64_t freq = IcomCivProtocol::decodeBcdFreq(resp.data);
-        qDebug() << "IcomIpConnection: frequency" << freq << "Hz";
+        qCDebug(lcConnection) << "IcomIpConnection: frequency" << freq << "Hz";
         emit frequencyUpdated(freq);
         break;
     }
     case IcomCivProtocol::CMD_MODE: {
         if (!resp.data.isEmpty()) {
             auto mode = static_cast<IcomCivProtocol::CivMode>(static_cast<uint8_t>(resp.data[0]));
-            qDebug() << "IcomIpConnection: mode" << IcomCivProtocol::modeToString(mode);
+            qCDebug(lcConnection) << "IcomIpConnection: mode" << IcomCivProtocol::modeToString(mode);
             emit modeUpdated(IcomCivProtocol::modeToString(mode));
         }
         break;
     }
     default:
-        qDebug() << "IcomIpConnection: unhandled CI-V cmd:" << Qt::hex << static_cast<int>(resp.cmd);
+        qCDebug(lcConnection) << "IcomIpConnection: unhandled CI-V cmd:" << Qt::hex << static_cast<int>(resp.cmd);
         break;
     }
 }

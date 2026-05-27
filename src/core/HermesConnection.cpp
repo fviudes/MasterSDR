@@ -1,4 +1,5 @@
-#include "core/HermesConnection.h"
+﻿#include "core/HermesConnection.h"
+#include "core/LogManager.h"
 
 #include <QDebug>
 #include <QDateTime>
@@ -43,7 +44,7 @@ void HermesConnection::connectToRadio(const HermesRadioInfo& info)
     // Bind to any available port
     if (!m_socket->bind(QHostAddress::AnyIPv4, 0)) {
         m_errorString = "Failed to bind UDP socket: " + m_socket->errorString();
-        qWarning() << m_errorString;
+        qCWarning(lcConnection) << m_errorString;
         m_state.store(State::Error);
         emit stateChanged(State::Error);
         emit errorOccurred(m_errorString);
@@ -86,7 +87,7 @@ void HermesConnection::connectToRadio(const HermesRadioInfo& info)
 
     m_watchdogTimer->start();
 
-    qDebug() << "Hermes Lite 2 connected:" << info.ipAddress << "port:" << info.udpPort;
+    qCDebug(lcConnection) << "Hermes Lite 2 connected:" << info.ipAddress << "port:" << info.udpPort;
 }
 
 void HermesConnection::disconnectFromRadio()
@@ -111,7 +112,7 @@ void HermesConnection::disconnectFromRadio()
     emit stateChanged(State::Disconnected);
     emit disconnected();
 
-    qDebug() << "Hermes Lite 2 disconnected";
+    qCDebug(lcConnection) << "Hermes Lite 2 disconnected";
 }
 
 void HermesConnection::sendCommand(uint8_t addr, uint32_t data)
