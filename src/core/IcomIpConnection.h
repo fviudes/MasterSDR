@@ -43,15 +43,18 @@ public slots:
 private slots:
     void onReadyRead();
     void onKeepAlive();
+    void retryAuth();
 
 private:
     void sendCtrlPacket(const QByteArray& payload);
     void sendSerialPacket(const QByteArray& civFrame);
+    void sendAuthPacket();
     void processCtrlData(const QByteArray& data);
     void processSerialData(const QByteArray& data);
 
     QUdpSocket* m_socket{nullptr};
     QTimer* m_keepAliveTimer{nullptr};
+    QTimer* m_authRetryTimer{nullptr};
     QHostAddress m_host;
     uint16_t m_ctrlPort{50001};
     uint16_t m_serialPort{50002};

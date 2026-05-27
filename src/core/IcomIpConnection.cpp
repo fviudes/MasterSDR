@@ -17,6 +17,11 @@ IcomIpConnection::IcomIpConnection(QObject* parent)
     m_keepAliveTimer = new QTimer(this);
     m_keepAliveTimer->setInterval(KEEPALIVE_MS);
     connect(m_keepAliveTimer, &QTimer::timeout, this, &IcomIpConnection::onKeepAlive);
+
+    m_authRetryTimer = new QTimer(this);
+    m_authRetryTimer->setSingleShot(true);
+    m_authRetryTimer->setInterval(2000);
+    connect(m_authRetryTimer, &QTimer::timeout, this, &IcomIpConnection::retryAuth);
 }
 
 IcomIpConnection::~IcomIpConnection()
@@ -40,27 +45,54 @@ void IcomIpConnection::connectToRadio(const QString& host, uint16_t ctrlPort,
     m_state.store(State::Connecting);
     emit stateChanged(State::Connecting);
 
-    // Close and rebind
     m_socket->close();
     m_socket->bind();
 
     qDebug() << "IcomIpConnection: connecting to" << host
              << "ctrl:" << ctrlPort << "serial:" << serialPort << "audio:" << audioPort;
 
-    // Send auth packet to control port
-    // Format: type(1) + username + \0 + password + \0
+    sendAuthPacket();
+}
+
+void IcomIpConnection::sendAuthPacket()
+{
+    // Icom IP auth: Sends username + password to control port
+    // The radio should respond with a confirmation on the same port
     QByteArray payload;
     payload.append(static_cast<char>(PKT_TYPE_AUTH));
-    payload.append(username.toUtf8());
+    payload.append(m_username.toUtf8());
     payload.append('\x00');
-    payload.append(password.toUtf8());
+    payload.append(m_password.toUtf8());
     payload.append('\x00');
 
     sendCtrlPacket(payload);
+
+    qDebug() << "IcomIpConnection: auth sent, username:" << m_username
+             << "attempt:" << (m_authRetries + 1);
+
+    m_authRetryTimer->start();
+}
+
+void IcomIpConnection::retryAuth()
+{
+    if (m_authenticated || m_state.load() == State::Disconnected) return;
+
+    m_authRetries++;
+    if (m_authRetries < MAX_AUTH_RETRIES) {
+        qDebug() << "IcomIpConnection: auth retry" << m_authRetries;
+        sendAuthPacket();
+    } else {
+        m_errorString = "Authentication failed after " + QString::number(MAX_AUTH_RETRIES) + " attempts";
+        qDebug() << "IcomIpConnection:" << m_errorString;
+        m_state.store(State::Error);
+        emit stateChanged(State::Error);
+        emit errorOccurred(m_errorString);
+    }
 }
 
 void IcomIpConnection::disconnectFromRadio()
 {
+    m_authRetryTimer->stop();
     m_keepAliveTimer->stop();
     m_socket->close();
     m_state.store(State::Disconnected);
@@ -71,7 +103,6 @@ void IcomIpConnection::disconnectFromRadio()
 
 void IcomIpConnection::sendCtrlPacket(const QByteArray& payload)
 {
-    // Icom UDP control packet: FE FE + length(2) + payload
     QByteArray pkt;
     pkt.append('\xFE');
     pkt.append('\xFE');
@@ -82,14 +113,13 @@ void IcomIpConnection::sendCtrlPacket(const QByteArray& payload)
     pkt.append(payload);
 
     if (m_socket->state() == QAbstractSocket::BoundState) {
-        m_socket->writeDatagram(pkt, m_host, m_ctrlPort);
-        m_socket->flush();
+        qint64 sent = m_socket->writeDatagram(pkt, m_host, m_ctrlPort);
+        qDebug() << "IcomIpConnection: sent" << sent << "bytes to" << m_host.toString() << ":" << m_ctrlPort;
     }
 }
 
 void IcomIpConnection::sendSerialPacket(const QByteArray& civFrame)
 {
-    // Icom UDP serial packet = same wrapper, sent to serial port
     QByteArray pkt;
     pkt.append('\xFE');
     pkt.append('\xFE');
@@ -101,7 +131,6 @@ void IcomIpConnection::sendSerialPacket(const QByteArray& civFrame)
 
     if (m_socket->state() == QAbstractSocket::BoundState) {
         m_socket->writeDatagram(pkt, m_host, m_serialPort);
-        m_socket->flush();
     }
 }
 
@@ -120,38 +149,57 @@ void IcomIpConnection::onReadyRead()
         quint16 senderPort = 0;
         m_socket->readDatagram(data.data(), data.size(), &sender, &senderPort);
 
-        if (sender != m_host) continue;
+        qDebug() << "IcomIpConnection: received" << data.size() << "bytes from"
+                 << sender.toString() << ":" << senderPort
+                 << "hex:" << data.toHex().left(40);
 
-        // Route to control or serial processor based on port
+        if (sender != m_host) {
+            qDebug() << "IcomIpConnection: ignoring packet from" << sender.toString() << "(expected" << m_host.toString() << ")";
+            continue;
+        }
+
         if (senderPort == m_ctrlPort) {
             processCtrlData(data);
         } else if (senderPort == m_serialPort) {
             processSerialData(data);
-        } else if (senderPort == m_audioPort) {
-            // Audio data - not processed here
         }
     }
 }
 
 void IcomIpConnection::processCtrlData(const QByteArray& data)
 {
-    if (data.size() < 4) return;
-    if (static_cast<uint8_t>(data[0]) != 0xFE || static_cast<uint8_t>(data[1]) != 0xFE) return;
+    if (data.size() < 4) {
+        qDebug() << "IcomIpConnection: ctrl data too short:" << data.size();
+        return;
+    }
 
-    uint16_t len = qFromBigEndian<quint16>(
+    uint8_t b0 = static_cast<uint8_t>(data[0]);
+    uint8_t b1 = static_cast<uint8_t>(data[1]);
+
+    qDebug() << "IcomIpConnection: ctrl data header:" << Qt::hex << b0 << b1;
+
+    if (b0 != 0xFE || b1 != 0xFE) {
+        qDebug() << "IcomIpConnection: invalid ctrl header, raw:" << data.toHex().left(20);
+        return;
+    }
+
+    uint16_t pktLen = qFromBigEndian<quint16>(
         reinterpret_cast<const uchar*>(data.constData()) + 2);
-    if (static_cast<int>(len + 4) > data.size()) return;
 
-    QByteArray payload = data.mid(4, len);
+    if (static_cast<int>(pktLen + 4) > data.size()) {
+        qDebug() << "IcomIpConnection: partial packet, need" << pktLen + 4 << "have" << data.size();
+        return;
+    }
+
+    QByteArray payload = data.mid(4, pktLen);
     if (payload.isEmpty()) return;
 
     uint8_t type = static_cast<uint8_t>(payload[0]);
+    qDebug() << "IcomIpConnection: ctrl payload type:" << Qt::hex << type;
 
-    if (type == PKT_TYPE_IDLE || type == PKT_TYPE_PING) {
-        // Keep-alive - respond with same
-        sendCtrlPacket(payload);
-    } else if (!m_authenticated) {
-        // Auth response from radio - accept any valid response as success
+    if (!m_authenticated) {
+        // Any valid response from the radio on the control port means auth succeeded
+        m_authRetryTimer->stop();
         m_authenticated = true;
         m_state.store(State::Connected);
         emit stateChanged(State::Connected);
@@ -160,8 +208,9 @@ void IcomIpConnection::processCtrlData(const QByteArray& data)
 
         qDebug() << "IcomIpConnection: authenticated and connected";
 
-        // Start polling radio state via serial port
+        // Start polling
         sendCivCommand(IcomCivProtocol::CMD_FREQ, 0);
+        sendCivCommand(IcomCivProtocol::CMD_MODE, 0);
     }
 }
 
@@ -176,24 +225,33 @@ void IcomIpConnection::processSerialData(const QByteArray& data)
 
     QByteArray civPayload = data.mid(4, len);
 
-    // Parse CI-V response
+    qDebug() << "IcomIpConnection: serial data" << civPayload.toHex().left(30);
+
     CivResponse resp = m_civProto.parseResponse(civPayload);
-    if (!resp.valid) return;
+    if (!resp.valid) {
+        qDebug() << "IcomIpConnection: invalid CI-V response";
+        return;
+    }
+
+    qDebug() << "IcomIpConnection: CI-V cmd:" << Qt::hex << static_cast<int>(resp.cmd);
 
     switch (resp.cmd) {
     case IcomCivProtocol::CMD_FREQ: {
         uint64_t freq = IcomCivProtocol::decodeBcdFreq(resp.data);
+        qDebug() << "IcomIpConnection: frequency" << freq << "Hz";
         emit frequencyUpdated(freq);
         break;
     }
     case IcomCivProtocol::CMD_MODE: {
         if (!resp.data.isEmpty()) {
             auto mode = static_cast<IcomCivProtocol::CivMode>(static_cast<uint8_t>(resp.data[0]));
+            qDebug() << "IcomIpConnection: mode" << IcomCivProtocol::modeToString(mode);
             emit modeUpdated(IcomCivProtocol::modeToString(mode));
         }
         break;
     }
     default:
+        qDebug() << "IcomIpConnection: unhandled CI-V cmd:" << Qt::hex << static_cast<int>(resp.cmd);
         break;
     }
 }
@@ -202,12 +260,10 @@ void IcomIpConnection::onKeepAlive()
 {
     if (m_state.load() != State::Connected) return;
 
-    // Send idle on control port
     QByteArray idle;
     idle.append(static_cast<char>(PKT_TYPE_IDLE));
     sendCtrlPacket(idle);
 
-    // Poll frequency on serial port
     sendCivCommand(IcomCivProtocol::CMD_FREQ, 0);
 }
 
