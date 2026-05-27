@@ -52,7 +52,8 @@ void HermesConnection::connectToRadio(const HermesRadioInfo& info)
 
     // The HL2 code uses connect() on the UDP socket to set default destination
     // This filters incoming packets and allows send() without address each time
-    m_socket->connectToHost(m_radioAddress, m_radioPort, QIODevice::WriteOnly);
+    // ReadWrite is critical: WriteOnly prevents the readyRead signal
+    m_socket->connectToHost(m_radioAddress, m_radioPort, QIODevice::ReadWrite);
 
     // Start sequence: Send Stop twice (matches working hl2setup code)
     QByteArray stopPkt = HermesProtocol::buildStopPacket(0);
@@ -61,16 +62,18 @@ void HermesConnection::connectToRadio(const HermesRadioInfo& info)
     QThread::msleep(10);
     m_socket->write(stopPkt);
     m_socket->flush();
+    QThread::msleep(10);
 
-    // Send control data to start the radio
-    // After HL2 receives our packets with C0 index, it starts sending IQ data
-    // Send Start with radio enabled + watchdog disabled
+    // Send Start (radio + wideband) repeatedly like the reference C code does
     QByteArray startPkt = HermesProtocol::buildStartPacket(
         HermesProtocol::START_RADIO | HermesProtocol::START_WIDEBAND | HermesProtocol::START_DISABLE_WATCHDOG);
-    m_socket->write(startPkt);
-    m_socket->flush();
+    for (int i = 0; i < 3; ++i) {
+        m_socket->write(startPkt);
+        m_socket->flush();
+        QThread::msleep(2);
+    }
 
-    // Set number of receivers to 1
+    // Set number of receivers to 1, duplex off, MOX off (matches reference code)
     uint32_t ctrl = HermesProtocol::buildControlWord(HermesProtocol::SPEED_48K, 1, false, false);
     sendCommand(HermesProtocol::ADDR_CONTROL, ctrl);
 
