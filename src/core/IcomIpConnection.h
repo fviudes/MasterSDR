@@ -67,6 +67,7 @@ private:
     IcomCivProtocol m_civProto;
     bool m_authenticated{false};
     int m_authRetries{0};
+    QString m_errorString;
 
     static constexpr int KEEPALIVE_MS = 1000;
     static constexpr int MAX_AUTH_RETRIES = 5;
