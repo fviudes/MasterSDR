@@ -4,6 +4,7 @@
 #include "models/BandSettings.h"
 #include "models/AntennaGeniusModel.h"
 #include "models/HermesModel.h"
+#include "core/IcomIpConnection.h"
 #include "core/AppSettings.h"
 #include "core/CommandParser.h"   // MessageSeverity for onRadioMessage slot
 #include "core/RadioDiscovery.h"
@@ -578,6 +579,7 @@ private:
     QLabel* m_tgxlSeparator{nullptr};
     QLabel* m_tgxlIndicator{nullptr};
     HermesModel* m_hermes{nullptr};
+    IcomIpConnection* m_icomIpConn{nullptr};
     QLabel* m_pgxlSeparator{nullptr};
     QLabel* m_pgxlIndicator{nullptr};
     QLabel* m_txIndicator{nullptr};

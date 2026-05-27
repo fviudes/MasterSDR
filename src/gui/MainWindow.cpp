@@ -1636,6 +1636,26 @@ MainWindow::MainWindow(QWidget* parent)
         m_connPanel->setConnected(true);
     });
 
+    connect(m_connPanel, &ConnectionPanel::icomIpConnectRequested,
+            this, [this](const QString& ip, uint16_t ctrlPort,
+                         uint16_t rxPort, uint16_t txPort,
+                         const QString& username, const QString& password,
+                         const QString& model) {
+        if (!m_icomIpConn) {
+            m_icomIpConn = new IcomIpConnection(this);
+            connect(m_icomIpConn, &IcomIpConnection::connected, this, [this] {
+                m_connPanel->setConnected(true);
+            });
+            connect(m_icomIpConn, &IcomIpConnection::errorOccurred, this, [this](const QString& err) {
+                m_connPanel->setStatusText("Icom IP: " + err);
+            });
+        }
+        Q_UNUSED(rxPort);
+        Q_UNUSED(txPort);
+        Q_UNUSED(model);
+        m_icomIpConn->connectToRadio(ip, ctrlPort, rxPort, txPort, username, password);
+    });
+
     // WAN radio connect: ask SmartLink server for a handle, then TLS to radio
     connect(m_connPanel, &ConnectionPanel::wanConnectRequested,
             this, [this](const WanRadioInfo& info) {
