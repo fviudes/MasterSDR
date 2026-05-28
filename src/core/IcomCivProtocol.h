@@ -18,7 +18,7 @@ struct CivResponse {
 
 class IcomCivProtocol {
 public:
-    static constexpr uint8_t DEFAULT_CI_V_ADDR = 0x70;
+    static constexpr uint8_t DEFAULT_CI_V_ADDR = 0xA4;  // Default for IC-705/IC-7300/IC-9700
     static constexpr uint8_t HOST_ADDR = 0xE0;
 
     static constexpr uint8_t PREAMBLE1 = 0xFE;
@@ -109,6 +109,7 @@ public:
     static QString modeToString(CivMode mode);
     static CivMode modeFromString(const QString& mode);
     static QString rigIdToModel(uint8_t rigId);
+    static uint8_t modelToCivAddress(const QString& model);
     static QString smeterValueToText(uint8_t value);
     static float smeterToDbm(uint8_t value);
 

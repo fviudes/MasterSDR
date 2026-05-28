@@ -84,16 +84,22 @@ CivResponse IcomCivProtocol::parseResponse(const QByteArray& data) const
     resp.toAddr   = static_cast<uint8_t>(data[2]);
     resp.fromAddr = static_cast<uint8_t>(data[3]);
     resp.cmd      = static_cast<uint8_t>(data[4]);
-    resp.subCmd   = (data.size() > 6) ? static_cast<uint8_t>(data[5]) : 0;
 
-    int dataStart = 5;
-    if (resp.cmd == CMD_MODE || resp.cmd == CMD_PTT) {
-        dataStart = 6;
-    }
+    // Determine if there's a sub-command
+    int termPos = data.indexOf(static_cast<char>(TERMINATOR), 5);
+    if (termPos == -1) return resp;
 
-    int termPos = data.indexOf(static_cast<char>(TERMINATOR), dataStart);
-    if (termPos > dataStart) {
-        resp.data = data.mid(dataStart, termPos - dataStart);
+    // If there's data between position 5 and terminator, position 5 is subCmd
+    if (termPos > 6) {
+        resp.subCmd = static_cast<uint8_t>(data[5]);
+        resp.data = data.mid(6, termPos - 6);
+    } else if (termPos > 5) {
+        // Either a single byte of data at position 5, or subCmd=0 with no data
+        resp.subCmd = static_cast<uint8_t>(data[5]);
+        // data is empty
+    } else {
+        // termPos == 5: no subCmd, no data
+        resp.subCmd = 0;
     }
 
     resp.valid = true;
@@ -160,6 +166,22 @@ IcomCivProtocol::CivMode IcomCivProtocol::modeFromString(const QString& mode)
     if (mode == "DIGL") return CivMode::RTTY;
     if (mode == "DIGU") return CivMode::DIG;
     return CivMode::USB;
+}
+
+uint8_t IcomCivProtocol::modelToCivAddress(const QString& model)
+{
+    if (model.contains("705"))   return 0xA4;
+    if (model.contains("7300"))  return 0x94;
+    if (model.contains("9700"))  return 0xA2;
+    if (model.contains("7610"))  return 0x98;
+    if (model.contains("7100"))  return 0x88;
+    if (model.contains("785"))   return 0x8E;
+    if (model.contains("756Pro")) return 0x64;
+    if (model.contains("746"))   return 0x66;
+    if (model.contains("9100"))  return 0x7C;
+    if (model.contains("7200"))  return 0x76;
+    if (model.contains("706"))   return 0x58;
+    return DEFAULT_CI_V_ADDR;  // 0xA4 default
 }
 
 QString IcomCivProtocol::rigIdToModel(uint8_t rigId)

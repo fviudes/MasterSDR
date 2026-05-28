@@ -1796,6 +1796,11 @@ MainWindow::MainWindow(QWidget* parent)
             });
         }
         m_connPanel->setProperty("icomModel", model);
+        // Set CI-V address based on model selection
+        if (!model.isEmpty() && model != "Auto") {
+            uint8_t civAddr = IcomCivProtocol::modelToCivAddress(model);
+            m_icomIpConn->setCivAddress(civAddr);
+        }
         m_icomIpConn->connectToRadio(ip, ctrlPort, rxPort, txPort, username, password);
     });
 

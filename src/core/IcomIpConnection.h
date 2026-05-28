@@ -34,6 +34,8 @@ public:
     bool isPtt() const override { return m_ptt; }
     int sMeterLevel() const override { return m_sMeter; }
 
+    void setCivAddress(uint8_t addr) { m_civProto.setCivAddress(addr); m_civAddr = addr; }
+
 signals:
     void squelchStatusUpdated(bool open);
 
