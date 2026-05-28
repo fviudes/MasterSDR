@@ -9,7 +9,7 @@
 namespace MasterSDR {
 
 HermesConnection::HermesConnection(QObject* parent)
-    : QObject(parent)
+    : ISourceBackend(parent)
 {
 }
 
@@ -126,16 +126,18 @@ void HermesConnection::sendCommand(uint8_t addr, const QByteArray& data)
     m_socket->flush();
 }
 
-void HermesConnection::setFrequency(uint32_t freqHz)
+void HermesConnection::setFrequency(uint64_t freqHz)
 {
-    m_txFreq = freqHz;
-    sendCommand(HermesProtocol::ADDR_TX_NCO, freqHz);
+    m_txFreq = static_cast<uint32_t>(freqHz);
+    sendCommand(HermesProtocol::ADDR_TX_NCO, static_cast<uint32_t>(freqHz));
+    emit frequencyUpdated(freqHz);
 }
 
 void HermesConnection::setRX1Frequency(uint32_t freqHz)
 {
     m_rxFreq = freqHz;
     sendCommand(HermesProtocol::ADDR_RX1_NCO, freqHz);
+    emit frequencyUpdated(freqHz);
 }
 
 void HermesConnection::startRadio()
@@ -159,6 +161,7 @@ void HermesConnection::stopRadio()
 
 void HermesConnection::setPtt(bool active)
 {
+    m_ptt = active;
     uint32_t ctrl = HermesProtocol::buildControlWord(HermesProtocol::SPEED_48K, 1, false, active);
     sendCommand(HermesProtocol::ADDR_CONTROL, ctrl);
     emit pttStateChanged(active);

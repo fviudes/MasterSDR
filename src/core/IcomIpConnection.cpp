@@ -9,7 +9,7 @@
 namespace MasterSDR {
 
 IcomIpConnection::IcomIpConnection(QObject* parent)
-    : QObject(parent)
+    : ISourceBackend(parent)
     , m_civProto(IcomCivProtocol::DEFAULT_CI_V_ADDR)
 {
     m_socket = new QUdpSocket(this);
@@ -183,13 +183,25 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
         switch (resp.cmd) {
         case IcomCivProtocol::CMD_FREQ: {
             uint64_t freq = IcomCivProtocol::decodeBcdFreq(resp.data);
+            m_rxFreq = freq;
             qCDebug(lcConnection) << "IcomIpConnection: freq" << freq << "Hz";
             emit frequencyUpdated(freq);
+            break;
+        }
+        case IcomCivProtocol::CMD_MODE: {
+            if (!resp.data.isEmpty()) {
+                auto modeStr = IcomCivProtocol::modeToString(static_cast<uint8_t>(resp.data[0]));
+                if (!modeStr.isEmpty()) {
+                    m_rxMode = modeStr;
+                    emit modeUpdated(modeStr);
+                }
+            }
             break;
         }
         case IcomCivProtocol::CMD_S_METER: {
             if (!resp.data.isEmpty()) {
                 int level = static_cast<int>(static_cast<uint8_t>(resp.data[0]));
+                m_sMeter = level;
                 emit sMeterUpdated(level);
             }
             break;
@@ -226,24 +238,30 @@ void IcomIpConnection::sendCivCommand(uint8_t cmd, uint8_t subCmd, const QByteAr
 
 void IcomIpConnection::setFrequency(uint64_t freqHz)
 {
+    m_rxFreq = freqHz;
     sendCivCommand(IcomCivProtocol::CMD_FREQ, 0,
-                   IcomCivProtocol::encodeBcdFreq(freqHz));
+                    IcomCivProtocol::encodeBcdFreq(freqHz));
+    emit radioInfoUpdated();
 }
 
 void IcomIpConnection::setMode(const QString& mode)
 {
+    m_rxMode = mode;
     auto civMode = IcomCivProtocol::modeFromString(mode);
     QByteArray data;
     data.append(static_cast<char>(civMode));
     data.append('\x00');
     sendCivCommand(IcomCivProtocol::CMD_MODE, 0, data);
+    emit radioInfoUpdated();
 }
 
 void IcomIpConnection::setPtt(bool tx)
 {
+    m_ptt = tx;
     QByteArray data;
     data.append(tx ? '\x01' : '\x00');
     sendCivCommand(IcomCivProtocol::CMD_PTT, 0, data);
+    emit radioInfoUpdated();
 }
 
 } // namespace MasterSDR

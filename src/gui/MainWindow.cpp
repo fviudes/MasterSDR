@@ -1620,13 +1620,13 @@ MainWindow::MainWindow(QWidget* parent)
     }
     connect(m_connPanel, &ConnectionPanel::hermesConnectRequested,
             this, [this](const HermesRadioInfo& info) {
-        if (m_hermes->connection()->state() == HermesConnection::State::Connected) return;
+        if (m_hermes->connection()->state() == MasterSDR::ISourceBackend::State::Connected) return;
         m_hermes->connectToRadio(info);
         m_connPanel->setConnected(true);
     });
     connect(m_connPanel, &ConnectionPanel::hermesManualConnectRequested,
             this, [this](const QString& ip, uint16_t port) {
-        if (m_hermes->connection()->state() == HermesConnection::State::Connected) return;
+        if (m_hermes->connection()->state() == MasterSDR::ISourceBackend::State::Connected) return;
         HermesRadioInfo info;
         info.ipAddress = ip;
         info.udpPort = port;
@@ -1645,18 +1645,18 @@ MainWindow::MainWindow(QWidget* parent)
                          const QString& model) {
         if (!m_icomIpConn) {
             m_icomIpConn = new IcomIpConnection(this);
-            connect(m_icomIpConn, &IcomIpConnection::stateChanged, this, [this](IcomIpConnection::State state) {
+            connect(m_icomIpConn, &IcomIpConnection::stateChanged, this, [this](ISourceBackend::State state) {
                 switch (state) {
-                case IcomIpConnection::State::Connecting:
+                case ISourceBackend::State::Connecting:
                     m_connPanel->setStatusText("Connecting to ICOM...");
                     m_connStatusLabel->setText("Connecting ICOM...");
                     break;
-                case IcomIpConnection::State::Connected:
+                case ISourceBackend::State::Connected:
                     m_connPanel->setConnected(true);
                     m_connPanel->setStatusText("ICOM connected via IP");
                     m_connStatusLabel->setText("Connected");
                     break;
-                case IcomIpConnection::State::Error:
+                case ISourceBackend::State::Error:
                     m_connPanel->setStatusText("ICOM IP: connection failed");
                     m_connStatusLabel->setText("Error");
                     break;

@@ -82,7 +82,7 @@ void HermesModel::setFrequency(uint32_t freqHz)
 void HermesModel::setMox(bool active)
 {
     if (m_connected) {
-        m_connection->setMox(active);
+        m_connection->setPtt(active);
     }
 }
 

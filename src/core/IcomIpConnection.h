@@ -1,8 +1,8 @@
 #pragma once
 
 #include "core/IcomCivProtocol.h"
+#include "core/ISourceBackend.h"
 
-#include <QObject>
 #include <QUdpSocket>
 #include <QTimer>
 #include <QHostAddress>
@@ -10,37 +10,29 @@
 
 namespace MasterSDR {
 
-class IcomIpConnection : public QObject {
+class IcomIpConnection : public ISourceBackend {
     Q_OBJECT
 
 public:
-    enum class State { Disconnected, Connecting, Connected, Error };
-    Q_ENUM(State)
-
     explicit IcomIpConnection(QObject* parent = nullptr);
     ~IcomIpConnection() override;
 
     void connectToRadio(const QString& host, uint16_t ctrlPort,
                         uint16_t serialPort, uint16_t audioPort,
                         const QString& username, const QString& password);
-    void disconnectFromRadio();
 
-    State state() const { return m_state.load(); }
-
-signals:
-    void stateChanged(State newState);
-    void connected();
-    void disconnected();
-    void errorOccurred(const QString& message);
-    void frequencyUpdated(uint64_t freqHz);
-    void modeUpdated(const QString& mode);
-    void sMeterUpdated(int level);
-    void pttStateChanged(bool tx);
-
-public slots:
-    void setFrequency(uint64_t freqHz);
-    void setMode(const QString& mode);
-    void setPtt(bool tx);
+    // ISourceBackend interface
+    void connectToRadio() override { /* use parameterized version */ }
+    void disconnectFromRadio() override;
+    State state() const override { return m_state.load(); }
+    Type type() const override { return Type::IcomIp; }
+    void setFrequency(uint64_t freqHz) override;
+    uint64_t frequency() const override { return m_rxFreq; }
+    void setMode(const QString& mode) override;
+    QString mode() const override { return m_rxMode; }
+    void setPtt(bool tx) override;
+    bool isPtt() const override { return m_ptt; }
+    int sMeterLevel() const override { return m_sMeter; }
 
 private slots:
     void onReadyRead();
@@ -74,6 +66,11 @@ private:
 
     uint8_t m_civAddr{IcomCivProtocol::DEFAULT_CI_V_ADDR};
     IcomCivProtocol m_civProto;
+
+    uint64_t m_rxFreq{14074000};
+    QString m_rxMode{QLatin1String("USB")};
+    bool m_ptt{false};
+    int m_sMeter{0};
 
     static constexpr uint16_t TYPE_DATA    = 0x00;
     static constexpr uint16_t TYPE_NACK    = 0x01;
