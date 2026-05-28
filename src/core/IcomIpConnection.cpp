@@ -99,10 +99,8 @@ void IcomIpConnection::connectToRadio(const QString& host, uint16_t ctrlPort,
     m_audioSocket->bind();
 
     m_sourcePort = static_cast<uint16_t>(m_socket->localPort());
-    // source_id from IP (like wfview/node-red-icom)
-    quint32 ip = QHostAddress(QHostAddress::LocalHost).toIPv4Address();
-    // Actually use the real IP - but node-red uses 0 initially
-    m_sourceId = static_cast<uint16_t>((ip >> 8) & 0xFFFF);
+    // source_id: use a fixed client ID like wfview/node-red-icom
+    m_sourceId = 0x7F00;  // Client ID in node-red-icom format
 
     qCDebug(lcConnection) << "IcomIpConnection: connecting to" << host
              << "ctrl:" << ctrlPort
