@@ -47,7 +47,7 @@ QByteArray IcomCivProtocol::buildSetMode(CivMode mode) const
     QByteArray data;
     data.append(static_cast<char>(mode));
     data.append(static_cast<char>(0x00));
-    return buildCommand(CMD_MODE, 0, data);
+    return buildCommand(CMD_MODE, SUB_MODE_SET, data);
 }
 
 QByteArray IcomCivProtocol::buildSetPtt(bool tx) const
@@ -86,20 +86,21 @@ CivResponse IcomCivProtocol::parseResponse(const QByteArray& data) const
     resp.fromAddr = static_cast<uint8_t>(data[3]);
     resp.cmd      = static_cast<uint8_t>(data[4]);
 
-    // Determine if there's a sub-command
+    // Commands that have NO sub-command in response: CMD_READ_VFO, CMD_FREQ
+    bool noSubCmd = (resp.cmd == CMD_READ_VFO || resp.cmd == CMD_FREQ);
+
     int termPos = data.indexOf(static_cast<char>(TERMINATOR), 5);
     if (termPos == -1) return resp;
 
-    // If there's data between position 5 and terminator, position 5 is subCmd
-    if (termPos > 6) {
+    if (noSubCmd) {
+        resp.subCmd = 0;
+        resp.data = data.mid(5, termPos - 5);
+    } else if (termPos > 6) {
         resp.subCmd = static_cast<uint8_t>(data[5]);
         resp.data = data.mid(6, termPos - 6);
     } else if (termPos > 5) {
-        // Either a single byte of data at position 5, or subCmd=0 with no data
         resp.subCmd = static_cast<uint8_t>(data[5]);
-        // data is empty
     } else {
-        // termPos == 5: no subCmd, no data
         resp.subCmd = 0;
     }
 
