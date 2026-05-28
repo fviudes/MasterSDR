@@ -1620,11 +1620,13 @@ MainWindow::MainWindow(QWidget* parent)
     }
     connect(m_connPanel, &ConnectionPanel::hermesConnectRequested,
             this, [this](const HermesRadioInfo& info) {
+        if (m_hermes->connection()->state() == HermesConnection::State::Connected) return;
         m_hermes->connectToRadio(info);
         m_connPanel->setConnected(true);
     });
     connect(m_connPanel, &ConnectionPanel::hermesManualConnectRequested,
             this, [this](const QString& ip, uint16_t port) {
+        if (m_hermes->connection()->state() == HermesConnection::State::Connected) return;
         HermesRadioInfo info;
         info.ipAddress = ip;
         info.udpPort = port;
