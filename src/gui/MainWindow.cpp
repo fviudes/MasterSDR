@@ -1713,7 +1713,7 @@ MainWindow::MainWindow(QWidget* parent)
             this, [this](const QString& ip, uint16_t ctrlPort,
                          uint16_t rxPort, uint16_t txPort,
                          const QString& username, const QString& password,
-                         const QString& model) {
+                         const QString& model, uint8_t civAddr) {
         if (!m_icomIpConn) {
             m_icomIpConn = new IcomIpConnection(this);
             connect(m_icomIpConn, &IcomIpConnection::stateChanged, this, [this](ISourceBackend::State state) {
@@ -1864,10 +1864,11 @@ MainWindow::MainWindow(QWidget* parent)
             });
         }
         m_connPanel->setProperty("icomModel", model);
-        // Set CI-V address based on model selection
-        if (!model.isEmpty() && model != "Auto") {
-            uint8_t civAddr = IcomCivProtocol::modelToCivAddress(model);
+        // Set CI-V address — use the combo selection or derive from model
+        if (civAddr != 0) {
             m_icomIpConn->setCivAddress(civAddr);
+        } else if (!model.isEmpty() && model != "Auto") {
+            m_icomIpConn->setCivAddress(IcomCivProtocol::modelToCivAddress(model));
         }
         m_icomIpConn->connectToRadio(ip, ctrlPort, rxPort, txPort, username, password);
     });

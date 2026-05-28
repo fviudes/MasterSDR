@@ -583,6 +583,37 @@ ConnectionPanel::ConnectionPanel(QWidget* parent)
     m_icomIpModelCombo->setStyleSheet(editStyle);
     icomIpForm->addRow("Model:", m_icomIpModelCombo);
 
+    // CI-V Address combo — auto-set by model, but user can override
+    m_icomCivAddrCombo = new QComboBox(m_icomIpPage);
+    m_icomCivAddrCombo->addItem("0xA4 (IC-705/9700/7300 default)",  0xA4);
+    m_icomCivAddrCombo->addItem("0x94 (IC-7300)",                    0x94);
+    m_icomCivAddrCombo->addItem("0x98 (IC-7610)",                    0x98);
+    m_icomCivAddrCombo->addItem("0xA2 (IC-9700)",                    0xA2);
+    m_icomCivAddrCombo->addItem("0x88 (IC-7100)",                    0x88);
+    m_icomCivAddrCombo->addItem("0x8E (IC-7850/7851)",              0x8E);
+    m_icomCivAddrCombo->addItem("0x64 (IC-756Pro)",                  0x64);
+    m_icomCivAddrCombo->addItem("0x76 (IC-7200)",                    0x76);
+    m_icomCivAddrCombo->addItem("0x7C (IC-9100)",                    0x7C);
+    m_icomCivAddrCombo->addItem("0x58 (IC-706)",                     0x58);
+    m_icomCivAddrCombo->addItem("0x70 (IC-7400)",                    0x70);
+    m_icomCivAddrCombo->addItem("0x5A (IC-7000)",                    0x5A);
+    m_icomCivAddrCombo->addItem("0x66 (IC-746)",                     0x66);
+    m_icomCivAddrCombo->setMinimumHeight(32);
+    m_icomCivAddrCombo->setStyleSheet(editStyle);
+    // Auto-select based on model
+    connect(m_icomIpModelCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this](int) {
+        QString model = m_icomIpModelCombo->currentText();
+        uint8_t addr = MasterSDR::IcomCivProtocol::modelToCivAddress(model);
+        for (int i = 0; i < m_icomCivAddrCombo->count(); ++i) {
+            if (m_icomCivAddrCombo->itemData(i).toUInt() == addr) {
+                m_icomCivAddrCombo->setCurrentIndex(i);
+                return;
+            }
+        }
+    });
+    icomIpForm->addRow("CI-V Addr:", m_icomCivAddrCombo);
+
     m_icomIpAddr = new QLineEdit(m_icomIpPage);
     m_icomIpAddr->setPlaceholderText("192.168.1.100");
     m_icomIpAddr->setMinimumHeight(30);
@@ -1111,12 +1142,13 @@ void ConnectionPanel::onIcomIpConnectClicked()
     QString username  = m_icomUsername->text().trimmed();
     QString password  = m_icomPassword->text().trimmed();
     QString model     = m_icomIpModelCombo->currentText();
+    uint8_t  civAddr  = static_cast<uint8_t>(m_icomCivAddrCombo->currentData().toUInt());
 
     m_icomIpStatusLabel->setText(QString("Connecting to %1:%2...").arg(ip).arg(ctrlPort));
     m_icomIpStatusLabel->setStyleSheet("color: #a0b4c4; font-size: 12px; padding: 8px;");
     m_icomIpStatusLabel->setVisible(true);
 
-    emit icomIpConnectRequested(ip, ctrlPort, rxPort, txPort, username, password, model);
+    emit icomIpConnectRequested(ip, ctrlPort, rxPort, txPort, username, password, model, civAddr);
 }
 
 void ConnectionPanel::setConnected(bool connected)

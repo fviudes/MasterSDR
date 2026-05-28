@@ -86,8 +86,8 @@ CivResponse IcomCivProtocol::parseResponse(const QByteArray& data) const
     resp.fromAddr = static_cast<uint8_t>(data[3]);
     resp.cmd      = static_cast<uint8_t>(data[4]);
 
-    // Commands that have NO sub-command in response: CMD_READ_VFO, CMD_FREQ
-    bool noSubCmd = (resp.cmd == CMD_READ_VFO || resp.cmd == CMD_FREQ);
+    // CMD_READ_VFO (0x03) has NO sub-command in response — BCD data starts at pos 5
+    bool noSubCmd = (resp.cmd == CMD_READ_VFO);
 
     int termPos = data.indexOf(static_cast<char>(TERMINATOR), 5);
     if (termPos == -1) return resp;

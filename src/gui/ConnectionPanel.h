@@ -65,7 +65,7 @@ signals:
     void icomIpConnectRequested(const QString& ip, uint16_t ctrlPort,
                                 uint16_t rxPort, uint16_t txPort,
                                 const QString& username, const QString& password,
-                                const QString& model);
+                                const QString& model, uint8_t civAddr);
     void serialCatConnectRequested(const QString& portName, qint32 baudRate,
                                    const QString& protocolType, uint8_t civAddr = 0x70);
 
@@ -147,6 +147,7 @@ private:
     QLineEdit* m_icomUsername{nullptr};
     QLineEdit* m_icomPassword{nullptr};
     QComboBox* m_icomIpModelCombo{nullptr};
+    QComboBox* m_icomCivAddrCombo{nullptr};
     QPushButton* m_icomIpConnectBtn{nullptr};
     QLabel* m_icomIpStatusLabel{nullptr};
 
