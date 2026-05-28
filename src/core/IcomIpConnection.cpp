@@ -264,6 +264,7 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
             break;
         }
     }
+    }
 }
 
 void IcomIpConnection::onKeepAlive()
