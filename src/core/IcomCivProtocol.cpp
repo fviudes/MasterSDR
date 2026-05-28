@@ -17,7 +17,8 @@ QByteArray IcomCivProtocol::buildCommand(uint8_t cmd, uint8_t subCmd, const QByt
     pkt.append(static_cast<char>(m_civAddr));
     pkt.append(static_cast<char>(HOST_ADDR));
     pkt.append(static_cast<char>(cmd));
-    if (subCmd != 0 || !data.isEmpty()) {
+    // Include sub-command if non-zero, data exists, or command always needs it
+    if (subCmd != 0 || !data.isEmpty() || cmd == CMD_RIG_ID) {
         pkt.append(static_cast<char>(subCmd));
     }
     pkt.append(data);
