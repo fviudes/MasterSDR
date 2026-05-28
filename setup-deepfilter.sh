@@ -81,8 +81,8 @@ if ! command -v cargo &>/dev/null; then
 fi
 
 if ! command -v cargo-cbuild &>/dev/null; then
-    echo "Installing cargo-c..."
-    cargo install cargo-c
+    echo "Installing cargo-c (with --locked for reproducible build)..."
+    cargo install cargo-c --locked --version "0.10.5"
 fi
 
 # ── Clone and build ──────────────────────────────────────────────────────
