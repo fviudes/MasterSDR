@@ -71,7 +71,7 @@ QByteArray IcomCivProtocol::buildSetSplit(bool on) const
 
 QByteArray IcomCivProtocol::buildReadSMeter() const
 {
-    return buildCommand(CMD_S_METER, 0);
+    return buildCommand(CMD_S_METER, SUB_SMETER);
 }
 
 CivResponse IcomCivProtocol::parseResponse(const QByteArray& data) const

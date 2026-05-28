@@ -47,6 +47,9 @@ private slots:
 private:
     QByteArray buildPacket(uint16_t typeCode, uint16_t seq,
                             const QByteArray& payload = QByteArray());
+    QByteArray buildPacketFor(uint16_t typeCode, uint16_t seq,
+                               uint16_t dstPort, uint16_t dstId,
+                               const QByteArray& payload = QByteArray());
     void sendCtrlPacket(uint16_t typeCode, uint16_t seq, const QByteArray& payload = QByteArray());
     void sendSerialPacket(uint16_t seq, const QByteArray& civFrame);
     void sendCivCommand(uint8_t cmd, uint8_t subCmd, const QByteArray& data = QByteArray());

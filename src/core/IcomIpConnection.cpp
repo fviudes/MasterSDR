@@ -43,11 +43,28 @@ QByteArray IcomIpConnection::buildPacket(uint16_t typeCode, uint16_t seq,
     pkt.append(reinterpret_cast<const char*>(&m_sourcePort), 2);
     // source_id (uint16 LE)
     pkt.append(reinterpret_cast<const char*>(&m_sourceId), 2);
-    // destination_port (uint16 LE)
+    // destination_port (uint16 LE) — uses m_destPort set from SYN-ACK
     pkt.append(reinterpret_cast<const char*>(&m_destPort), 2);
-    // destination_id (uint16 LE)
+    // destination_id (uint16 LE) — uses m_destId set from SYN-ACK
     pkt.append(reinterpret_cast<const char*>(&m_destId), 2);
     // payload
+    if (!payload.isEmpty()) pkt.append(payload);
+    return pkt;
+}
+
+QByteArray IcomIpConnection::buildPacketFor(uint16_t typeCode, uint16_t seq,
+                                             uint16_t dstPort, uint16_t dstId,
+                                             const QByteArray& payload)
+{
+    uint32_t totalLen = 16 + static_cast<uint32_t>(payload.size());
+    QByteArray pkt;
+    pkt.append(reinterpret_cast<const char*>(&totalLen), 4);
+    pkt.append(reinterpret_cast<const char*>(&typeCode), 2);
+    pkt.append(reinterpret_cast<const char*>(&seq), 2);
+    pkt.append(reinterpret_cast<const char*>(&m_sourcePort), 2);
+    pkt.append(reinterpret_cast<const char*>(&m_sourceId), 2);
+    pkt.append(reinterpret_cast<const char*>(&dstPort), 2);
+    pkt.append(reinterpret_cast<const char*>(&dstId), 2);
     if (!payload.isEmpty()) pkt.append(payload);
     return pkt;
 }
@@ -55,7 +72,7 @@ QByteArray IcomIpConnection::buildPacket(uint16_t typeCode, uint16_t seq,
 void IcomIpConnection::sendCtrlPacket(uint16_t typeCode, uint16_t seq,
                                        const QByteArray& payload)
 {
-    QByteArray pkt = buildPacket(typeCode, seq, payload);
+    QByteArray pkt = buildPacketFor(typeCode, seq, m_ctrlPort, m_destId, payload);
     m_socket->writeDatagram(pkt, m_host, m_ctrlPort);
 }
 
@@ -174,7 +191,7 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
                 // Register audio stream on port 50003 — send init packet
                 if (m_audioSocket) {
                     uint16_t audioSeq = m_seq++;
-                    QByteArray audioPkt = buildPacket(TYPE_DATA, audioSeq);
+                    QByteArray audioPkt = buildPacketFor(TYPE_DATA, audioSeq, m_audioPort, m_destId);
                     m_audioSocket->writeDatagram(audioPkt, m_host, m_audioPort);
                     qCDebug(lcConnection) << "IcomIpConnection: audio registration sent to" << m_host.toString() << ":" << m_audioPort;
                 }
@@ -189,15 +206,17 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
         default:
             break;
         }
-    } else if (senderPort == m_serialPort && type == TYPE_DATA) {
-        // Serial channel - CI-V response
+    } else if (type == TYPE_DATA) {
+        // Data channel — could be serial (50002) or audio (50003)
+        // CI-V frames start with FE FE preamble — try parsing regardless of senderPort
         QByteArray civPayload = data.mid(16);
-        if (civPayload.isEmpty()) return;
+        if (civPayload.size() >= 5
+            && static_cast<uint8_t>(civPayload[0]) == IcomCivProtocol::PREAMBLE1
+            && static_cast<uint8_t>(civPayload[1]) == IcomCivProtocol::PREAMBLE2) {
+            qCDebug(lcConnection) << "IcomIpConnection: CI-V data from port" << senderPort << ":" << civPayload.toHex().left(30);
 
-        qCDebug(lcConnection) << "IcomIpConnection: CI-V data:" << civPayload.toHex().left(30);
-
-        CivResponse resp = m_civProto.parseResponse(civPayload);
-        if (!resp.valid) return;
+            CivResponse resp = m_civProto.parseResponse(civPayload);
+            if (!resp.valid) return;
 
         switch (resp.cmd) {
         case IcomCivProtocol::CMD_FREQ:
@@ -261,7 +280,7 @@ void IcomIpConnection::onKeepAlive()
 
 void IcomIpConnection::sendSerialPacket(uint16_t seq, const QByteArray& civFrame)
 {
-    QByteArray pkt = buildPacket(TYPE_DATA, seq, civFrame);
+    QByteArray pkt = buildPacketFor(TYPE_DATA, seq, m_serialPort, m_destId, civFrame);
     m_socket->writeDatagram(pkt, m_host, m_serialPort);
 }
 
