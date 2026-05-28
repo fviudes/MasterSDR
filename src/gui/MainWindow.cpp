@@ -1572,7 +1572,11 @@ MainWindow::MainWindow(QWidget* parent)
         s.remove("LastConnectedRadioSerial");
         s.remove("LastRoutedRadioIp");
         s.save();
-        m_radioModel.disconnectFromRadio();
+        if (m_icomIpConn && m_icomIpConn->state() == ISourceBackend::State::Connected) {
+            m_icomIpConn->disconnectFromRadio();
+        } else {
+            m_radioModel.disconnectFromRadio();
+        }
     });
 
     // ── SmartLink ──────────────────────────────────────────────────────────
