@@ -190,7 +190,7 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
         }
         case IcomCivProtocol::CMD_MODE: {
             if (!resp.data.isEmpty()) {
-                auto modeStr = IcomCivProtocol::modeToString(static_cast<uint8_t>(resp.data[0]));
+                auto modeStr = IcomCivProtocol::modeToString(static_cast<IcomCivProtocol::CivMode>(resp.data[0]));
                 if (!modeStr.isEmpty()) {
                     m_rxMode = modeStr;
                     emit modeUpdated(modeStr);
