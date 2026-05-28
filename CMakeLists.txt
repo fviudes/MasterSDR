@@ -518,6 +518,7 @@ set(CORE_SOURCES
     src/core/HermesDiscovery.cpp
     src/core/HermesConnection.cpp
     src/core/LogbookClient.cpp
+    src/core/SourceManager.cpp
     src/core/IcomCivProtocol.cpp
     src/core/IcomIpConnection.cpp
     src/core/KenwoodCatProtocol.cpp

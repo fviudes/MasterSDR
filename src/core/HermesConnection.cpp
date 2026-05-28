@@ -35,7 +35,7 @@ void HermesConnection::connectToRadio(const HermesRadioInfo& info)
     m_radioAddress = QHostAddress(info.ipAddress);
     m_radioPort = info.udpPort;
 
-    m_state.store(State::Connecting);
+    m_connState.store(static_cast<int>(State::Connecting));
     emit stateChanged(State::Connecting);
 
     // Close any existing socket binding
@@ -45,7 +45,7 @@ void HermesConnection::connectToRadio(const HermesRadioInfo& info)
     if (!m_socket->bind(QHostAddress::AnyIPv4, 0)) {
         m_errorString = "Failed to bind UDP socket: " + m_socket->errorString();
         qCWarning(lcConnection) << m_errorString;
-        m_state.store(State::Error);
+        m_connState.store(static_cast<int>(State::Error));
         emit stateChanged(State::Error);
         emit errorOccurred(m_errorString);
         return;
@@ -78,7 +78,7 @@ void HermesConnection::connectToRadio(const HermesRadioInfo& info)
     // Set default frequency
     setRX1Frequency(14074000);
 
-    m_state.store(State::Connected);
+    m_connState.store(static_cast<int>(State::Connected));
     emit stateChanged(State::Connected);
     emit connected();
 
@@ -91,7 +91,7 @@ void HermesConnection::disconnectFromRadio()
 {
     m_watchdogTimer->stop();
 
-    if (m_socket && m_state.load() == State::Connected) {
+    if (m_socket && static_cast<State>(m_connState.load()) == State::Connected) {
         QByteArray stopPkt = HermesProtocol::buildStopPacket(0);
         m_socket->writeDatagram(stopPkt, m_radioAddress, m_radioPort);
         QThread::msleep(10);
@@ -103,7 +103,7 @@ void HermesConnection::disconnectFromRadio()
         m_socket->close();
     }
 
-    m_state.store(State::Disconnected);
+    m_connState.store(static_cast<int>(State::Disconnected));
     emit stateChanged(State::Disconnected);
     emit disconnected();
 
@@ -112,7 +112,7 @@ void HermesConnection::disconnectFromRadio()
 
 void HermesConnection::sendCommand(uint8_t addr, uint32_t data)
 {
-    if (m_state.load() != State::Connected || !m_socket) return;
+    if (static_cast<State>(m_connState.load()) != State::Connected || !m_socket) return;
     QByteArray pkt = HermesProtocol::buildCommandPacket(addr, data);
     m_socket->writeDatagram(pkt, m_radioAddress, m_radioPort);
     m_socket->flush();
@@ -120,7 +120,7 @@ void HermesConnection::sendCommand(uint8_t addr, uint32_t data)
 
 void HermesConnection::sendCommand(uint8_t addr, const QByteArray& data)
 {
-    if (m_state.load() != State::Connected || !m_socket) return;
+    if (static_cast<State>(m_connState.load()) != State::Connected || !m_socket) return;
     QByteArray pkt = HermesProtocol::buildCommandPacket(addr, data);
     m_socket->writeDatagram(pkt, m_radioAddress, m_radioPort);
     m_socket->flush();
@@ -157,7 +157,7 @@ void HermesConnection::stopRadio()
     }
 }
 
-void HermesConnection::setMox(bool active)
+void HermesConnection::setPtt(bool active)
 {
     uint32_t ctrl = HermesProtocol::buildControlWord(HermesProtocol::SPEED_48K, 1, false, active);
     sendCommand(HermesProtocol::ADDR_CONTROL, ctrl);
@@ -201,7 +201,7 @@ void HermesConnection::processReply(const QByteArray& data)
 
 void HermesConnection::onWatchdogTimeout()
 {
-    if (m_state.load() != State::Connected || !m_socket) return;
+    if (static_cast<State>(m_connState.load()) != State::Connected || !m_socket) return;
     // Send discovery packet as keep-alive
     QByteArray pkt = HermesProtocol::buildDiscoveryPacket();
     m_socket->writeDatagram(pkt, m_radioAddress, m_radioPort);
