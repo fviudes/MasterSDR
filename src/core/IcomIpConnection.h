@@ -34,9 +34,13 @@ signals:
     void errorOccurred(const QString& message);
     void frequencyUpdated(uint64_t freqHz);
     void modeUpdated(const QString& mode);
+    void sMeterUpdated(int level);
+    void pttStateChanged(bool tx);
 
 public slots:
     void setFrequency(uint64_t freqHz);
+    void setMode(const QString& mode);
+    void setPtt(bool tx);
 
 private slots:
     void onReadyRead();

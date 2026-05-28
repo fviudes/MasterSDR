@@ -1645,11 +1645,28 @@ MainWindow::MainWindow(QWidget* parent)
                          const QString& model) {
         if (!m_icomIpConn) {
             m_icomIpConn = new IcomIpConnection(this);
+            // Wire Icom IP into full radio control
             connect(m_icomIpConn, &IcomIpConnection::connected, this, [this] {
                 m_connPanel->setConnected(true);
+                m_connPanel->setStatusText("ICOM connected via IP");
+            });
+            connect(m_icomIpConn, &IcomIpConnection::disconnected, this, [this] {
+                m_connPanel->setConnected(false);
+                m_connPanel->setStatusText("ICOM disconnected");
             });
             connect(m_icomIpConn, &IcomIpConnection::errorOccurred, this, [this](const QString& err) {
-                m_connPanel->setStatusText("Icom IP: " + err);
+                m_connPanel->setStatusText("ICOM IP: " + err);
+            });
+            // Route frequency updates to the radio model
+            connect(m_icomIpConn, &IcomIpConnection::frequencyUpdated, this, [this](uint64_t freqHz) {
+                double mhz = static_cast<double>(freqHz) / 1e6;
+                if (auto* s = m_radioModel.slice(0)) {
+                    s->setFrequency(mhz);
+                }
+            });
+            // Route mode updates
+            connect(m_icomIpConn, &IcomIpConnection::modeUpdated, this, [this](const QString& mode) {
+                qCDebug(lcConnection) << "ICOM mode:" << mode;
             });
         }
         Q_UNUSED(rxPort);

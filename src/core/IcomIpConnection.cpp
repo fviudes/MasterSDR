@@ -205,6 +205,7 @@ void IcomIpConnection::onKeepAlive()
     if (!m_connected) return;
     sendCtrlPacket(TYPE_PING, m_pingSeq++);
     sendCivCommand(IcomCivProtocol::CMD_FREQ, 0);
+    sendCivCommand(IcomCivProtocol::CMD_MODE, 0);
 }
 
 void IcomIpConnection::sendSerialPacket(uint16_t seq, const QByteArray& civFrame)
@@ -224,6 +225,22 @@ void IcomIpConnection::setFrequency(uint64_t freqHz)
 {
     sendCivCommand(IcomCivProtocol::CMD_FREQ, 0,
                    IcomCivProtocol::encodeBcdFreq(freqHz));
+}
+
+void IcomIpConnection::setMode(const QString& mode)
+{
+    auto civMode = IcomCivProtocol::modeFromString(mode);
+    QByteArray data;
+    data.append(static_cast<char>(civMode));
+    data.append('\x00');
+    sendCivCommand(IcomCivProtocol::CMD_MODE, 0, data);
+}
+
+void IcomIpConnection::setPtt(bool tx)
+{
+    QByteArray data;
+    data.append(tx ? '\x01' : '\x00');
+    sendCivCommand(IcomCivProtocol::CMD_PTT, 0, data);
 }
 
 } // namespace MasterSDR
