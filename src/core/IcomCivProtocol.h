@@ -27,6 +27,7 @@ public:
 
     // CI-V commands (from wfview/IC-9700 CI-V reference)
     static constexpr uint8_t CMD_FREQ        = 0x00;
+    static constexpr uint8_t CMD_READ_VFO    = 0x03;
     static constexpr uint8_t CMD_MODE        = 0x06;
     static constexpr uint8_t CMD_ATTENUATOR  = 0x11;
     static constexpr uint8_t CMD_MIC_GAIN    = 0x14;
@@ -34,14 +35,18 @@ public:
     static constexpr uint8_t CMD_PREAMP      = 0x16;
     static constexpr uint8_t CMD_RIG_ID      = 0x19;
     static constexpr uint8_t CMD_PTT         = 0x1C;
+    static constexpr uint8_t CMD_GPS         = 0x23;
     static constexpr uint8_t CMD_SPECTRUM    = 0x27;
     static constexpr uint8_t CMD_BROADCAST   = 0x00;  // Address 0x00 = all radios respond
 
     // Sub-commands for CMD_MODE (0x06)
     static constexpr uint8_t SUB_MODE_SET    = 0x01;
+    static constexpr uint8_t SUB_MODE_READ   = 0x04;
 
     // Sub-commands for CMD_S_METER (0x15)
+    static constexpr uint8_t SUB_SQUELCH     = 0x01;
     static constexpr uint8_t SUB_SMETER      = 0x02;
+    static constexpr uint8_t SUB_OVF_STATUS  = 0x07;
     static constexpr uint8_t SUB_POWER_METER = 0x11;
 
     // Sub-commands for CMD_PREAMP (0x16)
@@ -92,6 +97,9 @@ public:
     QByteArray buildSetVfoB(uint64_t freqHz) const;
     QByteArray buildSetSplit(bool on) const;
     QByteArray buildReadSMeter() const;
+    QByteArray buildReadSquelch() const;
+    QByteArray buildReadOvfStatus() const;
+    QByteArray buildReadTxFreq() const;
 
     CivResponse parseResponse(const QByteArray& data) const;
     static bool isCompleteFrame(const QByteArray& buffer);
@@ -101,6 +109,8 @@ public:
     static QString modeToString(CivMode mode);
     static CivMode modeFromString(const QString& mode);
     static QString rigIdToModel(uint8_t rigId);
+    static QString smeterValueToText(uint8_t value);
+    static float smeterToDbm(uint8_t value);
 
     QByteArray buildReadRigId() const;
 

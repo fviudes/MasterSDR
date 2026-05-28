@@ -165,6 +165,10 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
                 // Start CI-V polling on serial port
                 sendCivCommand(IcomCivProtocol::CMD_FREQ, 0);
                 sendCivCommand(IcomCivProtocol::CMD_MODE, 0);
+                sendCivCommand(IcomCivProtocol::CMD_S_METER, IcomCivProtocol::SUB_SMETER);
+                // Poll squelch and overflow status
+                sendCivCommand(IcomCivProtocol::CMD_S_METER, IcomCivProtocol::SUB_SQUELCH);
+                sendCivCommand(IcomCivProtocol::CMD_S_METER, IcomCivProtocol::SUB_OVF_STATUS);
                 // Query rig identity for auto-detection
                 QByteArray rigIdCmd = m_civProto.buildReadRigId();
                 sendSerialPacket(m_seq++, rigIdCmd);
@@ -219,6 +223,11 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
                 int level = static_cast<int>(static_cast<uint8_t>(resp.data[0]));
                 m_sMeter = level;
                 emit sMeterUpdated(level);
+                // Handle squelch status (sub=0x01)
+                if (resp.subCmd == IcomCivProtocol::SUB_SQUELCH) {
+                    bool squelchOpen = (resp.data[0] != 0x00);
+                    emit squelchStatusUpdated(squelchOpen);
+                }
             }
             break;
         }
@@ -243,10 +252,11 @@ void IcomIpConnection::onKeepAlive()
     if (!m_connected) return;
     sendCtrlPacket(TYPE_PING, m_pingSeq++);
 
-    // Poll radio state using wfview CI-V commands
+    // Poll radio state using CI-V commands
     sendCivCommand(IcomCivProtocol::CMD_FREQ, 0);          // Frequency
     sendCivCommand(IcomCivProtocol::CMD_MODE, 0);          // Mode
     sendCivCommand(IcomCivProtocol::CMD_S_METER, IcomCivProtocol::SUB_SMETER); // S-meter
+    sendCivCommand(IcomCivProtocol::CMD_S_METER, IcomCivProtocol::SUB_SQUELCH); // Squelch
 }
 
 void IcomIpConnection::sendSerialPacket(uint16_t seq, const QByteArray& civFrame)

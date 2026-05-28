@@ -191,4 +191,37 @@ QByteArray IcomCivProtocol::buildReadRigId() const
     return buildCommand(CMD_RIG_ID, 0x00);
 }
 
+QString IcomCivProtocol::smeterValueToText(uint8_t value)
+{
+    int sUnit = value / 12;
+    if (sUnit > 9) sUnit = 9;
+    QString text = QString("S%1").arg(sUnit);
+    if (value > 120) {
+        int dbOverS9 = ((value - 121) / 20) * 10;
+        text = QString("S9+%1").arg(dbOverS9);
+    }
+    return text;
+}
+
+float IcomCivProtocol::smeterToDbm(uint8_t value)
+{
+    float sUnit = value / 12.0f;
+    return -127.0f + sUnit * 6.0f;
+}
+
+QByteArray IcomCivProtocol::buildReadSquelch() const
+{
+    return buildCommand(CMD_S_METER, SUB_SQUELCH);
+}
+
+QByteArray IcomCivProtocol::buildReadOvfStatus() const
+{
+    return buildCommand(CMD_S_METER, SUB_OVF_STATUS);
+}
+
+QByteArray IcomCivProtocol::buildReadTxFreq() const
+{
+    return buildCommand(CMD_FREQ, 0x03);
+}
+
 } // namespace MasterSDR

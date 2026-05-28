@@ -34,6 +34,9 @@ public:
     bool isPtt() const override { return m_ptt; }
     int sMeterLevel() const override { return m_sMeter; }
 
+signals:
+    void squelchStatusUpdated(bool open);
+
 private slots:
     void onReadyRead();
     void onKeepAlive();

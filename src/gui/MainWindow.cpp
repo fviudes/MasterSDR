@@ -1687,6 +1687,7 @@ MainWindow::MainWindow(QWidget* parent)
                 if (auto* s = m_radioModel.slice(0)) {
                     m_appletPanel->setSlice(s);
                     m_appletPanel->sMeterWidget()->setRxMode(s->mode());
+                    m_appletPanel->sMeterWidget()->setTxMode(s->mode());
                 }
                 // Start Icom audio playback
                 if (!m_icomAudioSink) {
@@ -1763,13 +1764,20 @@ MainWindow::MainWindow(QWidget* parent)
                     m_appletPanel->phoneCwApplet()->setMode(mappedMode);
             });
             connect(m_icomIpConn, &IcomIpConnection::sMeterUpdated, this, [this](int level) {
-                float dbm = -127.0f + (static_cast<float>(level) / 255.0f) * 107.0f;
+                float dbm = IcomCivProtocol::smeterToDbm(static_cast<uint8_t>(level));
                 m_appletPanel->sMeterWidget()->setLevel(dbm);
-                // Update PTT state indicator when S-meter active (signal present)
                 m_appletPanel->sMeterWidget()->setTransmitting(m_icomIpConn->isPtt());
+                // Update squelch status indicator via S-meter strength
+                bool signalPresent = (level > 20);
+                m_appletPanel->sMeterWidget()->setRxMode(signalPresent
+                    ? m_icomIpConn->mode() : QLatin1String("SQL"));
             });
             connect(m_icomIpConn, &IcomIpConnection::pttStateChanged, this, [this](bool tx) {
                 m_appletPanel->sMeterWidget()->setTransmitting(tx);
+            });
+            connect(m_icomIpConn, &IcomIpConnection::squelchStatusUpdated, this, [this](bool open) {
+                QString rxModeText = open ? m_icomIpConn->mode() : QLatin1String("SQL");
+                m_appletPanel->sMeterWidget()->setRxMode(rxModeText);
             });
             connect(m_icomIpConn, &IcomIpConnection::audioDataReady, this, [this](const QByteArray& pcm) {
                 if (m_icomAudioSink && m_icomAudioDevice) {
