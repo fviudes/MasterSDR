@@ -17,6 +17,7 @@
 #include "core/FirmwareStager.h"
 #include "core/TgxlConnection.h"
 #include "core/PgxlConnection.h"
+#include "core/IcomIpConnection.h"
 #include "models/AntennaGeniusModel.h"
 
 #include <QCloseEvent>
@@ -214,6 +215,7 @@ RadioSetupDialog::RadioSetupDialog(RadioModel* model, AudioEngine* audio,
     addDeferred("USB Cables",      [this] { return buildUsbCablesTab(); });
     addDeferred("Peripherals",     [this] { return buildPeripheralsTab(); });
     addDeferred("Themes",          [this] { return buildUiEnhancementsTab(); });
+    addDeferred("Icom IP",         [this] { return buildIcomIpTab(); });
 #ifdef HAVE_SERIALPORT
     addDeferred("Serial",          [this] { return buildSerialTab(); });
 #endif
@@ -4345,6 +4347,159 @@ QWidget* RadioSetupDialog::buildUiEnhancementsTab()
         refreshAllBtns();
     });
 
+    return page;
+}
+
+void RadioSetupDialog::setIcomIpConnection(IcomIpConnection* conn)
+{
+    m_icomIpConn = conn;
+    if (m_icomIpConn) {
+        connect(m_icomIpConn, &IcomIpConnection::stateChanged, this, [this](ISourceBackend::State state) {
+            if (m_icomStateLabel) {
+                m_icomStateLabel->setText(state == ISourceBackend::State::Connected ? "Connected" :
+                                          state == ISourceBackend::State::Connecting ? "Connecting..." : "Disconnected");
+            }
+        });
+        connect(m_icomIpConn, &IcomIpConnection::frequencyUpdated, this, [this](uint64_t freqHz) {
+            if (m_icomFreqLabel) {
+                double mhz = static_cast<double>(freqHz) / 1e6;
+                m_icomFreqLabel->setText(QString::number(mhz, 'f', 6) + " MHz");
+            }
+        });
+        connect(m_icomIpConn, &IcomIpConnection::modeUpdated, this, [this](const QString& mode) {
+            if (m_icomModeLabel) m_icomModeLabel->setText(mode);
+        });
+        connect(m_icomIpConn, &IcomIpConnection::sMeterUpdated, this, [this](int level) {
+            if (m_icomSMeterLabel) m_icomSMeterLabel->setText(QString("S%1").arg(level / 24));
+        });
+    }
+}
+
+QWidget* RadioSetupDialog::buildIcomIpTab()
+{
+    static const QString kLabelStyle =
+        "QLabel { color: #8aa8c0; font-size: 11px; }";
+    static const QString kValueStyle =
+        "QLabel { background: #1a2a3a; border: 1px solid #304050; "
+        "border-radius: 3px; color: #c8d8e8; font-size: 12px; font-weight: bold; "
+        "padding: 3px 10px; }";
+    static const QString kGroupStyle =
+        "QGroupBox { color: #8aa8c0; font-size: 12px; font-weight: bold; "
+        "border: 1px solid #304050; border-radius: 4px; margin-top: 10px; padding-top: 16px; }"
+        "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 4px; }";
+
+    auto* page = new QWidget;
+    auto* vbox = new QVBoxLayout(page);
+    vbox->setSpacing(8);
+
+    // Connection Status group
+    {
+        auto* group = new QGroupBox("ICOM IP Connection");
+        group->setStyleSheet(kGroupStyle);
+        auto* grid = new QGridLayout(group);
+        grid->setSpacing(6);
+
+        grid->addWidget(new QLabel("Status:"), 0, 0);
+        m_icomStateLabel = new QLabel(m_icomIpConn
+            ? (m_icomIpConn->state() == ISourceBackend::State::Connected ? "Connected" : "Disconnected")
+            : "Disconnected");
+        m_icomStateLabel->setStyleSheet(kValueStyle);
+        grid->addWidget(m_icomStateLabel, 0, 1);
+
+        grid->addWidget(new QLabel("Model:"), 0, 2);
+        m_icomModelLabel = new QLabel(m_icomIpConn ? m_icomIpConn->radioModel() : "--");
+        m_icomModelLabel->setStyleSheet(kValueStyle);
+        grid->addWidget(m_icomModelLabel, 0, 3);
+
+        grid->addWidget(new QLabel("IP Address:"), 1, 0);
+        m_icomIpLabel = new QLabel("--");
+        m_icomIpLabel->setStyleSheet(kValueStyle);
+        grid->addWidget(m_icomIpLabel, 1, 1);
+
+        grid->addWidget(new QLabel("Control Port:"), 1, 2);
+        m_icomCtrlPortLabel = new QLabel("50001");
+        m_icomCtrlPortLabel->setStyleSheet(kValueStyle);
+        grid->addWidget(m_icomCtrlPortLabel, 1, 3);
+
+        grid->addWidget(new QLabel("Audio Port:"), 2, 2);
+        m_icomAudioPortLabel = new QLabel("50003");
+        m_icomAudioPortLabel->setStyleSheet(kValueStyle);
+        grid->addWidget(m_icomAudioPortLabel, 2, 3);
+
+        for (auto* lbl : group->findChildren<QLabel*>()) {
+            if (lbl->styleSheet().isEmpty())
+                lbl->setStyleSheet(kLabelStyle);
+        }
+
+        vbox->addWidget(group);
+    }
+
+    // Live Data group
+    {
+        auto* group = new QGroupBox("Live Radio Data");
+        group->setStyleSheet(kGroupStyle);
+        auto* grid = new QGridLayout(group);
+        grid->setSpacing(6);
+
+        grid->addWidget(new QLabel("Frequency:"), 0, 0);
+        m_icomFreqLabel = new QLabel("--");
+        m_icomFreqLabel->setStyleSheet(kValueStyle);
+        grid->addWidget(m_icomFreqLabel, 0, 1);
+
+        grid->addWidget(new QLabel("Mode:"), 0, 2);
+        m_icomModeLabel = new QLabel("--");
+        m_icomModeLabel->setStyleSheet(kValueStyle);
+        grid->addWidget(m_icomModeLabel, 0, 3);
+
+        grid->addWidget(new QLabel("S-Meter:"), 1, 0);
+        m_icomSMeterLabel = new QLabel("--");
+        m_icomSMeterLabel->setStyleSheet(kValueStyle);
+        grid->addWidget(m_icomSMeterLabel, 1, 1);
+
+        for (auto* lbl : group->findChildren<QLabel*>()) {
+            if (lbl->styleSheet().isEmpty())
+                lbl->setStyleSheet(kLabelStyle);
+        }
+
+        vbox->addWidget(group);
+    }
+
+    // Protocol Info group
+    {
+        auto* group = new QGroupBox("Protocol Information");
+        group->setStyleSheet(kGroupStyle);
+        auto* grid = new QGridLayout(group);
+        grid->setSpacing(6);
+
+        grid->addWidget(new QLabel("Protocol:"), 0, 0);
+        auto* protoLabel = new QLabel("CI-V over UDP (wfview/node-red-icom)");
+        protoLabel->setStyleSheet(kValueStyle);
+        grid->addWidget(protoLabel, 0, 1);
+
+        grid->addWidget(new QLabel("Transport:"), 1, 0);
+        auto* transportLabel = new QLabel("UDP (ports 50001-50003)");
+        transportLabel->setStyleSheet(kValueStyle);
+        grid->addWidget(transportLabel, 1, 1);
+
+        grid->addWidget(new QLabel("CI-V Address:"), 2, 0);
+        auto* civAddrLabel = new QLabel("0xA4 (default)");
+        civAddrLabel->setStyleSheet(kValueStyle);
+        grid->addWidget(civAddrLabel, 2, 1);
+
+        grid->addWidget(new QLabel("Keep-Alive:"), 3, 0);
+        auto* keepAliveLabel = new QLabel("3 seconds (PING type 0x07)");
+        keepAliveLabel->setStyleSheet(kValueStyle);
+        grid->addWidget(keepAliveLabel, 3, 1);
+
+        for (auto* lbl : group->findChildren<QLabel*>()) {
+            if (lbl->styleSheet().isEmpty())
+                lbl->setStyleSheet(kLabelStyle);
+        }
+
+        vbox->addWidget(group);
+    }
+
+    vbox->addStretch(1);
     return page;
 }
 

@@ -15,6 +15,9 @@ IcomIpConnection::IcomIpConnection(QObject* parent)
     m_socket = new QUdpSocket(this);
     connect(m_socket, &QUdpSocket::readyRead, this, &IcomIpConnection::onReadyRead);
 
+    m_audioSocket = new QUdpSocket(this);
+    connect(m_audioSocket, &QUdpSocket::readyRead, this, &IcomIpConnection::onAudioReady);
+
     m_keepAliveTimer = new QTimer(this);
     m_keepAliveTimer->setInterval(KEEPALIVE_MS);
     connect(m_keepAliveTimer, &QTimer::timeout, this, &IcomIpConnection::onKeepAlive);
@@ -75,6 +78,9 @@ void IcomIpConnection::connectToRadio(const QString& host, uint16_t ctrlPort,
     m_socket->close();
     m_socket->bind();
 
+    m_audioSocket->close();
+    m_audioSocket->bind();
+
     m_sourcePort = static_cast<uint16_t>(m_socket->localPort());
     // source_id from IP (like wfview/node-red-icom)
     quint32 ip = QHostAddress(QHostAddress::LocalHost).toIPv4Address();
@@ -97,6 +103,7 @@ void IcomIpConnection::disconnectFromRadio()
         sendCtrlPacket(TYPE_DISCON, m_seq++);
     }
     m_socket->close();
+    m_audioSocket->close();
     m_state.store(State::Disconnected);
     m_connected = false;
     emit stateChanged(State::Disconnected);
@@ -262,6 +269,19 @@ void IcomIpConnection::setPtt(bool tx)
     data.append(tx ? '\x01' : '\x00');
     sendCivCommand(IcomCivProtocol::CMD_PTT, 0, data);
     emit radioInfoUpdated();
+}
+
+void IcomIpConnection::onAudioReady()
+{
+    while (m_audioSocket->hasPendingDatagrams()) {
+        QByteArray data;
+        data.resize(static_cast<int>(m_audioSocket->pendingDatagramSize()));
+        m_audioSocket->readDatagram(data.data(), data.size());
+        if (data.size() > 16) {
+            QByteArray pcm = data.mid(16);
+            emit audioDataReady(pcm);
+        }
+    }
 }
 
 } // namespace MasterSDR

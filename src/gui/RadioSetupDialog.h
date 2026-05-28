@@ -25,6 +25,8 @@ class TgxlConnection;
 class PgxlConnection;
 class AntennaGeniusModel;
 
+class IcomIpConnection;
+
 // Radio Setup dialog — tabbed configuration window matching SmartSDR's
 // Settings → Radio Setup. Shows radio info, GPS, TX, RX, filters, etc.
 class RadioSetupDialog : public PersistentDialog {
@@ -37,6 +39,7 @@ public:
                               AntennaGeniusModel* ag = nullptr,
                               QWidget* parent = nullptr);
     void selectTab(const QString& tabName);
+    void setIcomIpConnection(IcomIpConnection* conn);
 
 signals:
     void txBandSettingsRequested();
@@ -67,6 +70,7 @@ private:
     QWidget* buildUsbCablesTab();
     QWidget* buildPeripheralsTab();
     QWidget* buildUiEnhancementsTab();
+    QWidget* buildIcomIpTab();
 #ifdef HAVE_SERIALPORT
     QWidget* buildSerialTab();
 #endif
@@ -117,6 +121,16 @@ private:
     // → wipe the saved manual IP/port. New-IP edits still require an
     // explicit Connect click so an unfinished value cannot leak in.
     QVector<std::function<void()>> m_peripheralRowSavers;
+    IcomIpConnection* m_icomIpConn{nullptr};
+    QLabel* m_icomStatusLabel{nullptr};
+    QLabel* m_icomModelLabel{nullptr};
+    QLabel* m_icomIpLabel{nullptr};
+    QLabel* m_icomCtrlPortLabel{nullptr};
+    QLabel* m_icomAudioPortLabel{nullptr};
+    QLabel* m_icomFreqLabel{nullptr};
+    QLabel* m_icomModeLabel{nullptr};
+    QLabel* m_icomSMeterLabel{nullptr};
+    QLabel* m_icomStateLabel{nullptr};
 };
 
 } // namespace MasterSDR

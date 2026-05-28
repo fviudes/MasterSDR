@@ -1650,62 +1650,76 @@ MainWindow::MainWindow(QWidget* parent)
                 case ISourceBackend::State::Connecting:
                     m_connPanel->setStatusText("Connecting to ICOM...");
                     m_connStatusLabel->setText("Connecting ICOM...");
+                    m_titleBar->setDiscovering(true);
                     break;
                 case ISourceBackend::State::Connected:
                     m_connPanel->setConnected(true);
                     m_connPanel->setStatusText("ICOM connected via IP");
                     m_connStatusLabel->setText("Connected");
+                    m_titleBar->setDiscovering(false);
+                    if (auto* s = m_radioModel.slice(0))
+                        s->applyStatus({{QStringLiteral("active"), QStringLiteral("1")}});
                     break;
                 case ISourceBackend::State::Error:
                     m_connPanel->setStatusText("ICOM IP: connection failed");
                     m_connStatusLabel->setText("Error");
+                    m_titleBar->setDiscovering(false);
                     break;
                 default:
                     break;
                 }
             });
             connect(m_icomIpConn, &IcomIpConnection::connected, this, [this] {
-                // Update radio info in footer
                 QString modelName = m_connPanel->property("icomModel").toString();
                 if (modelName.isEmpty()) modelName = "ICOM Radio";
                 m_radioModel.setRadioInfo(modelName, modelName, "");
-                // The connection indicator GIF in the title bar is driven
-                // by MainWindow which shows/hides based on connected state
+                m_stationLabel->setText(modelName);
+                m_radioInfoLabel->setText(modelName);
+                m_radioVersionLabel->setText("CI-V / IP");
+                m_connPanel->hide();
+                if (m_reconnectDlg) {
+                    m_reconnectDlg->close();
+                    m_reconnectDlg->deleteLater();
+                    m_reconnectDlg = nullptr;
+                }
             });
             connect(m_icomIpConn, &IcomIpConnection::disconnected, this, [this] {
                 m_connPanel->setConnected(false);
                 m_connPanel->setStatusText("ICOM disconnected");
                 m_connStatusLabel->setText("Disconnected");
+                m_titleBar->setDiscovering(false);
                 m_radioModel.setRadioInfo("", "", "");
+                m_stationLabel->setText("N0CALL");
+                m_radioInfoLabel->setText("");
+                m_radioVersionLabel->setText("");
             });
             connect(m_icomIpConn, &IcomIpConnection::errorOccurred, this, [this](const QString& err) {
                 m_connPanel->setStatusText("ICOM IP: " + err);
                 m_connStatusLabel->setText("Error");
+                m_titleBar->setDiscovering(false);
             });
-            // Frequency updates -> SliceModel and panadapter
             connect(m_icomIpConn, &IcomIpConnection::frequencyUpdated, this, [this](uint64_t freqHz) {
                 double mhz = static_cast<double>(freqHz) / 1e6;
                 if (auto* s = m_radioModel.slice(0)) {
-                    s->tuneAndRecenter(mhz);
+                    s->setFrequency(mhz);
                 }
             });
-            // Mode updates
             connect(m_icomIpConn, &IcomIpConnection::modeUpdated, this, [this](const QString& mode) {
-                QString flexMode = mode;
-                if (mode == "LSB") flexMode = "LSB";
-                else if (mode == "USB") flexMode = "USB";
-                else if (mode == "CW") flexMode = "CW";
-                else if (mode == "CWR") flexMode = "CW";
-                else if (mode == "AM") flexMode = "AM";
-                else if (mode == "FM") flexMode = "FM";
-                else if (mode == "DIGU") flexMode = "DIGU";
-                else if (mode == "DIGL") flexMode = "DIGL";
-                else if (mode == "RTTY") flexMode = "DIGL";
-                m_radioModel.sendCommand(QString("slice set 0 mode=%1").arg(flexMode));
+                QString mappedMode = mode;
+                if (mappedMode == "CWR") mappedMode = "CW";
+                else if (mappedMode == "DIGU") mappedMode = "DIGU";
+                else if (mappedMode == "DIGL" || mappedMode == "RTTY") mappedMode = "DIGL";
+                if (auto* s = m_radioModel.slice(0)) {
+                    s->applyStatus({{QStringLiteral("mode"), mappedMode}});
+                }
             });
-            // S-meter
             connect(m_icomIpConn, &IcomIpConnection::sMeterUpdated, this, [this](int level) {
                 Q_UNUSED(level);
+            });
+            // Audio RX path: IcomIpConnection emits audioDataReady with PCM from port 50003.
+            // AudioEngine integration pending — raw PCM needs format conversion to match VITA-49 pipeline.
+            connect(m_icomIpConn, &IcomIpConnection::audioDataReady, this, [this](const QByteArray& pcm) {
+                Q_UNUSED(pcm);
             });
         }
         m_connPanel->setProperty("icomModel", model);
@@ -5186,6 +5200,7 @@ MasterDspDialog* MainWindow::ensureMasterDspDialog()
 void MainWindow::wireRadioSetupDialogSignals(RadioSetupDialog* dlg, const QString& prevComp)
 {
     if (!dlg) return;
+    dlg->setIcomIpConnection(m_icomIpConn);
     connect(dlg, &RadioSetupDialog::txBandSettingsRequested,
             m_txBandAction, &QAction::trigger);
 #ifdef HAVE_SERIALPORT

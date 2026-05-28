@@ -37,6 +37,7 @@ public:
 private slots:
     void onReadyRead();
     void onKeepAlive();
+    void onAudioReady();
 
 private:
     QByteArray buildPacket(uint16_t typeCode, uint16_t seq,
@@ -47,6 +48,7 @@ private:
     void processPacket(const QByteArray& data, quint16 senderPort);
 
     QUdpSocket* m_socket{nullptr};
+    QUdpSocket* m_audioSocket{nullptr};
     QTimer* m_keepAliveTimer{nullptr};
     QHostAddress m_host;
     uint16_t m_ctrlPort{50001};
