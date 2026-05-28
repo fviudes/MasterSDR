@@ -1683,9 +1683,10 @@ MainWindow::MainWindow(QWidget* parent)
                 m_radioInfoLabel->setText(modelName);
                 m_radioVersionLabel->setText("CI-V / IP");
                 m_connPanel->hide();
-                // Connect applet panel to active slice for live data display
+                // Applet Panel: connect to Icom data streams
                 if (auto* s = m_radioModel.slice(0)) {
                     m_appletPanel->setSlice(s);
+                    m_appletPanel->sMeterWidget()->setRxMode(s->mode());
                 }
                 // Start Icom audio playback
                 if (!m_icomAudioSink) {
@@ -1713,6 +1714,10 @@ MainWindow::MainWindow(QWidget* parent)
                 m_stationLabel->setText("N0CALL");
                 m_radioInfoLabel->setText("");
                 m_radioVersionLabel->setText("");
+                // Reset applet panel
+                m_appletPanel->setSlice(nullptr);
+                m_appletPanel->sMeterWidget()->setLevel(-127.0f);
+                m_appletPanel->sMeterWidget()->setTransmitting(false);
                 // Stop Icom audio playback
                 if (m_icomAudioSink) {
                     m_icomAudioSink->stop();
@@ -1751,22 +1756,34 @@ MainWindow::MainWindow(QWidget* parent)
                 if (auto* s = m_radioModel.slice(0)) {
                     s->applyStatus({{QStringLiteral("mode"), mappedMode}});
                 }
+                // Applet Panel: update mode displays
+                m_appletPanel->sMeterWidget()->setRxMode(mappedMode);
+                m_appletPanel->sMeterWidget()->setTxMode(mappedMode);
+                if (m_appletPanel->phoneCwApplet())
+                    m_appletPanel->phoneCwApplet()->setMode(mappedMode);
             });
             connect(m_icomIpConn, &IcomIpConnection::sMeterUpdated, this, [this](int level) {
-                Q_UNUSED(level);
+                float dbm = -127.0f + (static_cast<float>(level) / 255.0f) * 107.0f;
+                m_appletPanel->sMeterWidget()->setLevel(dbm);
+                // Update PTT state indicator when S-meter active (signal present)
+                m_appletPanel->sMeterWidget()->setTransmitting(m_icomIpConn->isPtt());
+            });
+            connect(m_icomIpConn, &IcomIpConnection::pttStateChanged, this, [this](bool tx) {
+                m_appletPanel->sMeterWidget()->setTransmitting(tx);
             });
             connect(m_icomIpConn, &IcomIpConnection::audioDataReady, this, [this](const QByteArray& pcm) {
                 if (m_icomAudioSink && m_icomAudioDevice) {
                     m_icomAudioDevice->write(pcm);
                 }
             });
-            // Rig ID auto-detection: update footer when model is discovered
+            // Rig ID auto-detection: update footer + connection panel combo
             connect(m_icomIpConn, &IcomIpConnection::radioInfoUpdated, this, [this] {
                 QString model = m_icomIpConn->radioModel();
                 if (!model.isEmpty() && model.startsWith("IC-")) {
                     m_stationLabel->setText(model);
                     m_radioInfoLabel->setText(model);
                     m_radioModel.setRadioInfo(model, model, "");
+                    m_connPanel->setProperty("icomModel", model);
                 }
             });
         }

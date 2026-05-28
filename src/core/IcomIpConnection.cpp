@@ -99,13 +99,12 @@ void IcomIpConnection::connectToRadio(const QString& host, uint16_t ctrlPort,
 void IcomIpConnection::disconnectFromRadio()
 {
     m_keepAliveTimer->stop();
-    if (m_connected) {
-        sendCtrlPacket(TYPE_DISCON, m_seq++);
-    }
+    m_connected = false;
+    // Send DISCON before closing sockets
+    sendCtrlPacket(TYPE_DISCON, m_seq++);
     m_socket->close();
     m_audioSocket->close();
     m_state.store(State::Disconnected);
-    m_connected = false;
     emit stateChanged(State::Disconnected);
     emit disconnected();
 }
@@ -169,6 +168,13 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
                 // Query rig identity for auto-detection
                 QByteArray rigIdCmd = m_civProto.buildReadRigId();
                 sendSerialPacket(m_seq++, rigIdCmd);
+                // Register audio stream on port 50003 — send init packet
+                if (m_audioSocket) {
+                    uint16_t audioSeq = m_seq++;
+                    QByteArray audioPkt = buildPacket(TYPE_DATA, audioSeq);
+                    m_audioSocket->writeDatagram(audioPkt, m_host, m_audioPort);
+                    qCDebug(lcConnection) << "IcomIpConnection: audio registration sent to" << m_host.toString() << ":" << m_audioPort;
+                }
             }
             break;
 
