@@ -1,4 +1,5 @@
 ﻿#include "core/IcomIpConnection.h"
+#include "core/LogManager.h"
 
 #include <QDebug>
 #include <QDateTime>
