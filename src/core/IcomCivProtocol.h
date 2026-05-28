@@ -100,6 +100,9 @@ public:
 
     static QString modeToString(CivMode mode);
     static CivMode modeFromString(const QString& mode);
+    static QString rigIdToModel(uint8_t rigId);
+
+    QByteArray buildReadRigId() const;
 
 private:
     uint8_t m_civAddr{DEFAULT_CI_V_ADDR};

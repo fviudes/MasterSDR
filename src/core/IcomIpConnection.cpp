@@ -166,6 +166,9 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
                 // Start CI-V polling on serial port
                 sendCivCommand(IcomCivProtocol::CMD_FREQ, 0);
                 sendCivCommand(IcomCivProtocol::CMD_MODE, 0);
+                // Query rig identity for auto-detection
+                QByteArray rigIdCmd = m_civProto.buildReadRigId();
+                sendSerialPacket(m_seq++, rigIdCmd);
             }
             break;
 
@@ -210,6 +213,16 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
                 int level = static_cast<int>(static_cast<uint8_t>(resp.data[0]));
                 m_sMeter = level;
                 emit sMeterUpdated(level);
+            }
+            break;
+        }
+        case IcomCivProtocol::CMD_RIG_ID: {
+            if (!resp.data.isEmpty()) {
+                uint8_t rigId = static_cast<uint8_t>(resp.data[0]);
+                QString model = IcomCivProtocol::rigIdToModel(rigId);
+                m_radioModel = model;
+                qCDebug(lcConnection) << "IcomIpConnection: detected model" << model << "from rig ID" << Qt::hex << rigId;
+                emit radioInfoUpdated();
             }
             break;
         }

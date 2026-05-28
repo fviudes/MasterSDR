@@ -1659,14 +1659,14 @@ MainWindow::MainWindow(QWidget* parent)
                     m_connPanel->setConnected(true);
                     m_connPanel->setStatusText("ICOM connected via IP");
                     m_connStatusLabel->setText("Connected");
-                    m_titleBar->setDiscovering(false);
+                    m_titleBar->setConnected(true);
                     if (auto* s = m_radioModel.slice(0))
                         s->applyStatus({{QStringLiteral("active"), QStringLiteral("1")}});
                     break;
                 case ISourceBackend::State::Error:
                     m_connPanel->setStatusText("ICOM IP: connection failed");
                     m_connStatusLabel->setText("Error");
-                    m_titleBar->setDiscovering(false);
+                    m_titleBar->setConnected(false);
                     break;
                 default:
                     break;
@@ -1674,16 +1674,18 @@ MainWindow::MainWindow(QWidget* parent)
             });
             connect(m_icomIpConn, &IcomIpConnection::connected, this, [this] {
                 QString modelName = m_connPanel->property("icomModel").toString();
-                if (modelName.isEmpty()) modelName = "ICOM Radio";
+                if (modelName.isEmpty() || modelName == "Auto") {
+                    modelName = m_icomIpConn->radioModel();
+                    if (modelName.isEmpty()) modelName = "ICOM Radio";
+                }
                 m_radioModel.setRadioInfo(modelName, modelName, "");
                 m_stationLabel->setText(modelName);
                 m_radioInfoLabel->setText(modelName);
                 m_radioVersionLabel->setText("CI-V / IP");
                 m_connPanel->hide();
-                if (m_reconnectDlg) {
-                    m_reconnectDlg->close();
-                    m_reconnectDlg->deleteLater();
-                    m_reconnectDlg = nullptr;
+                // Connect applet panel to active slice for live data display
+                if (auto* s = m_radioModel.slice(0)) {
+                    m_appletPanel->setSlice(s);
                 }
                 // Start Icom audio playback
                 if (!m_icomAudioSink) {
@@ -1706,7 +1708,7 @@ MainWindow::MainWindow(QWidget* parent)
                 m_connPanel->setConnected(false);
                 m_connPanel->setStatusText("ICOM disconnected");
                 m_connStatusLabel->setText("Disconnected");
-                m_titleBar->setDiscovering(false);
+                m_titleBar->setConnected(false);
                 m_radioModel.setRadioInfo("", "", "");
                 m_stationLabel->setText("N0CALL");
                 m_radioInfoLabel->setText("");
@@ -1722,7 +1724,7 @@ MainWindow::MainWindow(QWidget* parent)
             connect(m_icomIpConn, &IcomIpConnection::errorOccurred, this, [this](const QString& err) {
                 m_connPanel->setStatusText("ICOM IP: " + err);
                 m_connStatusLabel->setText("Error");
-                m_titleBar->setDiscovering(false);
+                m_titleBar->setConnected(false);
             });
             connect(m_icomIpConn, &IcomIpConnection::frequencyUpdated, this, [this](uint64_t freqHz) {
                 double mhz = static_cast<double>(freqHz) / 1e6;
@@ -1753,10 +1755,18 @@ MainWindow::MainWindow(QWidget* parent)
             connect(m_icomIpConn, &IcomIpConnection::sMeterUpdated, this, [this](int level) {
                 Q_UNUSED(level);
             });
-            // Audio RX: route Icom PCM from port 50003 to speakers via QAudioSink
             connect(m_icomIpConn, &IcomIpConnection::audioDataReady, this, [this](const QByteArray& pcm) {
-                if (m_icomAudioSink && m_icomAudioDevice && m_icomAudioSink->state() == QAudio::ActiveState) {
+                if (m_icomAudioSink && m_icomAudioDevice) {
                     m_icomAudioDevice->write(pcm);
+                }
+            });
+            // Rig ID auto-detection: update footer when model is discovered
+            connect(m_icomIpConn, &IcomIpConnection::radioInfoUpdated, this, [this] {
+                QString model = m_icomIpConn->radioModel();
+                if (!model.isEmpty() && model.startsWith("IC-")) {
+                    m_stationLabel->setText(model);
+                    m_radioInfoLabel->setText(model);
+                    m_radioModel.setRadioInfo(model, model, "");
                 }
             });
         }
@@ -5239,6 +5249,9 @@ void MainWindow::wireRadioSetupDialogSignals(RadioSetupDialog* dlg, const QStrin
 {
     if (!dlg) return;
     dlg->setIcomIpConnection(m_icomIpConn);
+    connect(dlg, &RadioSetupDialog::disconnectIcomRequested, this, [this] {
+        if (m_icomIpConn) m_icomIpConn->disconnectFromRadio();
+    });
     connect(dlg, &RadioSetupDialog::txBandSettingsRequested,
             m_txBandAction, &QAction::trigger);
 #ifdef HAVE_SERIALPORT

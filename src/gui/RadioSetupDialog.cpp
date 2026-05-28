@@ -4426,6 +4426,19 @@ QWidget* RadioSetupDialog::buildIcomIpTab()
         m_icomAudioPortLabel->setStyleSheet(kValueStyle);
         grid->addWidget(m_icomAudioPortLabel, 2, 3);
 
+        // Connect / Disconnect buttons
+        auto* btnRow = new QHBoxLayout;
+        auto* disconnectBtn = new QPushButton("Disconnect");
+        disconnectBtn->setStyleSheet(
+            "QPushButton { background: #502020; border: 1px solid #804040; "
+            "border-radius: 3px; color: #ff8080; font-size: 11px; font-weight: bold; "
+            "padding: 4px 12px; }"
+            "QPushButton:hover { background: #703030; }");
+        QObject::connect(disconnectBtn, &QPushButton::clicked, this, &RadioSetupDialog::disconnectIcomRequested);
+        btnRow->addWidget(disconnectBtn);
+        btnRow->addStretch();
+        grid->addLayout(btnRow, 3, 0, 1, 4);
+
         for (auto* lbl : group->findChildren<QLabel*>()) {
             if (lbl->styleSheet().isEmpty())
                 lbl->setStyleSheet(kLabelStyle);

@@ -985,6 +985,24 @@ void TitleBar::setDiscovering(bool active)
     }
 }
 
+void TitleBar::setConnected(bool connected)
+{
+    m_heartbeatOffTimer->stop();
+    m_heartbeatAlarmTimer->stop();
+    m_alarmRed = false;
+    m_missedBeats = 0;
+    m_discovering = false;
+    if (connected) {
+        m_heartbeat->setStyleSheet(
+            "QLabel { background: #20c060; border-radius: 5px; }");
+        m_heartbeat->setToolTip("Radio connected");
+    } else {
+        m_heartbeat->setStyleSheet(
+            "QLabel { background: #404858; border-radius: 5px; }");
+        m_heartbeat->setToolTip("Radio disconnected");
+    }
+}
+
 void TitleBar::onHeartbeat()
 {
     m_discovering = false;

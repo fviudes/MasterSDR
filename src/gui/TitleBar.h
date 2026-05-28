@@ -32,6 +32,7 @@ public:
     void onHeartbeat();       // Call when a discovery packet arrives
     void onHeartbeatLost();   // Call when radio lost from discovery
     void setDiscovering(bool active); // Solid amber while discovering / not yet connected
+    void setConnected(bool connected); // Persistent green when connected (Icom, Hermes, etc.)
     void setMinimalMode(bool on);
     void setBlinkEnabled(bool enabled); // Toggle heartbeat animation on/off
 

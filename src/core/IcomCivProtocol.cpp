@@ -162,4 +162,33 @@ IcomCivProtocol::CivMode IcomCivProtocol::modeFromString(const QString& mode)
     return CivMode::USB;
 }
 
+QString IcomCivProtocol::rigIdToModel(uint8_t rigId)
+{
+    switch (rigId) {
+    case 0x6C: return QStringLiteral("IC-76");
+    case 0x6E: return QStringLiteral("IC-78");
+    case 0x72: return QStringLiteral("IC-7800");
+    case 0x74: return QStringLiteral("IC-7100");
+    case 0x76: return QStringLiteral("IC-7850/7851");
+    case 0x78: return QStringLiteral("IC-7300");
+    case 0x7A: return QStringLiteral("IC-9700");
+    case 0x7C: return QStringLiteral("IC-7610");
+    case 0x7E: return QStringLiteral("IC-705");
+    case 0x80: return QStringLiteral("IC-9100");
+    case 0x88: return QStringLiteral("IC-7200");
+    case 0x8A: return QStringLiteral("IC-7410/9100");
+    case 0x8E: return QStringLiteral("IC-7600");
+    case 0x92: return QStringLiteral("IC-756Pro3");
+    case 0x94: return QStringLiteral("IC-756Pro2");
+    case 0xA2: return QStringLiteral("IC-706MkIIG");
+    case 0xA4: return QStringLiteral("IC-756/756Pro");
+    default:   return QString("ICOM-0x%1").arg(rigId, 2, 16, QChar('0')).toUpper();
+    }
+}
+
+QByteArray IcomCivProtocol::buildReadRigId() const
+{
+    return buildCommand(CMD_RIG_ID, 0x00);
+}
+
 } // namespace MasterSDR
