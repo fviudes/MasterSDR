@@ -187,10 +187,10 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
             emit frequencyUpdated(freq);
             break;
         }
-        case IcomCivProtocol::CMD_MODE: {
+        case IcomCivProtocol::CMD_S_METER: {
             if (!resp.data.isEmpty()) {
-                auto mode = static_cast<IcomCivProtocol::CivMode>(static_cast<uint8_t>(resp.data[0]));
-                emit modeUpdated(IcomCivProtocol::modeToString(mode));
+                int level = static_cast<int>(static_cast<uint8_t>(resp.data[0]));
+                emit sMeterUpdated(level);
             }
             break;
         }
@@ -204,8 +204,11 @@ void IcomIpConnection::onKeepAlive()
 {
     if (!m_connected) return;
     sendCtrlPacket(TYPE_PING, m_pingSeq++);
-    sendCivCommand(IcomCivProtocol::CMD_FREQ, 0);
-    sendCivCommand(IcomCivProtocol::CMD_MODE, 0);
+
+    // Poll radio state using wfview CI-V commands
+    sendCivCommand(IcomCivProtocol::CMD_FREQ, 0);          // Frequency
+    sendCivCommand(IcomCivProtocol::CMD_MODE, 0);          // Mode
+    sendCivCommand(IcomCivProtocol::CMD_S_METER, IcomCivProtocol::SUB_SMETER); // S-meter
 }
 
 void IcomIpConnection::sendSerialPacket(uint16_t seq, const QByteArray& civFrame)

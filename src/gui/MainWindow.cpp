@@ -1645,10 +1645,21 @@ MainWindow::MainWindow(QWidget* parent)
                          const QString& model) {
         if (!m_icomIpConn) {
             m_icomIpConn = new IcomIpConnection(this);
-            // Wire Icom IP into full radio control
-            connect(m_icomIpConn, &IcomIpConnection::connected, this, [this] {
-                m_connPanel->setConnected(true);
-                m_connPanel->setStatusText("ICOM connected via IP");
+            connect(m_icomIpConn, &IcomIpConnection::stateChanged, this, [this](IcomIpConnection::State state) {
+                switch (state) {
+                case IcomIpConnection::State::Connecting:
+                    m_connPanel->setStatusText("Connecting to ICOM...");
+                    break;
+                case IcomIpConnection::State::Connected:
+                    m_connPanel->setConnected(true);
+                    m_connPanel->setStatusText("ICOM connected via IP");
+                    break;
+                case IcomIpConnection::State::Error:
+                    m_connPanel->setStatusText("ICOM IP: connection failed");
+                    break;
+                default:
+                    break;
+                }
             });
             connect(m_icomIpConn, &IcomIpConnection::disconnected, this, [this] {
                 m_connPanel->setConnected(false);
@@ -1657,16 +1668,31 @@ MainWindow::MainWindow(QWidget* parent)
             connect(m_icomIpConn, &IcomIpConnection::errorOccurred, this, [this](const QString& err) {
                 m_connPanel->setStatusText("ICOM IP: " + err);
             });
-            // Route frequency updates to the radio model
+            // Frequency updates -> SliceModel and main panadapter
             connect(m_icomIpConn, &IcomIpConnection::frequencyUpdated, this, [this](uint64_t freqHz) {
                 double mhz = static_cast<double>(freqHz) / 1e6;
                 if (auto* s = m_radioModel.slice(0)) {
                     s->setFrequency(mhz);
                 }
             });
-            // Route mode updates
+            // Mode updates -> SliceModel
             connect(m_icomIpConn, &IcomIpConnection::modeUpdated, this, [this](const QString& mode) {
-                qCDebug(lcConnection) << "ICOM mode:" << mode;
+                if (auto* s = m_radioModel.slice(0)) {
+                    // Map Icom mode to FlexRadio mode string
+                    QString flexMode = mode;
+                    if (mode == "DIGU") flexMode = "DIGU";
+                    else if (mode == "DIGL") flexMode = "DIGL";
+                    else if (mode == "CWR") flexMode = "CW";
+                    m_radioModel.sendCommand(QString("slice set 0 mode=%1").arg(flexMode));
+                }
+            });
+            // S-meter updates
+            connect(m_icomIpConn, &IcomIpConnection::sMeterUpdated, this, [this](int level) {
+                if (auto* s = m_radioModel.slice(0)) {
+                    Q_UNUSED(s);
+                    // S-meter level 0-255, mapped to dBm
+                    // m_radioModel.meterModel().setSmeter(level);
+                }
             });
         }
         Q_UNUSED(rxPort);
