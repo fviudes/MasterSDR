@@ -1649,55 +1649,66 @@ MainWindow::MainWindow(QWidget* parent)
                 switch (state) {
                 case IcomIpConnection::State::Connecting:
                     m_connPanel->setStatusText("Connecting to ICOM...");
+                    m_connStatusLabel->setText("Connecting ICOM...");
                     break;
                 case IcomIpConnection::State::Connected:
                     m_connPanel->setConnected(true);
                     m_connPanel->setStatusText("ICOM connected via IP");
+                    m_connStatusLabel->setText("Connected");
                     break;
                 case IcomIpConnection::State::Error:
                     m_connPanel->setStatusText("ICOM IP: connection failed");
+                    m_connStatusLabel->setText("Error");
                     break;
                 default:
                     break;
                 }
             });
+            connect(m_icomIpConn, &IcomIpConnection::connected, this, [this] {
+                // Update radio info in footer
+                QString modelName = m_connPanel->property("icomModel").toString();
+                if (modelName.isEmpty()) modelName = "ICOM Radio";
+                m_radioModel.setRadioInfo(modelName, modelName, "");
+                // The connection indicator GIF in the title bar is driven
+                // by MainWindow which shows/hides based on connected state
+            });
             connect(m_icomIpConn, &IcomIpConnection::disconnected, this, [this] {
                 m_connPanel->setConnected(false);
                 m_connPanel->setStatusText("ICOM disconnected");
+                m_connStatusLabel->setText("Disconnected");
+                m_radioModel.setRadioInfo("", "", "");
             });
             connect(m_icomIpConn, &IcomIpConnection::errorOccurred, this, [this](const QString& err) {
                 m_connPanel->setStatusText("ICOM IP: " + err);
+                m_connStatusLabel->setText("Error");
             });
-            // Frequency updates -> SliceModel and main panadapter
+            // Frequency updates -> SliceModel and panadapter
             connect(m_icomIpConn, &IcomIpConnection::frequencyUpdated, this, [this](uint64_t freqHz) {
                 double mhz = static_cast<double>(freqHz) / 1e6;
                 if (auto* s = m_radioModel.slice(0)) {
-                    s->setFrequency(mhz);
+                    s->tuneAndRecenter(mhz);
                 }
             });
-            // Mode updates -> SliceModel
+            // Mode updates
             connect(m_icomIpConn, &IcomIpConnection::modeUpdated, this, [this](const QString& mode) {
-                if (auto* s = m_radioModel.slice(0)) {
-                    // Map Icom mode to FlexRadio mode string
-                    QString flexMode = mode;
-                    if (mode == "DIGU") flexMode = "DIGU";
-                    else if (mode == "DIGL") flexMode = "DIGL";
-                    else if (mode == "CWR") flexMode = "CW";
-                    m_radioModel.sendCommand(QString("slice set 0 mode=%1").arg(flexMode));
-                }
+                QString flexMode = mode;
+                if (mode == "LSB") flexMode = "LSB";
+                else if (mode == "USB") flexMode = "USB";
+                else if (mode == "CW") flexMode = "CW";
+                else if (mode == "CWR") flexMode = "CW";
+                else if (mode == "AM") flexMode = "AM";
+                else if (mode == "FM") flexMode = "FM";
+                else if (mode == "DIGU") flexMode = "DIGU";
+                else if (mode == "DIGL") flexMode = "DIGL";
+                else if (mode == "RTTY") flexMode = "DIGL";
+                m_radioModel.sendCommand(QString("slice set 0 mode=%1").arg(flexMode));
             });
-            // S-meter updates
+            // S-meter
             connect(m_icomIpConn, &IcomIpConnection::sMeterUpdated, this, [this](int level) {
-                if (auto* s = m_radioModel.slice(0)) {
-                    Q_UNUSED(s);
-                    // S-meter level 0-255, mapped to dBm
-                    // m_radioModel.meterModel().setSmeter(level);
-                }
+                Q_UNUSED(level);
             });
         }
-        Q_UNUSED(rxPort);
-        Q_UNUSED(txPort);
-        Q_UNUSED(model);
+        m_connPanel->setProperty("icomModel", model);
         m_icomIpConn->connectToRadio(ip, ctrlPort, rxPort, txPort, username, password);
     });
 

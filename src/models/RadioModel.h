@@ -836,6 +836,14 @@ private:
 public:
     // Network diagnostics getters
     int     lastPingRtt()      const { return m_lastPingRtt; }
+
+    // Set radio info for non-SmartSDR connections (Icom IP, Hermes, etc.)
+    void setRadioInfo(const QString& name, const QString& model, const QString& version) {
+        m_name = name;
+        m_model = model;
+        m_version = version;
+        emit infoChanged();
+    }
     int     maxPingRtt()       const { return m_maxPingRtt; }
     QString networkQuality()   const;
     int     packetLossWindowSeconds() const { return NETWORK_LOSS_WINDOW_SAMPLES; }
