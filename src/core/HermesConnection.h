@@ -33,6 +33,8 @@ public:
 
     // Hermes-specific
     void connectToRadio(const HermesRadioInfo& info);
+    void startRadio();
+    void stopRadio();
     void setRX1Frequency(uint32_t freqHz);
     void sendCommand(uint8_t addr, uint32_t data);
     void sendCommand(uint8_t addr, const QByteArray& data);
