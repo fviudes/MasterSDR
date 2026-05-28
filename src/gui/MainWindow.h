@@ -49,6 +49,9 @@
 #include "core/DxccColorProvider.h"
 
 #include <QMainWindow>
+#include <QAudioSink>
+#include <QAudioFormat>
+#include <QMediaDevices>
 #include <QSplitter>
 #include <QPointer>
 #include <QLabel>
@@ -580,6 +583,8 @@ private:
     QLabel* m_tgxlIndicator{nullptr};
     HermesModel* m_hermes{nullptr};
     IcomIpConnection* m_icomIpConn{nullptr};
+    QAudioSink* m_icomAudioSink{nullptr};
+    QIODevice* m_icomAudioDevice{nullptr};
     QLabel* m_pgxlSeparator{nullptr};
     QLabel* m_pgxlIndicator{nullptr};
     QLabel* m_txIndicator{nullptr};

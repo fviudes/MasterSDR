@@ -120,6 +120,9 @@
 #include <functional>
 #include <QApplication>
 #include <QAudioDevice>
+#include <QAudioSink>
+#include <QAudioFormat>
+#include <QMediaDevices>
 #include <QProcess>
 #include <QScreen>
 #include <QTimer>
@@ -1682,6 +1685,22 @@ MainWindow::MainWindow(QWidget* parent)
                     m_reconnectDlg->deleteLater();
                     m_reconnectDlg = nullptr;
                 }
+                // Start Icom audio playback
+                if (!m_icomAudioSink) {
+                    QAudioFormat fmt;
+                    fmt.setSampleRate(8000);
+                    fmt.setChannelCount(1);
+                    fmt.setSampleFormat(QAudioFormat::Int16);
+                    QAudioDevice dev = QMediaDevices::defaultAudioOutput();
+                    if (!dev.isFormatSupported(fmt)) {
+                        fmt.setSampleRate(16000);
+                        if (!dev.isFormatSupported(fmt)) {
+                            fmt.setSampleRate(48000);
+                        }
+                    }
+                    m_icomAudioSink = new QAudioSink(dev, fmt, this);
+                    m_icomAudioDevice = m_icomAudioSink->start();
+                }
             });
             connect(m_icomIpConn, &IcomIpConnection::disconnected, this, [this] {
                 m_connPanel->setConnected(false);
@@ -1692,6 +1711,13 @@ MainWindow::MainWindow(QWidget* parent)
                 m_stationLabel->setText("N0CALL");
                 m_radioInfoLabel->setText("");
                 m_radioVersionLabel->setText("");
+                // Stop Icom audio playback
+                if (m_icomAudioSink) {
+                    m_icomAudioSink->stop();
+                    delete m_icomAudioSink;
+                    m_icomAudioSink = nullptr;
+                    m_icomAudioDevice = nullptr;
+                }
             });
             connect(m_icomIpConn, &IcomIpConnection::errorOccurred, this, [this](const QString& err) {
                 m_connPanel->setStatusText("ICOM IP: " + err);
@@ -1702,6 +1728,17 @@ MainWindow::MainWindow(QWidget* parent)
                 double mhz = static_cast<double>(freqHz) / 1e6;
                 if (auto* s = m_radioModel.slice(0)) {
                     s->setFrequency(mhz);
+                }
+                // Feed synthetic spectrum to panadapter
+                if (auto* sw = m_panStack ? m_panStack->activeSpectrum() : nullptr) {
+                    QVector<float> bins(512, -120.0f);
+                    int peakBin = 256;
+                    for (int i = 0; i < 512; ++i) {
+                        float dist = static_cast<float>(i - peakBin);
+                        float signal = -50.0f - (dist * dist) * 0.01f;
+                        bins[i] = qMax(bins[i] + signal, -120.0f);
+                    }
+                    sw->updateSpectrum(bins);
                 }
             });
             connect(m_icomIpConn, &IcomIpConnection::modeUpdated, this, [this](const QString& mode) {
@@ -1716,10 +1753,11 @@ MainWindow::MainWindow(QWidget* parent)
             connect(m_icomIpConn, &IcomIpConnection::sMeterUpdated, this, [this](int level) {
                 Q_UNUSED(level);
             });
-            // Audio RX path: IcomIpConnection emits audioDataReady with PCM from port 50003.
-            // AudioEngine integration pending — raw PCM needs format conversion to match VITA-49 pipeline.
+            // Audio RX: route Icom PCM from port 50003 to speakers via QAudioSink
             connect(m_icomIpConn, &IcomIpConnection::audioDataReady, this, [this](const QByteArray& pcm) {
-                Q_UNUSED(pcm);
+                if (m_icomAudioSink && m_icomAudioDevice && m_icomAudioSink->state() == QAudio::ActiveState) {
+                    m_icomAudioDevice->write(pcm);
+                }
             });
         }
         m_connPanel->setProperty("icomModel", model);
