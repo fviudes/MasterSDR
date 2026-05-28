@@ -18,6 +18,7 @@ class HermesModel : public QObject {
     Q_PROPERTY(float temperature READ temperature NOTIFY temperatureUpdated)
     Q_PROPERTY(int forwardPower READ forwardPower NOTIFY powerUpdated)
     Q_PROPERTY(int reversePower READ reversePower NOTIFY powerUpdated)
+    Q_PROPERTY(float swr READ swr NOTIFY powerUpdated)
     Q_PROPERTY(bool ptt READ isPtt NOTIFY pttChanged)
 
 public:
@@ -35,6 +36,7 @@ public:
     float temperature() const { return m_temperature; }
     int forwardPower() const { return m_forwardPower; }
     int reversePower() const { return m_reversePower; }
+    float swr() const;
     bool isPtt() const { return m_ptt; }
 
 public slots:

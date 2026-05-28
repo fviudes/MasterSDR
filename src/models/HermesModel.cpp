@@ -59,31 +59,13 @@ void HermesModel::connectToRadio(const HermesRadioInfo& info)
     m_numReceivers = info.numReceivers;
 
     emit radioInfoChanged();
-
-    m_connection->connectToRadio(info);
-
-    qDebug() << "HermesModel: Connecting to" << m_radioName
-             << "GW:" << m_gatewareVersion
-             << "MAC:" << m_macAddress;
 }
 
-void HermesModel::disconnectFromRadio()
+float HermesModel::swr() const
 {
-    m_connection->disconnectFromRadio();
-}
-
-void HermesModel::setFrequency(uint32_t freqHz)
-{
-    if (m_connected) {
-        m_connection->setRX1Frequency(freqHz);
-    }
-}
-
-void HermesModel::setMox(bool active)
-{
-    if (m_connected) {
-        m_connection->setPtt(active);
-    }
+    if (m_reversePower <= 0 || m_forwardPower <= 0) return 1.0f;
+    float gamma = std::sqrt(static_cast<float>(m_reversePower) / static_cast<float>(m_forwardPower));
+    return (1.0f + gamma) / (1.0f - gamma);
 }
 
 } // namespace MasterSDR

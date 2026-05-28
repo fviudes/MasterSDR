@@ -185,6 +185,13 @@ void HermesConnection::onReadyRead()
                                << static_cast<uint8_t>(data[1])
                                << static_cast<uint8_t>(data[2]);
 
+        // I/Q wideband packets — 1024 bytes, type 0x04, ADC samples
+        if (HermesProtocol::isWidebandPacket(data)) {
+            emit iqDataReady(data);
+            continue;
+        }
+
+        // Status/reply packets — 60 bytes, EF FE header
         if (data.size() >= 60 && HermesProtocol::isValidReply(data)) {
             processReply(data);
         }

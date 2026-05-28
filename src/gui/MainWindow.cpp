@@ -1574,6 +1574,8 @@ MainWindow::MainWindow(QWidget* parent)
         s.save();
         if (m_icomIpConn && m_icomIpConn->state() == ISourceBackend::State::Connected) {
             m_icomIpConn->disconnectFromRadio();
+        } else if (m_hermes && m_hermes->connection()->state() == ISourceBackend::State::Connected) {
+            m_hermes->disconnectFromRadio();
         } else {
             m_radioModel.disconnectFromRadio();
         }
@@ -1624,6 +1626,68 @@ MainWindow::MainWindow(QWidget* parent)
         m_hermes = new HermesModel(this);
         m_connPanel->setHermesDiscovery(m_hermes->discovery());
         m_hermes->discovery()->startDiscovery();
+        // Wire Hermes signals to UI
+        connect(m_hermes, &HermesModel::connectedChanged, this, [this](bool connected) {
+            if (connected) {
+                m_connPanel->setConnected(true);
+                m_titleBar->setConnected(true);
+                QString name = m_hermes->radioName();
+                m_radioModel.setRadioInfo(name, name, m_hermes->gatewareVersion());
+                m_stationLabel->setText(name);
+                m_radioInfoLabel->setText(name);
+                m_radioVersionLabel->setText("GW " + m_hermes->gatewareVersion());
+                m_connPanel->hide();
+                if (auto* s = m_radioModel.slice(0)) {
+                    m_appletPanel->setSlice(s);
+                    m_appletPanel->sMeterWidget()->setRxMode("USB");
+                }
+            } else {
+                m_connPanel->setConnected(false);
+                m_titleBar->setConnected(false);
+                m_radioModel.setRadioInfo("", "", "");
+                m_stationLabel->setText("N0CALL");
+                m_radioInfoLabel->setText("");
+                m_radioVersionLabel->setText("");
+                m_appletPanel->setSlice(nullptr);
+            }
+        });
+        connect(m_hermes, &HermesModel::temperatureUpdated, this, [this](float tempC) {
+            if (m_paTempLabel)
+                m_paTempLabel->setText(QString("%1°C").arg(tempC, 0, 'f', 1));
+        });
+        connect(m_hermes, &HermesModel::powerUpdated, this, [this](int fwd, int rev) {
+            Q_UNUSED(fwd); Q_UNUSED(rev);
+        });
+        connect(m_hermes, &HermesModel::pttChanged, this, [this](bool ptt) {
+            m_appletPanel->sMeterWidget()->setTransmitting(ptt);
+            m_txIndicator->setStyleSheet(ptt
+                ? QStringLiteral("QLabel { color: #ff4040; font-weight: bold; font-size: 21px; }")
+                : QStringLiteral("QLabel { color: rgba(255,255,255,128); font-weight: bold; font-size: 21px; }"));
+        });
+        // Frequency updates from Hermes → SliceModel + panadapter
+        connect(m_hermes->connection(), &HermesConnection::frequencyUpdated, this, [this](uint64_t freqHz) {
+            double mhz = static_cast<double>(freqHz) / 1e6;
+            if (auto* s = m_radioModel.slice(0)) {
+                s->setFrequency(mhz);
+            }
+        });
+        // I/Q data from Hermes (wideband packets) → spectrum feed
+        connect(m_hermes->connection(), &HermesConnection::iqDataReady, this, [this](const QByteArray& iq) {
+            if (auto* sw = m_panStack ? m_panStack->activeSpectrum() : nullptr) {
+                QVector<float> bins(512, -120.0f);
+                int samplePairs = (iq.size() - 4) / 4; // EF FE header + I/Q interleaved 16-bit
+                int step = qMax(1, samplePairs / 512);
+                for (int i = 0; i < 512 && i * step * 4 + 4 < iq.size(); ++i) {
+                    int offset = 4 + i * step * 4;
+                    qint16 iVal = qFromLittleEndian<qint16>(reinterpret_cast<const uchar*>(iq.constData()) + offset);
+                    qint16 qVal = qFromLittleEndian<qint16>(reinterpret_cast<const uchar*>(iq.constData()) + offset + 2);
+                    float mag = std::sqrt(static_cast<float>(iVal * iVal + qVal * qVal));
+                    float dbm = 20.0f * std::log10(qMax(mag, 1.0f) / 32768.0f);
+                    bins[i] = qBound(-120.0f, dbm, 0.0f);
+                }
+                sw->updateSpectrum(bins);
+            }
+        });
     }
     connect(m_connPanel, &ConnectionPanel::hermesConnectRequested,
             this, [this](const HermesRadioInfo& info) {
