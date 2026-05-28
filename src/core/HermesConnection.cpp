@@ -41,7 +41,7 @@ void HermesConnection::connectToRadio(const HermesRadioInfo& info)
     // Close any existing socket binding
     m_socket->close();
 
-    // Bind to any available port
+    // Bind to any available port for receiving HL2 data
     if (!m_socket->bind(QHostAddress::AnyIPv4, 0)) {
         m_errorString = "Failed to bind UDP socket: " + m_socket->errorString();
         qCWarning(lcConnection) << m_errorString;
@@ -51,30 +51,27 @@ void HermesConnection::connectToRadio(const HermesRadioInfo& info)
         return;
     }
 
-    // The HL2 code uses connect() on the UDP socket to set default destination
-    // This filters incoming packets and allows send() without address each time
-    // ReadWrite is critical: WriteOnly prevents the readyRead signal
-    m_socket->connectToHost(m_radioAddress, m_radioPort, QIODevice::ReadWrite);
+    qCDebug(lcConnection) << "Hermes bound to port:" << m_socket->localPort();
 
-    // Start sequence: Send Stop twice (matches working hl2setup code)
+    // Start sequence: Send Stop twice (matches working hl2setup/Python code)
     QByteArray stopPkt = HermesProtocol::buildStopPacket(0);
-    m_socket->write(stopPkt);
+    m_socket->writeDatagram(stopPkt, m_radioAddress, m_radioPort);
     m_socket->flush();
     QThread::msleep(10);
-    m_socket->write(stopPkt);
+    m_socket->writeDatagram(stopPkt, m_radioAddress, m_radioPort);
     m_socket->flush();
     QThread::msleep(10);
 
-    // Send Start (radio + wideband) repeatedly like the reference C code does
+    // Send Start (radio + wideband) like the Python code
     QByteArray startPkt = HermesProtocol::buildStartPacket(
         HermesProtocol::START_RADIO | HermesProtocol::START_WIDEBAND | HermesProtocol::START_DISABLE_WATCHDOG);
     for (int i = 0; i < 3; ++i) {
-        m_socket->write(startPkt);
+        m_socket->writeDatagram(startPkt, m_radioAddress, m_radioPort);
         m_socket->flush();
         QThread::msleep(2);
     }
 
-    // Set number of receivers to 1, duplex off, MOX off (matches reference code)
+    // Set number of receivers to 1, duplex off, MOX off
     uint32_t ctrl = HermesProtocol::buildControlWord(HermesProtocol::SPEED_48K, 1, false, false);
     sendCommand(HermesProtocol::ADDR_CONTROL, ctrl);
 
@@ -95,16 +92,14 @@ void HermesConnection::disconnectFromRadio()
     m_watchdogTimer->stop();
 
     if (m_socket && m_state.load() == State::Connected) {
-        // Send Stop twice to cleanly shut down
         QByteArray stopPkt = HermesProtocol::buildStopPacket(0);
-        m_socket->write(stopPkt);
+        m_socket->writeDatagram(stopPkt, m_radioAddress, m_radioPort);
         QThread::msleep(10);
-        m_socket->write(stopPkt);
+        m_socket->writeDatagram(stopPkt, m_radioAddress, m_radioPort);
         m_socket->flush();
     }
 
     if (m_socket) {
-        m_socket->disconnectFromHost();
         m_socket->close();
     }
 
@@ -119,7 +114,7 @@ void HermesConnection::sendCommand(uint8_t addr, uint32_t data)
 {
     if (m_state.load() != State::Connected || !m_socket) return;
     QByteArray pkt = HermesProtocol::buildCommandPacket(addr, data);
-    m_socket->write(pkt);
+    m_socket->writeDatagram(pkt, m_radioAddress, m_radioPort);
     m_socket->flush();
 }
 
@@ -127,7 +122,7 @@ void HermesConnection::sendCommand(uint8_t addr, const QByteArray& data)
 {
     if (m_state.load() != State::Connected || !m_socket) return;
     QByteArray pkt = HermesProtocol::buildCommandPacket(addr, data);
-    m_socket->write(pkt);
+    m_socket->writeDatagram(pkt, m_radioAddress, m_radioPort);
     m_socket->flush();
 }
 
@@ -148,7 +143,7 @@ void HermesConnection::startRadio()
     QByteArray pkt = HermesProtocol::buildStartPacket(
         HermesProtocol::START_RADIO | HermesProtocol::START_WIDEBAND | HermesProtocol::START_DISABLE_WATCHDOG);
     if (m_socket) {
-        m_socket->write(pkt);
+        m_socket->writeDatagram(pkt, m_radioAddress, m_radioPort);
         m_socket->flush();
     }
 }
@@ -157,7 +152,7 @@ void HermesConnection::stopRadio()
 {
     QByteArray pkt = HermesProtocol::buildStopPacket(0);
     if (m_socket) {
-        m_socket->write(pkt);
+        m_socket->writeDatagram(pkt, m_radioAddress, m_radioPort);
         m_socket->flush();
     }
 }
@@ -174,9 +169,20 @@ void HermesConnection::onReadyRead()
     while (m_socket && m_socket->hasPendingDatagrams()) {
         QByteArray data;
         data.resize(static_cast<int>(m_socket->pendingDatagramSize()));
-        m_socket->readDatagram(data.data(), data.size());
+        QHostAddress sender;
+        quint16 senderPort = 0;
+        m_socket->readDatagram(data.data(), data.size(), &sender, &senderPort);
 
-        if (data.size() == 60 && HermesProtocol::isValidReply(data)) {
+        if (data.isEmpty()) continue;
+
+        qCDebug(lcConnection) << "Hermes received:" << data.size() << "bytes from"
+                               << sender.toString() << ":" << senderPort
+                               << "header:" << Qt::hex
+                               << static_cast<uint8_t>(data[0])
+                               << static_cast<uint8_t>(data[1])
+                               << static_cast<uint8_t>(data[2]);
+
+        if (data.size() >= 60 && HermesProtocol::isValidReply(data)) {
             processReply(data);
         }
     }
@@ -198,7 +204,7 @@ void HermesConnection::onWatchdogTimeout()
     if (m_state.load() != State::Connected || !m_socket) return;
     // Send discovery packet as keep-alive
     QByteArray pkt = HermesProtocol::buildDiscoveryPacket();
-    m_socket->write(pkt);
+    m_socket->writeDatagram(pkt, m_radioAddress, m_radioPort);
     m_socket->flush();
 }
 
