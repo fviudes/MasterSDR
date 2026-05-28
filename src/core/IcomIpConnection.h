@@ -27,8 +27,6 @@ public:
 
     State state() const { return m_state.load(); }
 
-    void sendCivCommand(uint8_t cmd, uint8_t subCmd, const QByteArray& data = QByteArray());
-
 signals:
     void stateChanged(State newState);
     void connected();
@@ -43,14 +41,14 @@ public slots:
 private slots:
     void onReadyRead();
     void onKeepAlive();
-    void retryAuth();
+    void retryAuth() { }  // No-op; SYN/ACK handles retry
 
 private:
-    void sendCtrlPacket(const QByteArray& payload);
-    void sendSerialPacket(const QByteArray& civFrame);
-    void sendAuthPacket();
-    void processCtrlData(const QByteArray& data);
-    void processSerialData(const QByteArray& data);
+    void processCtrlPacket(uint16_t type, uint16_t seq,
+                           uint32_t sndId, uint32_t rcvId,
+                           const QByteArray& payload);
+    void processSerialData(const QByteArray& civPayload);
+    void sendCivCommand(uint8_t cmd, uint8_t subCmd, const QByteArray& data = QByteArray());
 
     QUdpSocket* m_socket{nullptr};
     QTimer* m_keepAliveTimer{nullptr};
@@ -63,18 +61,20 @@ private:
     QString m_password;
     std::atomic<State> m_state{State::Disconnected};
 
-    uint8_t m_civAddr{IcomCivProtocol::DEFAULT_CI_V_ADDR};
-    IcomCivProtocol m_civProto;
+    uint32_t m_localId{0};
+    uint32_t m_radioId{0};
+    uint32_t m_radioSerialPort{0};
+    uint32_t m_radioAudioPort{0};
+    uint16_t m_seq{0};
     bool m_authenticated{false};
     int m_authRetries{0};
     QString m_errorString;
 
-    static constexpr int KEEPALIVE_MS = 1000;
+    uint8_t m_civAddr{IcomCivProtocol::DEFAULT_CI_V_ADDR};
+    IcomCivProtocol m_civProto;
+
+    static constexpr int KEEPALIVE_MS = 3000;
     static constexpr int MAX_AUTH_RETRIES = 5;
-    static constexpr uint8_t PKT_TYPE_AUTH = 0x01;
-    static constexpr uint8_t PKT_TYPE_CIV  = 0x02;
-    static constexpr uint8_t PKT_TYPE_IDLE = 0x03;
-    static constexpr uint8_t PKT_TYPE_PING = 0x04;
 };
 
 } // namespace MasterSDR
