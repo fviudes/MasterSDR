@@ -5,6 +5,7 @@
 #include <QDateTime>
 #include <QtEndian>
 #include <QNetworkInterface>
+#include <QThread>
 
 namespace MasterSDR {
 
@@ -57,8 +58,15 @@ void IcomIpConnection::connectToRadio(const QString& host, uint16_t ctrlPort,
 
 void IcomIpConnection::sendAuthPacket()
 {
+    // Send initial connection request first (no auth, just "hello")
+    // Some Icom models need this before accepting credentials
+    QByteArray hello;
+    hello.append('\x00');  // type = connect/hello
+    sendCtrlPacket(hello);
+    QThread::msleep(100);
+
     // Icom IP auth: Sends username + password to control port
-    // The radio should respond with a confirmation on the same port
+    // Format matches Spectrum Lab/wfview: type(1) + username + \0 + password + \0
     QByteArray payload;
     payload.append(static_cast<char>(PKT_TYPE_AUTH));
     payload.append(m_username.toUtf8());
@@ -66,7 +74,20 @@ void IcomIpConnection::sendAuthPacket()
     payload.append(m_password.toUtf8());
     payload.append('\x00');
 
+    // Also send auth to serial port (50002) as fallback
+    // Some Icom radios accept auth on the serial port
     sendCtrlPacket(payload);
+    // Also try sending to serial port directly
+    if (m_serialPort != m_ctrlPort) {
+        QByteArray pkt;
+        pkt.append('\xFE');
+        pkt.append('\xFE');
+        uint16_t len = static_cast<uint16_t>(payload.size());
+        pkt.append(static_cast<char>((len >> 8) & 0xFF));
+        pkt.append(static_cast<char>(len & 0xFF));
+        pkt.append(payload);
+        m_socket->writeDatagram(pkt, m_host, m_serialPort);
+    }
 
     qCDebug(lcConnection) << "IcomIpConnection: auth sent, username:" << m_username
              << "attempt:" << (m_authRetries + 1);
