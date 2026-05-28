@@ -56,7 +56,7 @@ public:
     static constexpr uint8_t SUB_MIC_GAIN    = 0x0B;
     static constexpr uint8_t SUB_RF_GAIN     = 0x02;
     static constexpr uint8_t SUB_TX_POWER    = 0x0A;
-    static constexpr uint8_t SUB_SQUELCH     = 0x03;
+    static constexpr uint8_t SUB_SET_SQUELCH = 0x03;  // Set squelch level (0x14 0x03)
 
     // Sub-commands for CMD_SPECTRUM (0x27)
     static constexpr uint8_t SUB_SCOPE_DATA  = 0x00;
