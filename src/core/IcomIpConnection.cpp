@@ -198,16 +198,16 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
             break;
 
         case TYPE_PING: // 0x07
-            // Respond with ping
             sendCtrlPacket(TYPE_PING, m_pingSeq++);
             break;
 
         default:
             break;
         }
-    } else if (type == TYPE_DATA) {
-        // Data channel — could be serial (50002) or audio (50003)
-        // CI-V frames start with FE FE preamble — try parsing regardless of senderPort
+    }
+
+    // CI-V payload detection — works from any senderPort (ctrl or serial)
+    if (type == TYPE_DATA && data.size() > 16) {
         QByteArray civPayload = data.mid(16);
         if (civPayload.size() >= 5
             && static_cast<uint8_t>(civPayload[0]) == IcomCivProtocol::PREAMBLE1
