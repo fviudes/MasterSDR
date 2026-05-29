@@ -127,7 +127,6 @@ public:
     QByteArray buildReadAttenuator() const;
     QByteArray buildReadFilter() const;
     QByteArray buildReadRxAntenna() const;
-    QByteArray buildSetSplit(bool on) const;
 
 private:
     uint8_t m_civAddr{DEFAULT_CI_V_ADDR};
