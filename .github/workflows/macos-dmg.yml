@@ -1,0 +1,366 @@
+﻿name: macOS DMG
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-dmg:
+    strategy:
+      matrix:
+        include:
+          - runner: macos-15
+            label: apple-silicon
+          - runner: macos-15-intel
+            label: intel
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          clean: false  # skip post-run cleanup — Intel Qt source build creates huge tree
+
+      - name: Install dependencies via Homebrew
+        run: |
+          brew install ninja create-dmg autoconf automake libtool \
+            fftw portaudio hidapi
+          if [ "${{ matrix.label }}" = "apple-silicon" ]; then
+            # Apple Silicon: Homebrew Qt targets current OS, fine for arm64
+            brew install qt@6 qtkeychain
+          else
+            # Intel: don't install Homebrew Qt — we build from source below.
+            # qtkeychain pulls in qt@6 as a dependency, so skip it too and
+            # build without SmartLink credential persistence on Intel.
+            brew install fftw portaudio hidapi
+          fi
+
+      - name: Download pre-built Qt (Intel only)
+        if: matrix.label == 'intel'
+        id: qt-download
+        run: |
+          # Pull the pinned Qt tarball produced by build-macos-qt.yml.
+          # GitHub's release CDN doesn't evict, so this hits reliably
+          # regardless of how long since the last release build.  If the
+          # tarball is missing (Qt version bumped without re-running the
+          # builder workflow), fall back to from-source.
+          URL="https://github.com/${{ github.repository }}/releases/download/deps-qt-6.8.3-macos-intel/qt-6.8.3-macos-intel-deploy13.0.tar.gz"
+          if curl -sL --fail -o qt-install.tar.gz "$URL"; then
+            tar -xzf qt-install.tar.gz
+            rm qt-install.tar.gz
+            echo "downloaded=true" >> "$GITHUB_OUTPUT"
+            echo "Pre-built Qt downloaded ($(du -sh qt-install | cut -f1))"
+          else
+            echo "downloaded=false" >> "$GITHUB_OUTPUT"
+            echo "Pre-built Qt not available at $URL — falling back to from-source build (~27 min).  Run the Build macOS Qt (Intel deps) workflow to populate this asset."
+          fi
+
+      - name: Build Qt from source (Intel only, fallback)
+        if: matrix.label == 'intel' && steps.qt-download.outputs.downloaded != 'true'
+        run: |
+          # Increase git buffer to handle large Qt submodules
+          git config --global http.postBuffer 524288000
+          git config --global core.compression 0
+          git clone --depth 1 --branch v6.8.3 https://code.qt.io/qt/qt5.git qt-src
+          cd qt-src
+          # Retry init-repository up to 3 times for network resilience
+          for i in 1 2 3; do
+            perl init-repository --module-subset=qtbase,qtmultimedia,qtwebsockets,qtserialport,qtshadertools && break
+            echo "init-repository attempt $i failed, retrying..."
+            sleep 10
+          done
+          cd ..
+          mkdir qt-build && cd qt-build
+          ../qt-src/configure -prefix $PWD/../qt-install \
+            -release -opensource -confirm-license \
+            -nomake examples -nomake tests \
+            QMAKE_MACOSX_DEPLOYMENT_TARGET=13.0 \
+            -- -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0
+          cmake --build . --parallel $(sysctl -n hw.ncpu)
+          cmake --install .
+
+      - name: Setup DeepFilterNet3 (DFNR)
+        run: bash setup-deepfilter.sh
+
+      - name: Set up ccache
+        uses: hendrikmuhs/ccache-action@77c3f8fd59034e6f3d5c58867ded0185b48d534f  # v1
+        with:
+          key: ccache-macos-${{ matrix.label }}
+          max-size: 500M
+
+      - name: Configure
+        run: |
+          if [ "${{ matrix.label }}" = "intel" ]; then
+            QT_PREFIX="$PWD/qt-install"
+            DEPLOY_TARGET="13.0"
+          else
+            QT_PREFIX="$(brew --prefix)"
+            DEPLOY_TARGET="14.0"
+          fi
+          # Intel Mac: disable GPU rendering — QRhiWidget has issues on
+          # older Metal/OpenGL hardware. Apple Silicon uses GPU by default.
+          GPU_FLAG=""
+          if [ "${{ matrix.label }}" = "intel" ]; then
+            GPU_FLAG="-DMASTERSDR_GPU_SPECTRUM=OFF"
+          fi
+          cmake -B build -G "Unix Makefiles" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET="$DEPLOY_TARGET" \
+            -DCMAKE_PREFIX_PATH="$QT_PREFIX;$(brew --prefix)" \
+            -DMQTT_TLS=OFF \
+            $GPU_FLAG
+
+      - name: Build
+        run: cmake --build build -j$(sysctl -n hw.ncpu)
+
+      - name: Bundle DFNR model
+        run: |
+          if [ -f third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz ]; then
+            mkdir -p build/MasterSDR.app/Contents/Resources
+            cp third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz \
+              build/MasterSDR.app/Contents/Resources/
+          fi
+
+      - name: Build DAX audio driver
+        run: |
+          if [ "${{ matrix.label }}" = "intel" ]; then
+            DEPLOY_TARGET="13.0"
+          else
+            DEPLOY_TARGET="14.0"
+          fi
+          cmake -B driver-build hal-plugin \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET="$DEPLOY_TARGET"
+          cmake --build driver-build -j$(sysctl -n hw.ncpu)
+          DESTDIR="$PWD/driver-root" cmake --install driver-build
+
+      - name: Verify binaries
+        run: |
+          echo "=== App architecture check ==="
+          file build/MasterSDR.app/Contents/MacOS/MasterSDR
+          lipo -info build/MasterSDR.app/Contents/MacOS/MasterSDR
+          echo "=== DAX driver architecture check ==="
+          file driver-root/Library/Audio/Plug-Ins/HAL/MasterSDRDAX.driver/Contents/MacOS/MasterSDRDAX
+          lipo -info driver-root/Library/Audio/Plug-Ins/HAL/MasterSDRDAX.driver/Contents/MacOS/MasterSDRDAX
+
+      - name: Bundle Qt frameworks
+        run: |
+          if [ "${{ matrix.label }}" = "intel" ]; then
+            DEPLOYQT="$PWD/qt-install/bin/macdeployqt"
+          else
+            DEPLOYQT="$(brew --prefix qt@6)/bin/macdeployqt"
+          fi
+          "$DEPLOYQT" build/MasterSDR.app \
+            -verbose=1 \
+            -always-overwrite
+
+      - name: Check if Apple signing secrets are available
+        id: signing
+        run: |
+          if [ -n "${{ secrets.APPLE_CERT_BASE64 }}" ] && \
+             [ -n "${{ secrets.APPLE_CERT_PASSWORD }}" ] && \
+             [ -n "${{ secrets.APPLE_TEAM_ID }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "Apple signing secrets found — DMG will be signed and notarized"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Apple signing secrets not configured — producing unsigned DMG"
+          fi
+
+      - name: Import code signing certificate
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          APPLE_CERT_BASE64: ${{ secrets.APPLE_CERT_BASE64 }}
+          APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+        run: |
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-keychain-settings build.keychain
+
+          echo "$APPLE_CERT_BASE64" | base64 --decode > cert.p12
+          security import cert.p12 -k build.keychain -P "$APPLE_CERT_PASSWORD" \
+            -T /usr/bin/codesign -T /usr/bin/productsign
+          rm cert.p12
+
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+
+      - name: Code sign application
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          APP="build/MasterSDR.app"
+          SIGN_ID="Developer ID Application"
+
+          # 1. Sign all dylibs (plugins, helpers, etc.)
+          find "$APP" -name "*.dylib" -print0 | xargs -0 -n1 \
+            codesign --force --options runtime --timestamp --sign "$SIGN_ID"
+
+          # 2. Sign framework binaries (the actual Mach-O inside each .framework)
+          find "$APP/Contents/Frameworks" -name "*.framework" -type d -maxdepth 1 | while read fw; do
+            fw_name=$(basename "$fw" .framework)
+            fw_binary="$fw/$fw_name"
+            if [ -f "$fw_binary" ]; then
+              codesign --force --options runtime --timestamp --sign "$SIGN_ID" "$fw_binary"
+            fi
+            # Sign any nested dylibs inside the framework
+            find "$fw" -name "*.dylib" -print0 2>/dev/null | xargs -0 -n1 \
+              codesign --force --options runtime --timestamp --sign "$SIGN_ID" 2>/dev/null || true
+            # Sign the framework bundle itself
+            codesign --force --options runtime --timestamp --sign "$SIGN_ID" "$fw"
+          done
+
+          # 3. Sign the main app bundle last (no --deep)
+          codesign --force --options runtime --timestamp \
+            --entitlements macos/MasterSDR.entitlements \
+            --sign "$SIGN_ID" \
+            "$APP"
+
+          # 4. Verify
+          codesign --verify --deep --strict "$APP"
+          echo "Code signing verified successfully"
+
+      - name: Code sign DAX driver
+        if: steps.signing.outputs.enabled == 'true'
+        run: |
+          codesign --force --options runtime --timestamp \
+            --sign "Developer ID Application" \
+            driver-root/Library/Audio/Plug-Ins/HAL/MasterSDRDAX.driver
+          codesign --verify --deep --strict \
+            driver-root/Library/Audio/Plug-Ins/HAL/MasterSDRDAX.driver
+          echo "DAX driver signing verified"
+
+      - name: Import installer certificate for PKG signing
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          APPLE_INSTALLER_CERT_BASE64: ${{ secrets.APPLE_INSTALLER_CERT_BASE64 }}
+          APPLE_INSTALLER_CERT_PASSWORD: ${{ secrets.APPLE_INSTALLER_CERT_PASSWORD }}
+        run: |
+          echo "$APPLE_INSTALLER_CERT_BASE64" | base64 --decode > installer-cert.p12
+          security import installer-cert.p12 -k build.keychain -P "$APPLE_INSTALLER_CERT_PASSWORD" \
+            -T /usr/bin/productbuild -T /usr/bin/pkgbuild -T /usr/bin/productsign
+          rm installer-cert.p12
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+
+      - name: Build DAX driver PKG
+        run: |
+          # Extract version from CMakeLists.txt to keep driver PKG in sync
+          APP_VERSION=$(sed -n 's/^project(MasterSDR VERSION \([^ ]*\).*/\1/p' CMakeLists.txt)
+
+          pkgbuild \
+            --root driver-root \
+            --install-location / \
+            --identifier com.mastersdr.dax \
+            --version "$APP_VERSION" \
+            MasterSDRDAX-component.pkg
+
+          cat > distribution.xml <<'DISTXML'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <installer-gui-script minSpecVersion="2">
+              <title>MasterSDR DAX Audio Drivers</title>
+              <options customize="never" require-scripts="false"/>
+              <pkg-ref id="com.mastersdr.dax" version="__VERSION__"
+                       onConclusion="RequireRestart">MasterSDRDAX-component.pkg</pkg-ref>
+              <choices-outline>
+                  <line choice="com.mastersdr.dax"/>
+              </choices-outline>
+              <choice id="com.mastersdr.dax" title="MasterSDR DAX Audio Drivers">
+                  <pkg-ref id="com.mastersdr.dax"/>
+              </choice>
+          </installer-gui-script>
+          DISTXML
+          sed -i '' 's/^          //' distribution.xml
+          sed -i '' "s/__VERSION__/$APP_VERSION/g" distribution.xml
+
+          if [ "${{ steps.signing.outputs.enabled }}" = "true" ]; then
+            productbuild \
+              --distribution distribution.xml \
+              --package-path . \
+              --sign "Developer ID Installer" \
+              "MasterSDR DAX Drivers.pkg"
+          else
+            productbuild \
+              --distribution distribution.xml \
+              --package-path . \
+              "MasterSDR DAX Drivers.pkg"
+          fi
+
+          echo "DAX driver PKG v${APP_VERSION} built"
+
+      - name: Create DMG
+        run: |
+          mkdir -p dmg-stage
+          ditto build/MasterSDR.app dmg-stage/MasterSDR.app
+          cp "MasterSDR DAX Drivers.pkg" dmg-stage/
+
+          # Layout: app (left) + Applications link (right), PKG below Applications
+          create-dmg \
+            --volname "MasterSDR" \
+            --volicon "build/MasterSDR.icns" \
+            --background "docs/logo-invert.png" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "MasterSDR.app" 150 120 \
+            --hide-extension "MasterSDR.app" \
+            --app-drop-link 450 120 \
+            --icon "MasterSDR DAX Drivers.pkg" 450 290 \
+            "MasterSDR-${{ github.ref_name }}-macOS-${{ matrix.label }}.dmg" \
+            "dmg-stage/" \
+          || true
+
+      - name: Sign DMG
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          codesign --force --timestamp \
+            --sign "Developer ID Application" \
+            MasterSDR-${{ github.ref_name }}-macOS-${{ matrix.label }}.dmg
+
+      - name: Notarize DMG
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcrun notarytool submit \
+            MasterSDR-${{ github.ref_name }}-macOS-${{ matrix.label }}.dmg \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait --timeout 600 2>&1 | tee notarize-output.txt || true
+
+          # Extract submission ID and fetch detailed log on failure
+          SUB_ID=$(grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' notarize-output.txt | head -1)
+          if grep -q "Invalid" notarize-output.txt; then
+            echo "=== Notarization FAILED — fetching Apple's rejection log ==="
+            xcrun notarytool log "$SUB_ID" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_APP_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" || true
+            exit 1
+          fi
+
+          xcrun stapler staple \
+            MasterSDR-${{ github.ref_name }}-macOS-${{ matrix.label }}.dmg
+          echo "Notarization and stapling complete"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        with:
+          name: macOS-DMG-${{ matrix.label }}
+          path: MasterSDR-*.dmg
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda  # v3
+        with:
+          files: MasterSDR-*.dmg
