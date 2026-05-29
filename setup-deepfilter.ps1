@@ -29,13 +29,14 @@ if ((Test-Path "$LibDir\deepfilter.dll") -and (Test-Path "$OutDir\models\$ModelN
 }
 
 # ── Try downloading pre-built binary ────────────────────────────────────
-$ReleaseRepo = if ($env:DFNR_RELEASE_REPO) { $env:DFNR_RELEASE_REPO } else { "ten9876/MasterSDR" }
+$ReleaseRepo = if ($env:DFNR_RELEASE_REPO) { $env:DFNR_RELEASE_REPO } else { "fviudes/MasterSDR" }
 $ReleaseTag  = "dfnr-libs"
 $Platform    = "windows-x86_64"
 $Tarball     = "libdeepfilter-$Platform.tar.gz"
 $DownloadUrl = "https://github.com/$ReleaseRepo/releases/download/$ReleaseTag/$Tarball"
 
 Write-Host "Trying pre-built binary from $DownloadUrl ..." -ForegroundColor Cyan
+$usePrebuilt = $false
 try {
     $TarPath = Join-Path $env:TEMP $Tarball
     Invoke-WebRequest -Uri $DownloadUrl -OutFile $TarPath -UseBasicParsing -ErrorAction Stop
@@ -44,12 +45,17 @@ try {
     Remove-Item $TarPath -ErrorAction SilentlyContinue
     if (Test-Path "$LibDir\deepfilter.dll") {
         Write-Host "DeepFilterNet3 ready (pre-built) in $LibDir" -ForegroundColor Green
-        exit 0
+        $usePrebuilt = $true
+    } else {
+        Write-Host "Download succeeded but DLL not found — falling back to source build" -ForegroundColor Yellow
     }
-    Write-Host "Download succeeded but DLL not found — falling back to source build" -ForegroundColor Yellow
 } catch {
     Write-Host "Pre-built binary not available — falling back to source build" -ForegroundColor Yellow
 }
+
+if ($usePrebuilt) { exit 0 }
+# Pre-built failed or corrupt — clean and rebuild from source
+if (Test-Path $LibDir) { Remove-Item -Recurse -Force $LibDir -ErrorAction SilentlyContinue }
 
 # ── Check prerequisites ─────────────────────────────────────────────────
 if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
