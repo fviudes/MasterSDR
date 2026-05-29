@@ -72,7 +72,9 @@ QByteArray IcomIpConnection::buildPacketFor(uint16_t typeCode, uint16_t seq,
 void IcomIpConnection::sendCtrlPacket(uint16_t typeCode, uint16_t seq,
                                        const QByteArray& payload)
 {
-    QByteArray pkt = buildPacketFor(typeCode, seq, m_ctrlPort, m_destId, payload);
+    // Use m_destPort from SYN-ACK header (radio's actual ctrl channel port)
+    // NOT m_ctrlPort parameter — radio may use different port in header vs UDP
+    QByteArray pkt = buildPacketFor(typeCode, seq, m_destPort, m_destId, payload);
     m_socket->writeDatagram(pkt, m_host, m_ctrlPort);
 }
 
