@@ -187,10 +187,7 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
                 // Query rig identity for auto-detection
                 QByteArray rigIdCmd = m_civProto.buildReadRigId();
                 sendSerialPacket(m_seq++, rigIdCmd);
-                // Enable spectrum scope (CI-V 0x27 0x11)
-                QByteArray scopeEnable;
-                scopeEnable.append('\x01');
-                sendCivCommand(IcomCivProtocol::CMD_SPECTRUM, IcomCivProtocol::SUB_SCOPE_ENABLE, scopeEnable);
+                // Register audio/scope stream on port 50003
                 // Register audio stream on port 50003 — send init packet
                 if (m_audioSocket) {
                     uint16_t audioSeq = m_seq++;
@@ -321,9 +318,8 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
             break;
         }
         case IcomCivProtocol::CMD_SPECTRUM: {
-            if (resp.subCmd == IcomCivProtocol::SUB_SCOPE_DATA && !resp.data.isEmpty()) {
-                emit spectrumDataReady(resp.data);
-            }
+            // Scope data streams on port 50003, not CI-V. Log for debug.
+            qCDebug(lcConnection) << "IcomIpConnection: CI-V scope response" << resp.data.size() << "bytes";
             break;
         }
         default:
@@ -349,13 +345,12 @@ void IcomIpConnection::onKeepAlive()
     sendCivCommand(IcomCivProtocol::CMD_SPLIT, 0);           // Split (0x0F)
     sendCivCommand(IcomCivProtocol::CMD_PREAMP, IcomCivProtocol::SUB_PREAMP);      // Preamp (0x16 0x02)
     sendCivCommand(IcomCivProtocol::CMD_ATTENUATOR, 0);      // Attenuator (0x11)
-    // Spectrum scope data (CI-V 0x27 0x00)
-    sendCivCommand(IcomCivProtocol::CMD_SPECTRUM, IcomCivProtocol::SUB_SCOPE_DATA);
+    // NOTE: Spectrum scope data streams on port 50003 (audio), not via CI-V 0x27
 }
 
 void IcomIpConnection::sendSerialPacket(uint16_t seq, const QByteArray& civFrame)
 {
-    // IC-705 sends/receives CI-V on ctrl port 50001, not serial port 50002
+    // IC-705: CI-V commands go to ctrl port 50001, not serial 50002
     QByteArray pkt = buildPacketFor(TYPE_DATA, seq, m_ctrlPort, m_destId, civFrame);
     m_socket->writeDatagram(pkt, m_host, m_ctrlPort);
 }
@@ -404,7 +399,15 @@ void IcomIpConnection::onAudioReady()
         m_audioSocket->readDatagram(data.data(), data.size());
         if (data.size() > 16) {
             QByteArray pcm = data.mid(16);
-            emit audioDataReady(pcm);
+            // IC-705 sends both PCM audio (~160 bytes) and scope data (~475 bytes)
+            // on port 50003. Scope data is used for panadapter.
+            if (pcm.size() >= 400) {
+                qCDebug(lcConnection) << "IcomIpConnection: audio scope data" << pcm.size() << "bytes";
+                emit spectrumDataReady(pcm);
+            } else {
+                qCDebug(lcConnection) << "IcomIpConnection: audio PCM" << pcm.size() << "bytes";
+                emit audioDataReady(pcm);
+            }
         }
     }
 }
