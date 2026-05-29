@@ -474,11 +474,11 @@ void IcomIpConnection::onKeepAlive()
 
 void IcomIpConnection::sendSerialPacket(uint16_t seq, const QByteArray& civFrame)
 {
-    // Port 50002 uses raw CI-V frames (no 16-byte Icom IP header).
-    // The 16-byte header is only for Control port 50001.
-    m_socket->writeDatagram(civFrame, m_host, m_serialPort);
-    qCDebug(lcConnection) << "IcomIpConnection: CI-V raw to" << m_host.toString() << ":" << m_serialPort
-             << "frame:" << civFrame.toHex().constData();
+    // Send CI-V with 16-byte header to port 50002 (radio expects header format).
+    // Radio ACKs with empty TYPE_DATA from port 50001, then sends
+    // actual CI-V response as raw UDP from port 50002.
+    QByteArray pkt = buildPacketFor(TYPE_DATA, seq, m_serialPort, m_destId, civFrame);
+    m_socket->writeDatagram(pkt, m_host, m_serialPort);
 }
 
 void IcomIpConnection::sendCivCommand(uint8_t cmd, uint8_t subCmd, const QByteArray& data)
