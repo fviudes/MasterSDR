@@ -215,21 +215,25 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
     }
 
     // CI-V payload detection — works from any senderPort (ctrl or serial)
-    if (type == TYPE_DATA && data.size() > 16) {
-        QByteArray civPayload = data.mid(16);
+    if (type == TYPE_DATA) {
+        QByteArray civPayload;
+        bool hasCivPayload = data.size() > 16;
+        if (hasCivPayload) civPayload = data.mid(16);
+
+        qCDebug(lcConnection) << "IcomIpConnection: TYPE_DATA" << data.size() << "bytes from port" << senderPort
+                 << "payloadSize:" << (hasCivPayload ? civPayload.size() : 0)
+                 << "payload:" << (hasCivPayload ? civPayload.left(30).toHex().constData() : "(empty)");
+
+        if (!hasCivPayload) return;
+
         bool hasCivPreamble = (civPayload.size() >= 5
             && static_cast<uint8_t>(civPayload[0]) == IcomCivProtocol::PREAMBLE1
             && static_cast<uint8_t>(civPayload[1]) == IcomCivProtocol::PREAMBLE2);
 
         // Some Icom models strip FE FE preamble in IP responses
-        // Check for controller address at payload start (E0)
         bool hasRawCiv = (civPayload.size() >= 4
             && (static_cast<uint8_t>(civPayload[0]) == IcomCivProtocol::HOST_ADDR
                 || static_cast<uint8_t>(civPayload[0]) == m_civProto.civAddress()));
-
-        qCDebug(lcConnection) << "IcomIpConnection: TYPE_DATA" << civPayload.size() << "bytes"
-                 << "hasPreamble:" << hasCivPreamble << "hasRawCiv:" << hasRawCiv
-                 << "first bytes:" << civPayload.left(20).toHex().constData();
 
         if (hasCivPreamble || hasRawCiv) {
             // If no preamble, rebuild it for parseResponse
