@@ -216,7 +216,7 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
         // Some Icom models strip FE FE preamble in IP responses
         // Check for controller address at payload start (E0)
         bool hasRawCiv = (civPayload.size() >= 4
-            && (static_cast<uint8_t>(civPayload[0]) == HOST_ADDR
+            && (static_cast<uint8_t>(civPayload[0]) == IcomCivProtocol::HOST_ADDR
                 || static_cast<uint8_t>(civPayload[0]) == m_civProto.civAddress()));
 
         if (hasCivPreamble || hasRawCiv) {
