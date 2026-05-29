@@ -372,10 +372,10 @@ void IcomIpConnection::onKeepAlive()
 
 void IcomIpConnection::sendSerialPacket(uint16_t seq, const QByteArray& civFrame)
 {
-    // CI-V responses arrive on ctrl port 50001, so send CI-V there too.
-    // Spectrum Lab uses only udp://IC-705:50001 — no separate serial port.
-    QByteArray pkt = buildPacketFor(TYPE_DATA, seq, m_ctrlPort, m_destId, civFrame);
-    m_socket->writeDatagram(pkt, m_host, m_ctrlPort);
+    // CI-V commands go to Serial Port UDP 50002 (IC-705 menu).
+    // Radio responds from Ctrl Port 50001 — we catch via FE FE detection.
+    QByteArray pkt = buildPacketFor(TYPE_DATA, seq, m_serialPort, m_destId, civFrame);
+    m_socket->writeDatagram(pkt, m_host, m_serialPort);
 }
 
 void IcomIpConnection::sendCivCommand(uint8_t cmd, uint8_t subCmd, const QByteArray& data)
