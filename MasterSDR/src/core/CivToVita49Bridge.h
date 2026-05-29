@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/IcomCivProtocol.h"
+
 #include <QObject>
 #include <QUdpSocket>
 #include <QTimer>
@@ -12,7 +14,6 @@
 
 namespace MasterSDR {
 
-class IcomCivProtocol;
 class PanadapterStream;
 
 // Meter indices for Icom radios (synthesized to match FlexRadio meter layout).

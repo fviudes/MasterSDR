@@ -1,351 +1,309 @@
-<mxfile host="app.diagrams.net" modified="2025-05-29T00:00:00.000Z" agent="HamRadio Desktop" version="21.0.0">
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
   <diagram name="HamRadio Desktop Architecture" id="arch">
-    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="2400" math="0" shadow="0">
+    <mxGraphModel dx="1687" dy="984" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="2400" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        
-        <!-- ===== TITLE ===== -->
-        <mxCell id="title" value="HamRadio Desktop — Component Architecture v1.2.0" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#e0e0e0;" vertex="1" parent="1">
+        <mxCell id="title" value="HamRadio Desktop — Component Architecture v1.2.0" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#e0e0e0;" parent="1" vertex="1">
           <mxGeometry x="400" y="20" width="800" height="40" as="geometry" />
         </mxCell>
-        
-        <!-- ===== LAYER 0: USER ===== -->
-        <mxCell id="layer0_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#16213e;opacity=60;" vertex="1" parent="1">
+        <mxCell id="layer0_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#16213e;opacity=60;" parent="1" vertex="1">
           <mxGeometry x="40" y="80" width="1520" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="user_label" value="USER LAYER" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6c757d;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="user_label" value="USER LAYER" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6c757d;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="50" y="85" width="100" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="user" value="Operator / Radio Operator" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#0f3460;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=11;" vertex="1" parent="1">
+        <mxCell id="user" value="Operator / Radio Operator" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#0f3460;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=11;" parent="1" vertex="1">
           <mxGeometry x="700" y="95" width="40" height="60" as="geometry" />
         </mxCell>
-        
-        <!-- ===== LAYER 1: ELECTRON APP ===== -->
-        <mxCell id="layer1_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;strokeColor=#16213e;opacity=40;" vertex="1" parent="1">
+        <mxCell id="layer1_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;strokeColor=#16213e;opacity=40;" parent="1" vertex="1">
           <mxGeometry x="40" y="170" width="1520" height="510" as="geometry" />
         </mxCell>
-        <mxCell id="layer1_label" value="ELECTRON APP (Node.js + React + Vite)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6c757d;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="layer1_label" value="ELECTRON APP (Node.js + React + Vite)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6c757d;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="50" y="175" width="280" height="20" as="geometry" />
         </mxCell>
-
-        <!-- RENDERER PROCESS box -->
-        <mxCell id="renderer_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;strokeColor=#533483;opacity=60;" vertex="1" parent="1">
+        <mxCell id="renderer_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;strokeColor=#533483;opacity=60;" parent="1" vertex="1">
           <mxGeometry x="60" y="200" width="700" height="460" as="geometry" />
         </mxCell>
-        <mxCell id="renderer_label" value="RENDERER PROCESS (React)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6c757d;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="renderer_label" value="RENDERER PROCESS (React)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6c757d;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="70" y="205" width="200" height="20" as="geometry" />
         </mxCell>
-
-        <!-- React Components -->
-        <mxCell id="app" value="&lt;b&gt;App.jsx&lt;/b&gt;&lt;br&gt;Root Component" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#533483;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="app" value="&lt;b&gt;App.jsx&lt;/b&gt;&lt;br&gt;Root Component" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#533483;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=10;" parent="1" vertex="1">
           <mxGeometry x="80" y="240" width="140" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="topmenu" value="&lt;b&gt;TopMenuBar&lt;/b&gt;&lt;br&gt;SDR | Digital | Logbook" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="topmenu" value="&lt;b&gt;TopMenuBar&lt;/b&gt;&lt;br&gt;SDR | Digital | Logbook" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="250" y="240" width="150" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="vfo" value="&lt;b&gt;VFOControlBar&lt;/b&gt;&lt;br&gt;Freq | Mode | PTT | Band" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="vfo" value="&lt;b&gt;VFOControlBar&lt;/b&gt;&lt;br&gt;Freq | Mode | PTT | Band" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="430" y="240" width="150" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="waterfall" value="&lt;b&gt;WaterfallPanel&lt;/b&gt;&lt;br&gt;Spectrum + Waterfall" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="waterfall" value="&lt;b&gt;WaterfallPanel&lt;/b&gt;&lt;br&gt;Spectrum + Waterfall" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="610" y="240" width="140" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="connpanel" value="&lt;b&gt;RadioConnectionPanel&lt;/b&gt;&lt;br&gt;7 radio types + config" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="connpanel" value="&lt;b&gt;RadioConnectionPanel&lt;/b&gt;&lt;br&gt;7 radio types + config" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="80" y="310" width="170" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="digital_panel" value="&lt;b&gt;DigitalModesPanel&lt;/b&gt;&lt;br&gt;FT8/FT4 UI (stub)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#6c757d;fontSize=9;dashed=1;" vertex="1" parent="1">
+        <mxCell id="digital_panel" value="&lt;b&gt;DigitalModesPanel&lt;/b&gt;&lt;br&gt;FT8/FT4 UI (stub)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#6c757d;fontSize=9;dashed=1;" parent="1" vertex="1">
           <mxGeometry x="280" y="310" width="150" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="logbook_panel" value="&lt;b&gt;LogbookPanel&lt;/b&gt;&lt;br&gt;QSO viewer (stub)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#6c757d;fontSize=9;dashed=1;" vertex="1" parent="1">
+        <mxCell id="logbook_panel" value="&lt;b&gt;LogbookPanel&lt;/b&gt;&lt;br&gt;QSO viewer (stub)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#6c757d;fontSize=9;dashed=1;" parent="1" vertex="1">
           <mxGeometry x="460" y="310" width="150" height="50" as="geometry" />
         </mxCell>
-
-        <!-- PRELOAD BRIDGE -->
-        <mxCell id="preload" value="&lt;b&gt;preload.js&lt;/b&gt;&lt;br&gt;contextBridge&lt;br&gt;───&lt;br&gt;hamradio.radio | .audio | .digital | .logbook | .serial" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;strokeColor=#e94560;fontColor=#ffffff;fontSize=9;align=center;" vertex="1" parent="1">
+        <mxCell id="preload" value="&lt;b&gt;preload.js&lt;/b&gt;&lt;br&gt;contextBridge&lt;br&gt;───&lt;br&gt;hamradio.radio | .audio | .digital | .logbook | .serial" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;strokeColor=#e94560;fontColor=#ffffff;fontSize=9;align=center;" parent="1" vertex="1">
           <mxGeometry x="80" y="500" width="270" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="ipc_bridge" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e94560;strokeWidth=2;dashed=1;" edge="1" parent="1" source="app" target="preload">
+        <mxCell id="ipc_bridge" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e94560;strokeWidth=2;dashed=1;" parent="1" source="app" target="preload" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="ipc_bridge2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e94560;strokeWidth=2;dashed=1;" edge="1" parent="1" source="connpanel" target="preload">
+        <mxCell id="ipc_bridge2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e94560;strokeWidth=2;dashed=1;" parent="1" source="connpanel" target="preload" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <!-- MAIN PROCESS -->
-        <mxCell id="main_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;strokeColor=#e94560;opacity=60;" vertex="1" parent="1">
+        <mxCell id="main_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;strokeColor=#e94560;opacity=60;" parent="1" vertex="1">
           <mxGeometry x="780" y="200" width="760" height="460" as="geometry" />
         </mxCell>
-        <mxCell id="main_label" value="MAIN PROCESS (Node.js)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6c757d;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="main_label" value="MAIN PROCESS (Node.js)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6c757d;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="790" y="205" width="180" height="20" as="geometry" />
         </mxCell>
-
-        <mxCell id="main_js" value="&lt;b&gt;main.js&lt;/b&gt; — Electron Main Process&lt;br&gt;IPC Handlers (21) + Event Forwarding" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;strokeColor=#e94560;fontColor=#ffffff;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="main_js" value="&lt;b&gt;main.js&lt;/b&gt; — Electron Main Process&lt;br&gt;IPC Handlers (21) + Event Forwarding" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;strokeColor=#e94560;fontColor=#ffffff;fontSize=10;" parent="1" vertex="1">
           <mxGeometry x="800" y="240" width="280" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="radio_ctrl" value="&lt;b&gt;RadioController&lt;/b&gt;&lt;br&gt;Facade / Strategy Pattern&lt;br&gt;State: freq, mode, PTT, band, power" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="radio_ctrl" value="&lt;b&gt;RadioController&lt;/b&gt;&lt;br&gt;Facade / Strategy Pattern&lt;br&gt;State: freq, mode, PTT, band, power" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="800" y="310" width="220" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="audio_proc" value="&lt;b&gt;AudioProcessor&lt;/b&gt;&lt;br&gt;FFT 2048pt | Waterfall&lt;br&gt;Hann window | 30 FPS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="audio_proc" value="&lt;b&gt;AudioProcessor&lt;/b&gt;&lt;br&gt;FFT 2048pt | Waterfall&lt;br&gt;Hann window | 30 FPS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="1050" y="310" width="180" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="digital_m" value="&lt;b&gt;DigitalModes&lt;/b&gt;&lt;br&gt;FT8/FT4 encode + decode&lt;br&gt;Costas sync | FSK demod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="digital_m" value="&lt;b&gt;DigitalModes&lt;/b&gt;&lt;br&gt;FT8/FT4 encode + decode&lt;br&gt;Costas sync | FSK demod" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="1270" y="310" width="180" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="logbook_s" value="&lt;b&gt;LogbookSync&lt;/b&gt;&lt;br&gt;REST API | ADIF | Offline Queue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="logbook_s" value="&lt;b&gt;LogbookSync&lt;/b&gt;&lt;br&gt;REST API | ADIF | Offline Queue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="800" y="400" width="220" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="serial_mgr" value="&lt;b&gt;SerialManager&lt;/b&gt;&lt;br&gt;SerialPort enumeration + lifecycle" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="serial_mgr" value="&lt;b&gt;SerialManager&lt;/b&gt;&lt;br&gt;SerialPort enumeration + lifecycle" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="1050" y="400" width="180" height="50" as="geometry" />
         </mxCell>
-
-        <!-- RADIO DRIVERS -->
-        <mxCell id="drivers_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;strokeColor=#4ecca3;opacity=40;" vertex="1" parent="1">
+        <mxCell id="drivers_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;strokeColor=#4ecca3;opacity=40;" parent="1" vertex="1">
           <mxGeometry x="800" y="470" width="720" height="175" as="geometry" />
         </mxCell>
-        <mxCell id="drivers_label" value="RADIO DRIVERS (EventEmitter)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#4ecca3;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="drivers_label" value="RADIO DRIVERS (EventEmitter)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#4ecca3;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="810" y="473" width="200" height="16" as="geometry" />
         </mxCell>
-        <mxCell id="d_hl2" value="HermesLite2&lt;br&gt;UDP 1024" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=8;" vertex="1" parent="1">
+        <mxCell id="d_hl2" value="HermesLite2&lt;br&gt;UDP 1024" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=8;" parent="1" vertex="1">
           <mxGeometry x="810" y="495" width="100" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="d_anan" value="AnanRadio&lt;br&gt;UDP 1024+1025" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=8;" vertex="1" parent="1">
+        <mxCell id="d_anan" value="AnanRadio&lt;br&gt;UDP 1024+1025" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=8;" parent="1" vertex="1">
           <mxGeometry x="925" y="495" width="100" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="d_flex" value="FlexRadio&lt;br&gt;TCP 4992" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=8;" vertex="1" parent="1">
+        <mxCell id="d_flex" value="FlexRadio&lt;br&gt;TCP 4992" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=8;" parent="1" vertex="1">
           <mxGeometry x="1040" y="495" width="100" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="d_icom" value="IcomRadio&lt;br&gt;Serial CI-V" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=8;" vertex="1" parent="1">
+        <mxCell id="d_icom" value="IcomRadio&lt;br&gt;Serial CI-V" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=8;" parent="1" vertex="1">
           <mxGeometry x="1155" y="495" width="100" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="d_yaesu" value="YaesuRadio&lt;br&gt;Serial CAT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=8;" vertex="1" parent="1">
+        <mxCell id="d_yaesu" value="YaesuRadio&lt;br&gt;Serial CAT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=8;" parent="1" vertex="1">
           <mxGeometry x="1270" y="495" width="100" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="d_ken" value="KenwoodRadio&lt;br&gt;Serial CAT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=8;" vertex="1" parent="1">
+        <mxCell id="d_ken" value="KenwoodRadio&lt;br&gt;Serial CAT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=8;" parent="1" vertex="1">
           <mxGeometry x="1385" y="495" width="100" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="d_icomip" value="&lt;b&gt;IcomIpRadio&lt;/b&gt;&lt;br&gt;UDP 50001/02/03&lt;br&gt;CI-V over IP | 16-byte header" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ecca3;strokeColor=#4ecca3;fontColor=#0a0a0a;fontSize=8;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="d_icomip" value="&lt;b&gt;IcomIpRadio&lt;/b&gt;&lt;br&gt;UDP 50001/02/03&lt;br&gt;CI-V over IP | 16-byte header" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ecca3;strokeColor=#4ecca3;fontColor=#0a0a0a;fontSize=8;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="810" y="545" width="200" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="d_yaesu2" value="FT-991A / FT-710 / FT-DX10&lt;br&gt;FT-DX101 / FT-891 / FT-857" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#6c757d;fontSize=8;dashed=1;" vertex="1" parent="1">
+        <mxCell id="d_yaesu2" value="FT-991A / FT-710 / FT-DX10&lt;br&gt;FT-DX101 / FT-891 / FT-857" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#6c757d;fontSize=8;dashed=1;" parent="1" vertex="1">
           <mxGeometry x="1040" y="545" width="200" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="d_ken2" value="TS-590 / TS-890 / TS-990 / TS-480" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#6c757d;fontSize=8;dashed=1;" vertex="1" parent="1">
+        <mxCell id="d_ken2" value="TS-590 / TS-890 / TS-990 / TS-480" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#6c757d;fontSize=8;dashed=1;" parent="1" vertex="1">
           <mxGeometry x="1270" y="545" width="200" height="40" as="geometry" />
         </mxCell>
-
-        <!-- ===== LAYER 2: MASTERSDR C++ Qt6 APP ===== -->
-        <mxCell id="layer2_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0a1628;strokeColor=#16213e;opacity=60;" vertex="1" parent="1">
-          <mxGeometry x="40" y="700" width="1520" height="1020" as="geometry" />
+        <mxCell id="layer2_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0a1628;strokeColor=#16213e;opacity=60;" parent="1" vertex="1">
+          <mxGeometry x="40" y="700" width="1520" height="860" as="geometry" />
         </mxCell>
-        <mxCell id="layer2_label" value="MASTERSDR (C++20 / Qt6 / SmartSDR v1.4.0.0)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6c757d;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="layer2_label" value="MASTERSDR (C++20 / Qt6 / SmartSDR v1.4.0.0)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6c757d;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="50" y="705" width="320" height="20" as="geometry" />
         </mxCell>
-
-        <!-- SOURCE MANAGER -->
-        <mxCell id="src_mgr" value="&lt;b&gt;SourceManager&lt;/b&gt;&lt;br&gt;ISourceBackend Router" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;strokeColor=#e94560;fontColor=#ffffff;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="src_mgr" value="&lt;b&gt;SourceManager&lt;/b&gt;&lt;br&gt;ISourceBackend Router" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;strokeColor=#e94560;fontColor=#ffffff;fontSize=10;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="80" y="740" width="180" height="50" as="geometry" />
         </mxCell>
-
-        <!-- BACKENDS -->
-        <mxCell id="be_flex" value="&lt;b&gt;RadioConnection&lt;/b&gt;&lt;br&gt;SmartSDR TCP&lt;br&gt;(FlexRadio)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="be_flex" value="&lt;b&gt;RadioConnection&lt;/b&gt;&lt;br&gt;SmartSDR TCP&lt;br&gt;(FlexRadio)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="80" y="810" width="150" height="55" as="geometry" />
         </mxCell>
-        <mxCell id="be_hermes" value="&lt;b&gt;HermesConnection&lt;/b&gt;&lt;br&gt;HL2 Raw UDP&lt;br&gt;(Hermes Lite 2)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="be_hermes" value="&lt;b&gt;HermesConnection&lt;/b&gt;&lt;br&gt;HL2 Raw UDP&lt;br&gt;(Hermes Lite 2)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="250" y="810" width="150" height="55" as="geometry" />
         </mxCell>
-        <mxCell id="be_icomip" value="&lt;b&gt;IcomIpConnection&lt;/b&gt;&lt;br&gt;Icom IP UDP&lt;br&gt;(Legacy)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#6c757d;fontSize=9;dashed=1;" vertex="1" parent="1">
+        <mxCell id="be_icomip" value="&lt;b&gt;IcomIpConnection&lt;/b&gt;&lt;br&gt;Icom IP UDP&lt;br&gt;(Legacy)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#6c757d;fontSize=9;dashed=1;" parent="1" vertex="1">
           <mxGeometry x="420" y="810" width="150" height="55" as="geometry" />
         </mxCell>
-        <mxCell id="be_serial" value="&lt;b&gt;SerialCatPort&lt;/b&gt;&lt;br&gt;Serial CAT&lt;br&gt;(Kenwood)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="be_serial" value="&lt;b&gt;SerialCatPort&lt;/b&gt;&lt;br&gt;Serial CAT&lt;br&gt;(Kenwood)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#e94560;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="590" y="810" width="150" height="55" as="geometry" />
         </mxCell>
-
-        <!-- NEW VITA-49 BRIDGES (v1.2.0) -->
-        <mxCell id="bridge_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a3a1a;strokeColor=#4ecca3;opacity=50;dashed=1;" vertex="1" parent="1">
+        <mxCell id="bridge_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a3a1a;strokeColor=#4ecca3;opacity=50;dashed=1;" parent="1" vertex="1">
           <mxGeometry x="80" y="885" width="820" height="160" as="geometry" />
         </mxCell>
-        <mxCell id="bridge_label" value="NEW v1.2.0: VITA-49 TRANSLATION BRIDGES (Bidirectional)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#4ecca3;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="bridge_label" value="NEW v1.2.0: VITA-49 TRANSLATION BRIDGES (Bidirectional)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#4ecca3;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="90" y="888" width="400" height="16" as="geometry" />
         </mxCell>
-        <mxCell id="bridge_icom" value="&lt;b&gt;IcomIpBackend&lt;/b&gt; (ISourceBackend)&lt;br&gt;─── wraps ───&lt;br&gt;&lt;b&gt;CivToVita49Bridge&lt;/b&gt;&lt;br&gt;───&lt;br&gt;CI-V ↔ VITA-49&lt;br&gt;PCC 0x03E3 | 0x8003 | 0x8002&lt;br&gt;SYN/SYN-ACK/READY handshake&lt;br&gt;3s keepalive + 9-param poll&lt;br&gt;7 meter definitions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ecca3;strokeColor=#4ecca3;fontColor=#0a0a0a;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="bridge_icom" value="&lt;b&gt;IcomIpBackend&lt;/b&gt; (ISourceBackend)&lt;br&gt;─── wraps ───&lt;br&gt;&lt;b&gt;CivToVita49Bridge&lt;/b&gt;&lt;br&gt;───&lt;br&gt;CI-V ↔ VITA-49&lt;br&gt;PCC 0x03E3 | 0x8003 | 0x8002&lt;br&gt;SYN/SYN-ACK/READY handshake&lt;br&gt;3s keepalive + 9-param poll&lt;br&gt;7 meter definitions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ecca3;strokeColor=#4ecca3;fontColor=#0a0a0a;fontSize=9;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="100" y="910" width="240" height="125" as="geometry" />
         </mxCell>
-        <mxCell id="bridge_hermes" value="&lt;b&gt;HermesBackend&lt;/b&gt; (ISourceBackend)&lt;br&gt;─── wraps ───&lt;br&gt;&lt;b&gt;HermesToVita49Bridge&lt;/b&gt;&lt;br&gt;───&lt;br&gt;HL2 ↔ VITA-49&lt;br&gt;PCC 0x03E3 | 0x8003 | 0x8002&lt;br&gt;Stop/Start sequence&lt;br&gt;500ms watchdog + keepalive&lt;br&gt;10 meter definitions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ecca3;strokeColor=#4ecca3;fontColor=#0a0a0a;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="bridge_hermes" value="&lt;b&gt;HermesBackend&lt;/b&gt; (ISourceBackend)&lt;br&gt;─── wraps ───&lt;br&gt;&lt;b&gt;HermesToVita49Bridge&lt;/b&gt;&lt;br&gt;───&lt;br&gt;HL2 ↔ VITA-49&lt;br&gt;PCC 0x03E3 | 0x8003 | 0x8002&lt;br&gt;Stop/Start sequence&lt;br&gt;500ms watchdog + keepalive&lt;br&gt;10 meter definitions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ecca3;strokeColor=#4ecca3;fontColor=#0a0a0a;fontSize=9;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="360" y="910" width="240" height="125" as="geometry" />
         </mxCell>
-        <mxCell id="bridge_out" value="Output: VITA-49 UDP&lt;br&gt;to PanadapterStream&lt;br&gt;via localhost loopback" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a3a1a;strokeColor=#4ecca3;fontColor=#4ecca3;fontSize=9;fontStyle=2;" vertex="1" parent="1">
+        <mxCell id="bridge_out" value="Output: VITA-49 UDP&lt;br&gt;to PanadapterStream&lt;br&gt;via localhost loopback" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a3a1a;strokeColor=#4ecca3;fontColor=#4ecca3;fontSize=9;fontStyle=2;" parent="1" vertex="1">
           <mxGeometry x="620" y="930" width="180" height="70" as="geometry" />
         </mxCell>
-
-        <!-- CONNECTION ARROWS -->
-        <mxCell id="arr_src" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e94560;strokeWidth=2;" edge="1" parent="1" source="src_mgr" target="be_flex">
+        <mxCell id="arr_src" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e94560;strokeWidth=2;" parent="1" source="src_mgr" target="be_flex" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="arr_src2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e94560;strokeWidth=2;" edge="1" parent="1" source="src_mgr" target="be_hermes">
+        <mxCell id="arr_src2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e94560;strokeWidth=2;" parent="1" source="src_mgr" target="be_hermes" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="arr_bridge" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4ecca3;strokeWidth=2;dashed=1;" edge="1" parent="1" source="src_mgr" target="bridge_icom">
+        <mxCell id="arr_bridge" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4ecca3;strokeWidth=2;dashed=1;" parent="1" source="src_mgr" target="bridge_icom" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <!-- RadioModel -->
-        <mxCell id="rmodel" value="&lt;b&gt;RadioModel&lt;/b&gt; — Central State Hub (5271 lines)&lt;br&gt;owns: SliceModel, PanadapterModel, MeterModel,&lt;br&gt;TransmitModel, EqualizerModel, TnfModel, SpotModel,&lt;br&gt;TunerModel, CwxModel, DvkModel, DaxIqModel,&lt;br&gt;FlexWaveformModel, NavtexModel, UsbCableModel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;strokeColor=#533483;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="rmodel" value="&lt;b&gt;RadioModel&lt;/b&gt; — Central State Hub (5271 lines)&lt;br&gt;owns: SliceModel, PanadapterModel, MeterModel,&lt;br&gt;TransmitModel, EqualizerModel, TnfModel, SpotModel,&lt;br&gt;TunerModel, CwxModel, DvkModel, DaxIqModel,&lt;br&gt;FlexWaveformModel, NavtexModel, UsbCableModel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;strokeColor=#533483;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="930" y="740" width="260" height="105" as="geometry" />
         </mxCell>
-
-        <!-- CORE PIPELINE -->
-        <mxCell id="core_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;strokeColor=#533483;opacity=50;" vertex="1" parent="1">
+        <mxCell id="core_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;strokeColor=#533483;opacity=50;" parent="1" vertex="1">
           <mxGeometry x="930" y="860" width="610" height="380" as="geometry" />
         </mxCell>
-        <mxCell id="core_label" value="CORE PIPELINE (VITA-49 consumers — UNCHANGED)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#533483;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="core_label" value="CORE PIPELINE (VITA-49 consumers — UNCHANGED)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#533483;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="940" y="863" width="320" height="16" as="geometry" />
         </mxCell>
-        <mxCell id="pan_stream" value="&lt;b&gt;PanadapterStream&lt;/b&gt; (1228 lines)&lt;br&gt;VITA-49 UDP parser + router&lt;br&gt;───&lt;br&gt;PCC 0x8003 → spectrumReady() &lt;br&gt;PCC 0x8004 → waterfallRowReady()&lt;br&gt;PCC 0x03E3 → audioDataReady()&lt;br&gt;PCC 0x0123 → daxAudioReady()&lt;br&gt;PCC 0x8002 → meterDataReady()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="pan_stream" value="&lt;b&gt;PanadapterStream&lt;/b&gt; (1228 lines)&lt;br&gt;VITA-49 UDP parser + router&lt;br&gt;───&lt;br&gt;PCC 0x8003 → spectrumReady() &lt;br&gt;PCC 0x8004 → waterfallRowReady()&lt;br&gt;PCC 0x03E3 → audioDataReady()&lt;br&gt;PCC 0x0123 → daxAudioReady()&lt;br&gt;PCC 0x8002 → meterDataReady()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="950" y="890" width="250" height="120" as="geometry" />
         </mxCell>
-        <mxCell id="audio_eng" value="&lt;b&gt;AudioEngine&lt;/b&gt; (4609 lines)&lt;br&gt;RX: QAudioSink&lt;br&gt;TX: VITA-49 buildVitaTxPacket()&lt;br&gt;DSP chain: NR2|NR4|RN2|BNR|DFNR&lt;br&gt;EQ→Gate→Comp→DeEss→Tube→Pudu→Reverb→Limiter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="audio_eng" value="&lt;b&gt;AudioEngine&lt;/b&gt; (4609 lines)&lt;br&gt;RX: QAudioSink&lt;br&gt;TX: VITA-49 buildVitaTxPacket()&lt;br&gt;DSP chain: NR2|NR4|RN2|BNR|DFNR&lt;br&gt;EQ→Gate→Comp→DeEss→Tube→Pudu→Reverb→Limiter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="950" y="1030" width="250" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="meter_m" value="&lt;b&gt;MeterModel&lt;/b&gt;&lt;br&gt;SLC/LEVEL | TX/FWDPWR | SWR&lt;br&gt;COD/MICPEAK | RAD/PATEMP&lt;br&gt;FlexLib-compatible conversions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="meter_m" value="&lt;b&gt;MeterModel&lt;/b&gt;&lt;br&gt;SLC/LEVEL | TX/FWDPWR | SWR&lt;br&gt;COD/MICPEAK | RAD/PATEMP&lt;br&gt;FlexLib-compatible conversions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="1225" y="890" width="235" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="spectrum_w" value="&lt;b&gt;SpectrumWidget&lt;/b&gt;&lt;br&gt;GPU QRhi FFT display&lt;br&gt;Waterfall + Overlay" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="spectrum_w" value="&lt;b&gt;SpectrumWidget&lt;/b&gt;&lt;br&gt;GPU QRhi FFT display&lt;br&gt;Waterfall + Overlay" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="1225" y="980" width="235" height="55" as="geometry" />
         </mxCell>
-        <mxCell id="meter_smooth" value="&lt;b&gt;MeterSmoother&lt;/b&gt;&lt;br&gt;30ms attack / 180ms release" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="meter_smooth" value="&lt;b&gt;MeterSmoother&lt;/b&gt;&lt;br&gt;30ms attack / 180ms release" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="1225" y="1055" width="235" height="45" as="geometry" />
         </mxCell>
-
-        <!-- GUI LAYER -->
-        <mxCell id="gui_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;strokeColor=#a855f7;opacity=40;" vertex="1" parent="1">
+        <mxCell id="gui_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;strokeColor=#a855f7;opacity=40;" parent="1" vertex="1">
           <mxGeometry x="930" y="1260" width="610" height="140" as="geometry" />
         </mxCell>
-        <mxCell id="gui_label" value="GUI (Qt6 Widgets + QRhi) — 253 files" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#a855f7;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="gui_label" value="GUI (Qt6 Widgets + QRhi) — 253 files" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#a855f7;fontStyle=1;" parent="1" vertex="1">
           <mxGeometry x="940" y="1263" width="280" height="16" as="geometry" />
         </mxCell>
-        <mxCell id="gui_main" value="&lt;b&gt;MainWindow&lt;/b&gt; — Signal Hub" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#533483;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
+        <mxCell id="gui_main" value="&lt;b&gt;MainWindow&lt;/b&gt; — Signal Hub" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#533483;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
           <mxGeometry x="950" y="1290" width="150" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="gui_pan" value="PanadapterApplet&lt;br&gt;PanadapterStack" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=8;" vertex="1" parent="1">
+        <mxCell id="gui_pan" value="PanadapterApplet&lt;br&gt;PanadapterStack" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=8;" parent="1" vertex="1">
           <mxGeometry x="1120" y="1290" width="120" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="gui_vfo" value="VfoWidget&lt;br&gt;FilterPassband" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=8;" vertex="1" parent="1">
+        <mxCell id="gui_vfo" value="VfoWidget&lt;br&gt;FilterPassband" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=8;" parent="1" vertex="1">
           <mxGeometry x="1260" y="1290" width="120" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="gui_rx" value="RxApplet | TxApplet&lt;br&gt;PhoneApplet | MeterApplet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=8;" vertex="1" parent="1">
+        <mxCell id="gui_rx" value="RxApplet | TxApplet&lt;br&gt;PhoneApplet | MeterApplet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=8;" parent="1" vertex="1">
           <mxGeometry x="950" y="1345" width="200" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="gui_dsp" value="ClientEq | ClientComp | ClientGate&lt;br&gt;ClientDeEss | ClientTube | ClientPudu" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=8;" vertex="1" parent="1">
+        <mxCell id="gui_dsp" value="ClientEq | ClientComp | ClientGate&lt;br&gt;ClientDeEss | ClientTube | ClientPudu" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#a855f7;fontColor=#e0e0e0;fontSize=8;" parent="1" vertex="1">
           <mxGeometry x="1170" y="1345" width="210" height="40" as="geometry" />
         </mxCell>
-
-        <!-- ===== LAYER 3: EXTERNAL SERVICES ===== -->
-        <mxCell id="layer3_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#16213e;opacity=40;" vertex="1" parent="1">
-          <mxGeometry x="40" y="1740" width="1520" height="140" as="geometry" />
+        <mxCell id="layer3_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#16213e;opacity=40;" parent="1" vertex="1">
+          <mxGeometry x="40" y="1590" width="1520" height="140" as="geometry" />
         </mxCell>
-        <mxCell id="layer3_label" value="EXTERNAL SERVICES" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6c757d;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="50" y="1745" width="160" height="20" as="geometry" />
+        <mxCell id="layer3_label" value="EXTERNAL SERVICES" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#6c757d;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="50" y="1595" width="160" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="svc_dx" value="DX Cluster&lt;br&gt;(Telnet)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="80" y="1780" width="120" height="50" as="geometry" />
+        <mxCell id="svc_dx" value="DX Cluster&lt;br&gt;(Telnet)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="80" y="1630" width="120" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="svc_wsjt" value="WSJT-X&lt;br&gt;(UDP bridge)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="230" y="1780" width="120" height="50" as="geometry" />
+        <mxCell id="svc_wsjt" value="WSJT-X&lt;br&gt;(UDP bridge)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="230" y="1630" width="120" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="svc_pota" value="POTA&lt;br&gt;(REST API)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="380" y="1780" width="120" height="50" as="geometry" />
+        <mxCell id="svc_pota" value="POTA&lt;br&gt;(REST API)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="380" y="1630" width="120" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="svc_mqtt" value="MQTT&lt;br&gt;(SmartLink)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="530" y="1780" width="120" height="50" as="geometry" />
+        <mxCell id="svc_mqtt" value="MQTT&lt;br&gt;(SmartLink)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="530" y="1630" width="120" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="svc_log" value="Logbook API&lt;br&gt;(REST)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="680" y="1780" width="120" height="50" as="geometry" />
+        <mxCell id="svc_log" value="Logbook API&lt;br&gt;(REST)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="680" y="1630" width="120" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="svc_midi" value="MIDI Devices&lt;br&gt;(HID API)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="830" y="1780" width="120" height="50" as="geometry" />
+        <mxCell id="svc_midi" value="MIDI Devices&lt;br&gt;(HID API)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="830" y="1630" width="120" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="svc_sdeck" value="Stream Deck&lt;br&gt;(Elgato HID)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="980" y="1780" width="120" height="50" as="geometry" />
+        <mxCell id="svc_sdeck" value="Stream Deck&lt;br&gt;(Elgato HID)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="980" y="1630" width="120" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="svc_tci" value="TCI&lt;br&gt;(WebSocket)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="1130" y="1780" width="120" height="50" as="geometry" />
+        <mxCell id="svc_tci" value="TCI&lt;br&gt;(WebSocket)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="1130" y="1630" width="120" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="svc_rigctl" value="rigctld&lt;br&gt;(TCP 4532)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="1280" y="1780" width="120" height="50" as="geometry" />
+        <mxCell id="svc_rigctl" value="rigctld&lt;br&gt;(TCP 4532)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="1280" y="1630" width="120" height="50" as="geometry" />
         </mxCell>
-
-        <!-- ===== LAYER 4: HARDWARE RADIOS ===== -->
-        <mxCell id="layer4_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;strokeColor=#4ecca3;opacity=40;" vertex="1" parent="1">
-          <mxGeometry x="40" y="1900" width="1520" height="100" as="geometry" />
+        <mxCell id="layer4_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#16213e;strokeColor=#4ecca3;opacity=40;" parent="1" vertex="1">
+          <mxGeometry x="40" y="1750" width="1520" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="layer4_label" value="HARDWARE RADIOS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#4ecca3;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="50" y="1905" width="160" height="20" as="geometry" />
+        <mxCell id="layer4_label" value="HARDWARE RADIOS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#4ecca3;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="50" y="1755" width="160" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="hw_hl2" value="&lt;b&gt;Hermes Lite 2&lt;/b&gt;&lt;br&gt;UDP:1025 | 48kHz BW" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="80" y="1940" width="150" height="45" as="geometry" />
+        <mxCell id="hw_hl2" value="&lt;b&gt;Hermes Lite 2&lt;/b&gt;&lt;br&gt;UDP:1025 | 48kHz BW" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="80" y="1790" width="150" height="45" as="geometry" />
         </mxCell>
-        <mxCell id="hw_anan" value="&lt;b&gt;ANAN SDR&lt;/b&gt;&lt;br&gt;UDP:1024+1025" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="260" y="1940" width="150" height="45" as="geometry" />
+        <mxCell id="hw_anan" value="&lt;b&gt;ANAN SDR&lt;/b&gt;&lt;br&gt;UDP:1024+1025" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="260" y="1790" width="150" height="45" as="geometry" />
         </mxCell>
-        <mxCell id="hw_flex" value="&lt;b&gt;FlexRadio 6000/8000&lt;/b&gt;&lt;br&gt;TCP:4992 | SmartSDR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="440" y="1940" width="170" height="45" as="geometry" />
+        <mxCell id="hw_flex" value="&lt;b&gt;FlexRadio 6000/8000&lt;/b&gt;&lt;br&gt;TCP:4992 | SmartSDR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f3460;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="440" y="1790" width="170" height="45" as="geometry" />
         </mxCell>
-        <mxCell id="hw_icom" value="&lt;b&gt;Icom IP/LAN&lt;/b&gt;&lt;br&gt;UDP:50001/02/03 | CI-V" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ecca3;strokeColor=#4ecca3;fontColor=#0a0a0a;fontSize=9;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="640" y="1940" width="180" height="45" as="geometry" />
+        <mxCell id="hw_icom" value="&lt;b&gt;Icom IP/LAN&lt;/b&gt;&lt;br&gt;UDP:50001/02/03 | CI-V" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ecca3;strokeColor=#4ecca3;fontColor=#0a0a0a;fontSize=9;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="640" y="1790" width="180" height="45" as="geometry" />
         </mxCell>
-        <mxCell id="hw_yaesu" value="&lt;b&gt;Yaesu FT-991A/etc&lt;/b&gt;&lt;br&gt;Serial CAT 38400bps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="850" y="1940" width="170" height="45" as="geometry" />
+        <mxCell id="hw_yaesu" value="&lt;b&gt;Yaesu FT-991A/etc&lt;/b&gt;&lt;br&gt;Serial CAT 38400bps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="850" y="1790" width="170" height="45" as="geometry" />
         </mxCell>
-        <mxCell id="hw_ken" value="&lt;b&gt;Kenwood TS-590/etc&lt;/b&gt;&lt;br&gt;Serial CAT 9600bps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="1050" y="1940" width="170" height="45" as="geometry" />
+        <mxCell id="hw_ken" value="&lt;b&gt;Kenwood TS-590/etc&lt;/b&gt;&lt;br&gt;Serial CAT 9600bps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#4ecca3;fontColor=#e0e0e0;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="1050" y="1790" width="170" height="45" as="geometry" />
         </mxCell>
-
-        <!-- ===== LEGEND ===== -->
-        <mxCell id="legend_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#16213e;opacity=80;" vertex="1" parent="1">
-          <mxGeometry x="40" y="2030" width="1520" height="60" as="geometry" />
+        <mxCell id="legend_bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#16213e;opacity=80;" parent="1" vertex="1">
+          <mxGeometry x="40" y="1880" width="1520" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="leg_new" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ecca3;strokeColor=#4ecca3;" vertex="1" parent="1">
-          <mxGeometry x="60" y="2045" width="20" height="20" as="geometry" />
+        <mxCell id="leg_new" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4ecca3;strokeColor=#4ecca3;" parent="1" vertex="1">
+          <mxGeometry x="60" y="1895" width="20" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="leg_new_t" value="New in v1.2.0" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#e0e0e0;" vertex="1" parent="1">
-          <mxGeometry x="90" y="2045" width="100" height="20" as="geometry" />
+        <mxCell id="leg_new_t" value="New in v1.2.0" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#e0e0e0;" parent="1" vertex="1">
+          <mxGeometry x="90" y="1895" width="100" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="leg_stub" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="220" y="2045" width="20" height="20" as="geometry" />
+        <mxCell id="leg_stub" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a2e;strokeColor=#6c757d;dashed=1;" parent="1" vertex="1">
+          <mxGeometry x="220" y="1895" width="20" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="leg_stub_t" value="Stub / Not Implemented" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#e0e0e0;" vertex="1" parent="1">
-          <mxGeometry x="250" y="2045" width="150" height="20" as="geometry" />
+        <mxCell id="leg_stub_t" value="Stub / Not Implemented" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#e0e0e0;" parent="1" vertex="1">
+          <mxGeometry x="250" y="1895" width="150" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="leg_elec" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;strokeColor=#e94560;" vertex="1" parent="1">
-          <mxGeometry x="430" y="2045" width="20" height="20" as="geometry" />
+        <mxCell id="leg_elec" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e94560;strokeColor=#e94560;" parent="1" vertex="1">
+          <mxGeometry x="430" y="1895" width="20" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="leg_elec_t" value="IPC Bridge" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#e0e0e0;" vertex="1" parent="1">
-          <mxGeometry x="460" y="2045" width="100" height="20" as="geometry" />
+        <mxCell id="leg_elec_t" value="IPC Bridge" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#e0e0e0;" parent="1" vertex="1">
+          <mxGeometry x="460" y="1895" width="100" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="leg_purple" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#533483;strokeColor=#a855f7;" vertex="1" parent="1">
-          <mxGeometry x="590" y="2045" width="20" height="20" as="geometry" />
+        <mxCell id="leg_purple" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#533483;strokeColor=#a855f7;" parent="1" vertex="1">
+          <mxGeometry x="590" y="1895" width="20" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="leg_purple_t" value="Core Pipeline / GUI" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#e0e0e0;" vertex="1" parent="1">
-          <mxGeometry x="620" y="2045" width="130" height="20" as="geometry" />
+        <mxCell id="leg_purple_t" value="Core Pipeline / GUI" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#e0e0e0;" parent="1" vertex="1">
+          <mxGeometry x="620" y="1895" width="130" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="leg_proto" value="SmartSDR v1.4.0.0 | VITA-49 | CI-V | CAT | UDP | TCP | HID | REST" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#6c757d;fontStyle=2;" vertex="1" parent="1">
-          <mxGeometry x="780" y="2045" width="500" height="20" as="geometry" />
+        <mxCell id="leg_proto" value="SmartSDR v1.4.0.0 | VITA-49 | CI-V | CAT | UDP | TCP | HID | REST" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#6c757d;fontStyle=2;" parent="1" vertex="1">
+          <mxGeometry x="780" y="1895" width="500" height="20" as="geometry" />
         </mxCell>
-
-        <!-- Data flow arrows (inter-layer) -->
-        <mxCell id="flow_app_to_mastersdr" value="VITA-49 UDP loopback" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4ecca3;strokeWidth=2;dashed=1;fontColor=#4ecca3;fontSize=9;" edge="1" parent="1" source="bridge_out" target="pan_stream">
+        <mxCell id="flow_app_to_mastersdr" value="VITA-49 UDP loopback" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4ecca3;strokeWidth=2;dashed=1;fontColor=#4ecca3;fontSize=9;" parent="1" source="bridge_out" target="pan_stream" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="flow_pan_to_audio" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a855f7;strokeWidth=1;" edge="1" parent="1" source="pan_stream" target="audio_eng">
+        <mxCell id="flow_pan_to_audio" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a855f7;strokeWidth=1;" parent="1" source="pan_stream" target="audio_eng" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="flow_pan_to_meter" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a855f7;strokeWidth=1;" edge="1" parent="1" source="pan_stream" target="meter_m">
+        <mxCell id="flow_pan_to_meter" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a855f7;strokeWidth=1;" parent="1" source="pan_stream" target="meter_m" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="flow_pan_to_spec" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a855f7;strokeWidth=1;" edge="1" parent="1" source="pan_stream" target="spectrum_w">
+        <mxCell id="flow_pan_to_spec" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a855f7;strokeWidth=1;" parent="1" source="pan_stream" target="spectrum_w" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
       </root>
     </mxGraphModel>
   </diagram>
