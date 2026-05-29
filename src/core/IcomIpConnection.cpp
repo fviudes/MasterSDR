@@ -351,8 +351,9 @@ void IcomIpConnection::onKeepAlive()
 
 void IcomIpConnection::sendSerialPacket(uint16_t seq, const QByteArray& civFrame)
 {
-    QByteArray pkt = buildPacketFor(TYPE_DATA, seq, m_serialPort, m_destId, civFrame);
-    m_socket->writeDatagram(pkt, m_host, m_serialPort);
+    // IC-705 sends/receives CI-V on ctrl port 50001, not serial port 50002
+    QByteArray pkt = buildPacketFor(TYPE_DATA, seq, m_ctrlPort, m_destId, civFrame);
+    m_socket->writeDatagram(pkt, m_host, m_ctrlPort);
 }
 
 void IcomIpConnection::sendCivCommand(uint8_t cmd, uint8_t subCmd, const QByteArray& data)

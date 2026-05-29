@@ -1805,12 +1805,13 @@ MainWindow::MainWindow(QWidget* parent)
                 if (auto* s = m_radioModel.slice(0)) {
                     s->setFrequency(mhz);
                 }
-                // Direct VFO position update (works without a SliceModel)
-                if (auto* sw = m_panStack ? m_panStack->activeSpectrum() : nullptr) {
-                    sw->setVfoFrequency(mhz);
+                // Direct VFO position update + synthetic spectrum fallback
+                SpectrumWidget* targetSw = m_panStack ? m_panStack->activeSpectrum() : nullptr;
+                if (!targetSw && m_panStack && m_panStack->count() > 0) {
+                    targetSw = m_panStack->allApplets().first()->spectrumWidget();
                 }
-                // Feed synthetic spectrum to panadapter
-                if (auto* sw = m_panStack ? m_panStack->activeSpectrum() : nullptr) {
+                if (targetSw) {
+                    targetSw->setVfoFrequency(mhz);
                     QVector<float> bins(512, -120.0f);
                     int peakBin = 256;
                     for (int i = 0; i < 512; ++i) {
@@ -1818,7 +1819,7 @@ MainWindow::MainWindow(QWidget* parent)
                         float signal = -50.0f - (dist * dist) * 0.01f;
                         bins[i] = qMax(bins[i] + signal, -120.0f);
                     }
-                    sw->updateSpectrum(bins);
+                    targetSw->updateSpectrum(bins);
                 }
             });
             connect(m_icomIpConn, &IcomIpConnection::modeUpdated, this, [this](const QString& mode) {
