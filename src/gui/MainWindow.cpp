@@ -1886,7 +1886,11 @@ MainWindow::MainWindow(QWidget* parent)
         } else if (!model.isEmpty() && model != "Auto") {
             m_icomIpConn->setCivAddress(IcomCivProtocol::modelToCivAddress(model));
         }
-        m_icomIpConn->connectToRadio(ip, ctrlPort, rxPort, txPort, username, password);
+        // Only connect if not already connecting/connected
+        auto st = m_icomIpConn->state();
+        if (st != ISourceBackend::State::Connecting && st != ISourceBackend::State::Connected) {
+            m_icomIpConn->connectToRadio(ip, ctrlPort, rxPort, txPort, username, password);
+        }
     });
 
     // WAN radio connect: ask SmartLink server for a handle, then TLS to radio
