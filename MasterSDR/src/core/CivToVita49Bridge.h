@@ -203,12 +203,15 @@ private:
     void synthesizeVita49Fft(const QByteArray& scopeData);
     void synthesizeVita49Meters();
 
+public:
     static constexpr quint32 FLEX_OUI    = 0x001C2D;
     static constexpr quint32 FLEX_ICC    = 0x534C;
-    static constexpr quint16 PCC_IF_DATA = 0x03E3;  // float32 stereo BE
-    static constexpr quint16 PCC_FFT     = 0x8003;  // FFT bins
-    static constexpr quint16 PCC_METER   = 0x8002;  // meter id/value pairs
+    static constexpr quint16 PCC_IF_DATA = 0x03E3;
+    static constexpr quint16 PCC_FFT     = 0x8003;
+    static constexpr quint16 PCC_METER   = 0x8002;
     static constexpr int VITA49_HEADER_BYTES = 28;
+
+private:
 
     QByteArray buildVita49Header(quint16 pcc, quint32 streamId, quint32 payloadBytes);
     QByteArray buildVita49AudioPacket(const QByteArray& pcmPayload);

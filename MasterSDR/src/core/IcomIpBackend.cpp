@@ -158,13 +158,7 @@ void IcomIpBackend::applyPanadapterDefinitions()
 
 void IcomIpBackend::applyMeterDefinitions(MeterModel* model)
 {
-    // Synthesize meter definitions that match FlexRadio's layout
-    // These are sent BEFORE any VITA-49 meter data arrives
-    // Format matches FlexRadio TCP status: "meter N N.src=SRC N.num=0 N.nam=NAME ..."
-
-    int idx = 0;
-
-    // SLICE0_LEVEL: S-meter (CI-V 0x15/0x02)
+    // idx removed - IcomMeterIndex provides the indices directly
     model->defineMeter(MeterDef{
         .index       = IcomMeterIndex::SLICE0_LEVEL,
         .source      = QStringLiteral("SLC"),

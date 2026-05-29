@@ -173,7 +173,7 @@ void CivToVita49Bridge::processIcomPacket(const QByteArray& data, quint16 sender
     if (data.size() < HEADER_SIZE) return;
 
     uint16_t type   = qFromLittleEndian<quint16>(reinterpret_cast<const uchar*>(data.constData()) + 4);
-    uint16_t seq    = qFromLittleEndian<quint16>(reinterpret_cast<const uchar*>(data.constData()) + 6);
+    Q_UNUSED(seq)
     uint16_t srcPort = qFromLittleEndian<quint16>(reinterpret_cast<const uchar*>(data.constData()) + 8);
     uint16_t srcId  = qFromLittleEndian<quint16>(reinterpret_cast<const uchar*>(data.constData()) + 10);
 
