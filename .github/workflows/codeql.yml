@@ -63,9 +63,11 @@ jobs:
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Configure
+        working-directory: MasterSDR
         run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
       - name: Build
+        working-directory: MasterSDR
         run: cmake --build build -j$(nproc)
 
       - name: Perform CodeQL Analysis

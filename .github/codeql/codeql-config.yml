@@ -1,0 +1,12 @@
+﻿name: MasterSDR CodeQL configuration
+
+# Restrict analysis to MasterSDR's own first-party C++ sources.  Vendored
+# upstream deps and build-time-extracted source trees are out of scope —
+# their security posture is the responsibility of upstream, and scanning
+# them inflates alert noise that masks signal in our own code.
+
+paths-ignore:
+  - 'MasterSDR/build/**'
+  - 'MasterSDR/third_party/**'
+  - 'MasterSDR/tests/**'
+  - 'MasterSDR/src/generated/**'
