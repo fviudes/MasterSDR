@@ -319,8 +319,8 @@ void IcomIpBackend::onVita49AudioPacket(const QByteArray& pkt)
 {
     // Forward directly to audioDataReady for AudioEngine
     // Strip VITA-49 header to extract PCM
-    if (pkt.size() > VITA49_HEADER_BYTES) {
-        QByteArray pcm = pkt.mid(VITA49_HEADER_BYTES);
+    if (pkt.size() > CivToVita49Bridge::VITA49_HEADER_BYTES) {
+        QByteArray pcm = pkt.mid(CivToVita49Bridge::VITA49_HEADER_BYTES);
         emit audioDataReady(pcm);
     }
 }
