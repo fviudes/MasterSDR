@@ -24,79 +24,75 @@ jobs:
           version: '6.8.*'
           host: 'windows'
           target: 'desktop'
-          # Qt 6.8 LTS dropped MSVC 2019 builds — arch must be msvc2022.
           arch: 'win64_msvc2022_64'
           modules: 'qtmultimedia qtserialport qtwebsockets qtshadertools'
 
       - name: Install Ninja, Inno Setup, and LLVM
         run: choco install ninja innosetup llvm -y
 
-      # zlib is bundled under third_party/zlib (1.3.1) — no vcpkg install
-      # needed; CMake builds zlibstatic from source.  (#2651)
-
-      # Each third-party dep is cached against the hash of its setup
-      # script (which pins the version), so cache invalidates the moment
-      # we bump a version.  Skips the upstream download + build entirely
-      # on cache hit.
       - name: Cache Opus
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5
         id: cache-opus
         with:
-          path: third_party/opus
-          key: opus-${{ runner.os }}-${{ hashFiles('setup-opus.ps1') }}
+          path: MasterSDR/third_party/opus
+          key: opus-${{ runner.os }}-${{ hashFiles('MasterSDR/setup-opus.ps1') }}
 
       - name: Setup Opus (SmartLink audio codec)
         if: steps.cache-opus.outputs.cache-hit != 'true'
+        working-directory: MasterSDR
         run: .\setup-opus.ps1
 
       - name: Cache FFTW3
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5
         id: cache-fftw
         with:
-          path: third_party/fftw3
-          key: fftw-${{ runner.os }}-${{ hashFiles('setup-fftw.ps1') }}
+          path: MasterSDR/third_party/fftw3
+          key: fftw-${{ runner.os }}-${{ hashFiles('MasterSDR/setup-fftw.ps1') }}
 
       - name: Setup FFTW3 float (NR4 dependency)
         if: steps.cache-fftw.outputs.cache-hit != 'true'
+        working-directory: MasterSDR
         run: .\setup-fftw.ps1
 
       - name: Cache hidapi
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5
         id: cache-hidapi
         with:
-          path: third_party/hidapi
-          key: hidapi-${{ runner.os }}-${{ hashFiles('setup-hidapi.ps1') }}
+          path: MasterSDR/third_party/hidapi
+          key: hidapi-${{ runner.os }}-${{ hashFiles('MasterSDR/setup-hidapi.ps1') }}
 
       - name: Setup hidapi (USB HID device support)
         if: steps.cache-hidapi.outputs.cache-hit != 'true'
+        working-directory: MasterSDR
         run: .\setup-hidapi.ps1
 
       - name: Cache DeepFilterNet3
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5
         id: cache-deepfilter
         with:
-          path: third_party/deepfilter
-          key: deepfilter-${{ runner.os }}-v2-${{ hashFiles('setup-deepfilter.ps1') }}
+          path: MasterSDR/third_party/deepfilter
+          key: deepfilter-${{ runner.os }}-v2-${{ hashFiles('MasterSDR/setup-deepfilter.ps1') }}
 
       - name: Setup DeepFilterNet3 (DFNR)
         if: steps.cache-deepfilter.outputs.cache-hit != 'true'
+        working-directory: MasterSDR
         run: .\setup-deepfilter.ps1
 
       - name: Configure
+        working-directory: MasterSDR
         run: |
-          # Force disable DFNR on Windows CI - corrupt pre-built cache persists
-          cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DMQTT_TLS=OFF -DENABLE_DFNR=OFF -DCMAKE_TOOLCHAIN_FILE="$env:CMAKE_TOOLCHAIN_FILE" -DVCPKG_TARGET_TRIPLET="$env:VCPKG_TARGET_TRIPLET"
+          cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DMQTT_TLS=OFF -DENABLE_DFNR=OFF
 
       - name: Build Opus (RADE dependency)
-        # ExternalProject dependency ordering via BUILD_BYPRODUCTS is correct,
-        # but a separate step gives clearer CI failure attribution and avoids
-        # any Ninja parallel-build ordering edge cases with IMPORTED targets.
+        working-directory: MasterSDR
         run: cmake --build build --target build_opus -j $env:NUMBER_OF_PROCESSORS
 
       - name: Build
+        working-directory: MasterSDR
         run: cmake --build build -j $env:NUMBER_OF_PROCESSORS
 
       - name: Deploy Qt
+        working-directory: MasterSDR
         run: |
           mkdir deploy
           copy build\MasterSDR.exe deploy\
@@ -110,35 +106,31 @@ jobs:
           if (Test-Path "third_party\hidapi\bin\hidapi.dll") {
             copy third_party\hidapi\bin\hidapi.dll deploy\
           }
-          # zlib is statically linked from third_party/zlib (#2651) — no
-          # DLL copy needed; zlibstatic is baked into MasterSDR.exe.
           if (Test-Path "third_party\deepfilter\lib\windows-x86_64\deepfilter.dll") {
             copy third_party\deepfilter\lib\windows-x86_64\deepfilter.dll deploy\
           }
           if (Test-Path "third_party\deepfilter\models\DeepFilterNet3_onnx.tar.gz") {
             copy third_party\deepfilter\models\DeepFilterNet3_onnx.tar.gz deploy\
           }
-          # NOTE: MQTT TLS is disabled (-DMQTT_TLS=OFF) so no OpenSSL DLLs
-          # are needed. This avoids the "libssl-3-x64.dll not found" crash
-          # on systems without OpenSSL installed (#1341, #1362).
-          if ($false) {
-          }
 
       - name: Stage MSVC runtime for installer
+        working-directory: MasterSDR
         run: |
           powershell -NoProfile -ExecutionPolicy Bypass -File packaging\windows\stage-msvc-runtime.ps1 -OutputDir installer-runtime
 
       - name: Create portable ZIP
+        working-directory: MasterSDR
         run: |
-          # Keep portable ZIP app-local runtime behavior aligned with the installer.
           Copy-Item -Path installer-runtime\*.dll -Destination deploy\ -Force
-          Compress-Archive -Path deploy\* -DestinationPath "MasterSDR-${{ github.ref_name }}-Windows-x64-portable.zip"
+          Compress-Archive -Path deploy\* -DestinationPath "..\MasterSDR-${{ github.ref_name }}-Windows-x64-portable.zip"
 
       - name: Create installer (Inno Setup)
+        working-directory: MasterSDR
         run: |
           $version = "${{ github.ref_name }}" -replace '^v', ''
           $runtimeDir = (Resolve-Path "installer-runtime").Path
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAPP_VERSION=$version "/DVC_RUNTIME_DIR=$runtimeDir" packaging\windows\installer.iss
+          Move-Item "packaging\windows\Output\*.exe" ".."
 
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7

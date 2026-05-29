@@ -18,6 +18,9 @@ jobs:
           - runner: macos-15-intel
             label: intel
     runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        working-directory: MasterSDR
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
@@ -60,13 +63,12 @@ jobs:
 
       - name: Build Qt from source (Intel only, fallback)
         if: matrix.label == 'intel' && steps.qt-download.outputs.downloaded != 'true'
+        working-directory: ${{ github.workspace }}
         run: |
-          # Increase git buffer to handle large Qt submodules
           git config --global http.postBuffer 524288000
           git config --global core.compression 0
           git clone --depth 1 --branch v6.8.3 https://code.qt.io/qt/qt5.git qt-src
           cd qt-src
-          # Retry init-repository up to 3 times for network resilience
           for i in 1 2 3; do
             perl init-repository --module-subset=qtbase,qtmultimedia,qtwebsockets,qtserialport,qtshadertools && break
             echo "init-repository attempt $i failed, retrying..."
@@ -94,14 +96,12 @@ jobs:
       - name: Configure
         run: |
           if [ "${{ matrix.label }}" = "intel" ]; then
-            QT_PREFIX="$PWD/qt-install"
+            QT_PREFIX="${{ github.workspace }}/qt-install"
             DEPLOY_TARGET="13.0"
           else
             QT_PREFIX="$(brew --prefix)"
             DEPLOY_TARGET="14.0"
           fi
-          # Intel Mac: disable GPU rendering — QRhiWidget has issues on
-          # older Metal/OpenGL hardware. Apple Silicon uses GPU by default.
           GPU_FLAG=""
           if [ "${{ matrix.label }}" = "intel" ]; then
             GPU_FLAG="-DMASTERSDR_GPU_SPECTRUM=OFF"
@@ -151,7 +151,7 @@ jobs:
       - name: Bundle Qt frameworks
         run: |
           if [ "${{ matrix.label }}" = "intel" ]; then
-            DEPLOYQT="$PWD/qt-install/bin/macdeployqt"
+            DEPLOYQT="${{ github.workspace }}/qt-install/bin/macdeployqt"
           else
             DEPLOYQT="$(brew --prefix qt@6)/bin/macdeployqt"
           fi

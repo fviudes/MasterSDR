@@ -22,6 +22,9 @@ jobs:
             use_aqt: false
 
     runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        working-directory: MasterSDR
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
@@ -83,9 +86,10 @@ jobs:
         run: cmake --build build -j$(nproc)
 
       - name: Install to AppDir
+        working-directory: ${{ github.workspace }}
         run: |
           set -e
-          DESTDIR=${{ github.workspace }}/AppDir cmake --install build
+          DESTDIR=${{ github.workspace }}/AppDir cmake --install MasterSDR/build
 
           # Ensure the icon is deployed to the XDG hicolor tree
           ICON_DIR="AppDir/usr/share/icons/hicolor/256x256/apps"
@@ -93,7 +97,7 @@ jobs:
           mkdir -p "$ICON_DIR"
           if [ ! -f "$ICON_PATH" ]; then
             echo "Icon not installed by CMake, copying from source..."
-            cp docs/logo-circle.png "$ICON_PATH"
+            cp MasterSDR/docs/logo-circle.png "$ICON_PATH"
           fi
           if [ -f "$ICON_PATH" ]; then
             convert "$ICON_PATH" -resize 256x256 "$ICON_PATH"
@@ -106,7 +110,7 @@ jobs:
           DESKTOP_FILE="AppDir/usr/share/applications/MasterSDR.desktop"
           if [ ! -f "$DESKTOP_FILE" ]; then
             echo "Desktop file not found, creating..."
-            cp MasterSDR.desktop "$DESKTOP_FILE"
+            cp MasterSDR/MasterSDR.desktop "$DESKTOP_FILE"
           fi
           # Ensure Icon=mastersdr (lowercase) is present
           sed -i 's/^Icon=.*/Icon=mastersdr/' "$DESKTOP_FILE"
@@ -117,8 +121,8 @@ jobs:
           cat "$DESKTOP_FILE"
 
           # Bundle DeepFilterNet3 model for DFNR
-          if [ -f third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz ]; then
-            cp third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz \
+          if [ -f MasterSDR/third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz ]; then
+            cp MasterSDR/third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz \
               AppDir/usr/bin/
           fi
 

@@ -56,6 +56,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
 
       - name: Configure
+        working-directory: MasterSDR
         env:
           CXXFLAGS: ${{ matrix.sanitizer.extra_cxx }}
           LDFLAGS:  ${{ matrix.sanitizer.extra_ld }}
@@ -64,10 +65,12 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ matrix.sanitizer.build_type }}
 
       - name: Build
+        working-directory: MasterSDR
         run: cmake --build build --parallel
 
       - name: Run tests under sanitizer
         id: ctest
+        working-directory: MasterSDR
         continue-on-error: true
         env:
           QT_QPA_PLATFORM: offscreen

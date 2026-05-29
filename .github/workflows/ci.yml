@@ -22,6 +22,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container: ghcr.io/ten9876/aethersdr-ci:latest
+    defaults:
+      run:
+        working-directory: MasterSDR
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
@@ -47,8 +50,8 @@ jobs:
         with:
           filters: |
             build:
-              - 'CMakeLists.txt'
-              - 'third_party/**'
+              - 'MasterSDR/CMakeLists.txt'
+              - 'MasterSDR/third_party/**'
               - '.github/workflows/**'
 
   # Cross-platform build check — runs only when CMakeLists.txt, third_party/,
@@ -60,13 +63,12 @@ jobs:
   #   * MSVC object files — sccache via GitHub Actions cache backend
   # Net effect: cold cache ~5 min, warm cache ~2-3 min (was ~14 min).
   check-windows:
-    # Only depend on check-paths so the conditional resolves; run in
-    # parallel with the Linux build instead of after it.  Linux passes
-    # the vast majority of PRs, so the wall-clock saving (~3 min) is
-    # worth the rare wasted Windows runner time when Linux fails first.
     needs: [check-paths]
     if: needs.check-paths.outputs.build-changed == 'true'
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: MasterSDR
     env:
       SCCACHE_GHA_ENABLED: 'true'
     steps:
@@ -75,9 +77,6 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@48d3ad6db93f3627c8ee7a0454bc6f3744f7e730  # v4.3.1
         with:
-          # 6.8.3 matches what community Windows builders are running and
-          # exposes Qt 6.8.x MOC volume so we catch issues like #1910 (MSVC
-          # COFF section limit, fixed by /bigobj) before they reach users.
           version: '6.8.3'
           modules: 'qtmultimedia qtwebsockets qtserialport qtshadertools'
           cache: true
@@ -85,15 +84,12 @@ jobs:
       - name: Cache FFTW3
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5
         with:
-          path: third_party/fftw3
-          key: ${{ runner.os }}-fftw3-3.3.5-${{ hashFiles('setup-fftw.ps1') }}
+          path: MasterSDR/third_party/fftw3
+          key: ${{ runner.os }}-fftw3-3.3.5-${{ hashFiles('MasterSDR/setup-fftw.ps1') }}
 
       - name: Install FFTW3
         shell: pwsh
-        run: |
-          if (Test-Path scripts/setup-fftw.ps1) { ./scripts/setup-fftw.ps1 }
-          elseif (Test-Path setup-fftw.ps1) { ./setup-fftw.ps1 }
-          else { Write-Host "No FFTW setup script — skipping" }
+        run: .\setup-fftw.ps1
 
       - name: Setup DeepFilterNet3 (DFNR)
         shell: pwsh
