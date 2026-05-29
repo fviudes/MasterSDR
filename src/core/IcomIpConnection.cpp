@@ -134,6 +134,18 @@ void IcomIpConnection::onReadyRead()
         quint16 senderPort = 0;
         m_socket->readDatagram(data.data(), data.size(), &sender, &senderPort);
 
+        // Raw CI-V frames from port 50002 (no 16-byte header)
+        if (data.size() >= 6 && data.size() < 60
+            && static_cast<uint8_t>(data[0]) == IcomCivProtocol::PREAMBLE1
+            && static_cast<uint8_t>(data[1]) == IcomCivProtocol::PREAMBLE2) {
+            qCDebug(lcConnection) << "IcomIpConnection: raw CI-V from port" << senderPort << data.toHex().constData();
+            CivResponse resp = m_civProto.parseResponse(data);
+            if (resp.valid) {
+                handleCivResponse(resp);
+            }
+            continue;
+        }
+
         if (data.size() < 16) continue;
 
         uint32_t len    = qFromLittleEndian<quint32>(reinterpret_cast<const uchar*>(data.constData()));
