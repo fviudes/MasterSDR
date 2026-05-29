@@ -188,12 +188,19 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
                 QByteArray rigIdCmd = m_civProto.buildReadRigId();
                 sendSerialPacket(m_seq++, rigIdCmd);
                 // Register audio/scope stream on port 50003
-                // Register audio stream on port 50003 — send init packet
+                // Register serial stream on port 50002 — send init packet
+                {
+                    uint16_t serialSeq = m_seq++;
+                    QByteArray serialPkt = buildPacketFor(TYPE_DATA, serialSeq, m_serialPort, m_destId);
+                    m_socket->writeDatagram(serialPkt, m_host, m_serialPort);
+                    qCDebug(lcConnection) << "IcomIpConnection: serial registration sent to" << m_host.toString() << ":" << m_serialPort;
+                }
+                // Register audio/scope stream on port 50003 — send init + are-you-ready
                 if (m_audioSocket) {
                     uint16_t audioSeq = m_seq++;
                     QByteArray audioPkt = buildPacketFor(TYPE_DATA, audioSeq, m_audioPort, m_destId);
                     m_audioSocket->writeDatagram(audioPkt, m_host, m_audioPort);
-                    qCDebug(lcConnection) << "IcomIpConnection: audio registration sent to" << m_host.toString() << ":" << m_audioPort;
+                    qCDebug(lcConnection) << "IcomIpConnection: audio are-you-ready sent to" << m_host.toString() << ":" << m_audioPort;
                 }
             }
             break;
@@ -332,7 +339,18 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
 void IcomIpConnection::onKeepAlive()
 {
     if (!m_connected) return;
+    // PING on ctrl port — required for connection liveness
     sendCtrlPacket(TYPE_PING, m_pingSeq++);
+    // Idle packet on serial port — keeps serial channel alive
+    {
+        QByteArray idlePkt = buildPacketFor(TYPE_DATA, m_pingSeq++, m_serialPort, m_destId);
+        m_socket->writeDatagram(idlePkt, m_host, m_serialPort);
+    }
+    // Idle packet on audio port — keeps audio channel alive
+    if (m_audioSocket) {
+        QByteArray idlePkt = buildPacketFor(TYPE_DATA, m_pingSeq++, m_audioPort, m_destId);
+        m_audioSocket->writeDatagram(idlePkt, m_host, m_audioPort);
+    }
 
     // Poll radio state using CI-V commands with proper sub-commands
     sendCivCommand(IcomCivProtocol::CMD_READ_VFO, 0);      // VFO frequency (0x03)
