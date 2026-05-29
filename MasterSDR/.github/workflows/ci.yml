@@ -1,0 +1,169 @@
+﻿name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  # Post-merge guard. We dropped the "Require branches up to date before
+  # merging" branch-protection bit because it forced a CI rerun on every
+  # PR whenever main moved (~15–25 min × N stale PRs per batch day).
+  # The trade-off is: CI now runs on the merged commit itself, so any
+  # semantic conflict that slipped past three-way merge surfaces on main
+  # within ~10 min and triggers normal failure notifications.
+  push:
+    branches: [main]
+
+# Least-privilege GITHUB_TOKEN. CI only needs to read repo contents to
+# build and test — no writes, no token-bearing API calls. Any future job
+# that needs more (e.g. publishing a comment) must opt in at the job level.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ghcr.io/ten9876/aethersdr-ci:latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+
+      - name: Setup DeepFilterNet3 (DFNR)
+        run: bash setup-deepfilter.sh
+
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+  # Detect if build system or third-party deps changed
+  check-paths:
+    runs-on: ubuntu-latest
+    outputs:
+      build-changed: ${{ steps.filter.outputs.build }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4
+        id: filter
+        with:
+          filters: |
+            build:
+              - 'CMakeLists.txt'
+              - 'third_party/**'
+              - '.github/workflows/**'
+
+  # Cross-platform build check — runs only when CMakeLists.txt, third_party/,
+  # or workflows are modified, to catch MSVC issues before release. (#796 lesson)
+  #
+  # Caching strategy:
+  #   * Qt install        — handled by jurplel/install-qt-action's cache: true
+  #   * FFTW3 third_party — actions/cache, keyed on the setup script + version
+  #   * MSVC object files — sccache via GitHub Actions cache backend
+  # Net effect: cold cache ~5 min, warm cache ~2-3 min (was ~14 min).
+  check-windows:
+    # Only depend on check-paths so the conditional resolves; run in
+    # parallel with the Linux build instead of after it.  Linux passes
+    # the vast majority of PRs, so the wall-clock saving (~3 min) is
+    # worth the rare wasted Windows runner time when Linux fails first.
+    needs: [check-paths]
+    if: needs.check-paths.outputs.build-changed == 'true'
+    runs-on: windows-latest
+    env:
+      SCCACHE_GHA_ENABLED: 'true'
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@48d3ad6db93f3627c8ee7a0454bc6f3744f7e730  # v4.3.1
+        with:
+          # 6.8.3 matches what community Windows builders are running and
+          # exposes Qt 6.8.x MOC volume so we catch issues like #1910 (MSVC
+          # COFF section limit, fixed by /bigobj) before they reach users.
+          version: '6.8.3'
+          modules: 'qtmultimedia qtwebsockets qtserialport qtshadertools'
+          cache: true
+
+      - name: Cache FFTW3
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5
+        with:
+          path: third_party/fftw3
+          key: ${{ runner.os }}-fftw3-3.3.5-${{ hashFiles('setup-fftw.ps1') }}
+
+      - name: Install FFTW3
+        shell: pwsh
+        run: |
+          if (Test-Path scripts/setup-fftw.ps1) { ./scripts/setup-fftw.ps1 }
+          elseif (Test-Path setup-fftw.ps1) { ./setup-fftw.ps1 }
+          else { Write-Host "No FFTW setup script — skipping" }
+
+      - name: Setup DeepFilterNet3 (DFNR)
+        shell: pwsh
+        run: .\setup-deepfilter.ps1
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@1583d6b38d7be47f593cb472781bbb21cab4321e  # v0.0.10
+
+      # CMAKE_CXX_COMPILER_LAUNCHER is honoured by Ninja and Make
+      # generators, NOT by the Visual Studio / MSBuild generator that
+      # CMake selects by default on windows-latest.  Switch to Ninja so
+      # cl.exe invocations actually route through sccache.  msvc-dev-cmd
+      # puts the MSVC toolchain on PATH (cl.exe, link.exe, etc.) so
+      # Ninja can find them.
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1  # v1
+        with:
+          arch: x64
+
+      # zlib is bundled under third_party/zlib (1.3.1) — no vcpkg install
+      # needed; CMake builds zlibstatic from source.  (#2651)
+
+      # Verify sccache can actually compile through the backend.  GitHub
+      # Actions Cache occasionally has outages; when that happens, sccache's
+      # GHA backend can't read/write and every compile through sccache
+      # fails.  Pre-flight a tiny test compile so we can fall through to a
+      # plain build instead of failing the whole job.
+      - name: Test sccache health
+        id: sccache_health
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          'int main(){return 0;}' | Out-File -Encoding ASCII test.cpp
+          sccache cl /c test.cpp /Fo:test.obj 2>&1 | Tee-Object -Variable scOut
+          $exit = $LASTEXITCODE
+          Remove-Item test.cpp,test.obj -ErrorAction SilentlyContinue
+          if ($exit -eq 0) {
+            "healthy=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            Write-Host "sccache OK"
+          } else {
+            "healthy=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            Write-Host "::warning::sccache unhealthy (exit $exit) — building without compiler cache"
+          }
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          $launcher = "${{ steps.sccache_health.outputs.healthy }}" -eq "true"
+          $cargs = @(
+            "-B","build","-G","Ninja",
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded",
+            "-DCMAKE_TOOLCHAIN_FILE=$env:CMAKE_TOOLCHAIN_FILE",
+            "-DVCPKG_TARGET_TRIPLET=$env:VCPKG_TARGET_TRIPLET"
+          )
+          if ($launcher) {
+            $cargs += "-DCMAKE_C_COMPILER_LAUNCHER=sccache"
+            $cargs += "-DCMAKE_CXX_COMPILER_LAUNCHER=sccache"
+          }
+          & cmake @cargs
+
+      - name: Build Opus (RADE dependency)
+        # ExternalProject dependency ordering via BUILD_BYPRODUCTS is correct,
+        # but a separate step gives clearer CI failure attribution and avoids
+        # any Ninja parallel-build ordering edge cases with IMPORTED targets.
+        run: cmake --build build --target build_opus -j $env:NUMBER_OF_PROCESSORS
+
+      - name: Build
+        run: cmake --build build -j $env:NUMBER_OF_PROCESSORS
+
+      - name: sccache stats
+        if: always()
+        run: sccache --show-stats

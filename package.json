@@ -1,0 +1,32 @@
+{
+  "name": "hamradio-desktop",
+  "version": "1.0.0",
+  "description": "SDR Client for Ham Radio - Hermes Lite 2, ANAN, FlexRadio, Icom, Yaesu, Kenwood",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "build": "vite build && electron-builder"
+  },
+  "dependencies": {
+    "serialport": "^12.0.0",
+    "node-hid": "^2.1.0",
+    "ws": "^8.17.0",
+    "axios": "^1.7.0",
+    "node-dsp": "^1.0.17",
+    "fft-js": "^0.0.12",
+    "wav": "^1.0.2",
+    "soundcard": "^1.0.3",
+    "portaudio": "^2.0.0",
+    "audio-render": "^1.0.3",
+    "electron-store": "^8.2.0"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.0",
+    "vite": "^5.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "concurrently": "^8.2.0",
+    "wait-on": "^7.2.0"
+  }
+}
