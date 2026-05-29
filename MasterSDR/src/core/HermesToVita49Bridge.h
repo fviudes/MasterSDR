@@ -178,12 +178,17 @@ private:
 
     void sendVita49ToLoopback(const QByteArray& pkt);
 
+    // ── VITA-49 synthesis constants (public for Backend access) ──
+
+public:
     static constexpr quint32 FLEX_OUI    = 0x001C2D;
     static constexpr quint32 FLEX_ICC    = 0x534C;
     static constexpr quint16 PCC_IF_DATA = 0x03E3;
     static constexpr quint16 PCC_FFT     = 0x8003;
     static constexpr quint16 PCC_METER   = 0x8002;
     static constexpr int VITA49_HEADER_BYTES = 28;
+
+private:
 
     QByteArray buildVita49Header(quint16 pcc, quint32 streamId, quint32 payloadBytes);
     QByteArray buildVita49FftPacket(const QVector<float>& bins, quint16 startBin, quint16 totalBins);
