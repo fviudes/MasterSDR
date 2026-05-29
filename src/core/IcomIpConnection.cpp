@@ -223,6 +223,10 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
             && (static_cast<uint8_t>(civPayload[0]) == IcomCivProtocol::HOST_ADDR
                 || static_cast<uint8_t>(civPayload[0]) == m_civProto.civAddress()));
 
+        qCDebug(lcConnection) << "IcomIpConnection: TYPE_DATA" << civPayload.size() << "bytes"
+                 << "hasPreamble:" << hasCivPreamble << "hasRawCiv:" << hasRawCiv
+                 << "first bytes:" << civPayload.left(20).toHex().constData();
+
         if (hasCivPreamble || hasRawCiv) {
             // If no preamble, rebuild it for parseResponse
             QByteArray fullPayload = civPayload;
@@ -360,7 +364,8 @@ void IcomIpConnection::sendCivCommand(uint8_t cmd, uint8_t subCmd, const QByteAr
 {
     QByteArray civFrame = m_civProto.buildCommand(cmd, subCmd, data);
     sendSerialPacket(m_seq++, civFrame);
-    qCDebug(lcConnection) << "IcomIpConnection: sent CI-V cmd:" << Qt::hex << cmd;
+    qCDebug(lcConnection) << "IcomIpConnection: CI-V TX cmd:" << Qt::hex << cmd
+             << "sub:" << subCmd << "frame:" << civFrame.toHex().constData();
 }
 
 void IcomIpConnection::setFrequency(uint64_t freqHz)
