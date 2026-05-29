@@ -161,6 +161,96 @@ void IcomIpConnection::onReadyRead()
     }
 }
 
+void IcomIpConnection::handleCivResponse(const CivResponse& resp)
+{
+    switch (resp.cmd) {
+    case IcomCivProtocol::CMD_FREQ:
+    case IcomCivProtocol::CMD_READ_VFO: {
+        uint64_t freq = IcomCivProtocol::decodeBcdFreq(resp.data);
+        m_rxFreq = freq;
+        qCDebug(lcConnection) << "IcomIpConnection: freq" << freq << "Hz";
+        emit frequencyUpdated(freq);
+        break;
+    }
+    case IcomCivProtocol::CMD_MODE: {
+        if (!resp.data.isEmpty()) {
+            auto modeStr = IcomCivProtocol::modeToString(static_cast<IcomCivProtocol::CivMode>(resp.data[0]));
+            if (!modeStr.isEmpty()) {
+                m_rxMode = modeStr;
+                emit modeUpdated(modeStr);
+            }
+        }
+        break;
+    }
+    case IcomCivProtocol::CMD_S_METER: {
+        if (!resp.data.isEmpty()) {
+            int level = static_cast<int>(static_cast<uint8_t>(resp.data[0]));
+            m_sMeter = level;
+            emit sMeterUpdated(level);
+            if (resp.subCmd == IcomCivProtocol::SUB_SQUELCH) {
+                emit squelchStatusUpdated(resp.data[0] != 0x00);
+            }
+        }
+        break;
+    }
+    case IcomCivProtocol::CMD_RIG_ID: {
+        if (!resp.data.isEmpty()) {
+            uint8_t rigId = static_cast<uint8_t>(resp.data[0]);
+            QString model = IcomCivProtocol::rigIdToModel(rigId);
+            m_radioModel = model;
+            qCDebug(lcConnection) << "IcomIpConnection: detected model" << model << "from rig ID" << Qt::hex << rigId;
+            emit radioInfoUpdated();
+        }
+        break;
+    }
+    case IcomCivProtocol::CMD_SPLIT: {
+        if (!resp.data.isEmpty()) {
+            m_split = (resp.data[0] != 0x00);
+            emit splitUpdated(m_split);
+        }
+        break;
+    }
+    case IcomCivProtocol::CMD_ATTENUATOR: {
+        if (!resp.data.isEmpty()) {
+            m_attenuator = (resp.data[0] != 0x00);
+            emit attenuatorUpdated(m_attenuator);
+        }
+        break;
+    }
+    case IcomCivProtocol::CMD_MIC_GAIN: {
+        if (!resp.data.isEmpty() && resp.subCmd == IcomCivProtocol::SUB_TX_POWER) {
+            m_txPower = static_cast<int>(resp.data[0]) * 100 / 255;
+            emit txPowerUpdated(m_txPower);
+        } else if (!resp.data.isEmpty() && resp.subCmd == IcomCivProtocol::SUB_RF_GAIN) {
+            m_rfGain = static_cast<int>(resp.data[0]) * 100 / 255;
+            emit rfGainUpdated(m_rfGain);
+        }
+        break;
+    }
+    case IcomCivProtocol::CMD_PREAMP: {
+        if (!resp.data.isEmpty()) {
+            if (resp.subCmd == IcomCivProtocol::SUB_PREAMP) {
+                m_preamp = static_cast<int>(resp.data[0]);
+                emit preampUpdated(m_preamp);
+            } else if (resp.subCmd == IcomCivProtocol::SUB_BKIN) {
+                m_bkInMode = static_cast<int>(resp.data[0]);
+                emit bkInUpdated(m_bkInMode);
+            } else if (resp.subCmd == IcomCivProtocol::SUB_APF) {
+                m_apfMode = static_cast<int>(resp.data[0]);
+                emit apfUpdated(m_apfMode);
+            }
+        }
+        break;
+    }
+    case IcomCivProtocol::CMD_SPECTRUM: {
+        qCDebug(lcConnection) << "IcomIpConnection: CI-V scope response" << resp.data.size() << "bytes";
+        break;
+    }
+    default:
+        break;
+    }
+}
+
 void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
 {
     if (data.size() < 16) return;

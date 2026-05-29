@@ -61,6 +61,7 @@ private:
     void sendSerialPacket(uint16_t seq, const QByteArray& civFrame);
     void sendCivCommand(uint8_t cmd, uint8_t subCmd, const QByteArray& data = QByteArray());
     void processPacket(const QByteArray& data, quint16 senderPort);
+    void handleCivResponse(const CivResponse& resp);
 
     QUdpSocket* m_socket{nullptr};
     QUdpSocket* m_audioSocket{nullptr};
