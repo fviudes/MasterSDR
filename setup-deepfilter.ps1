@@ -61,8 +61,8 @@ if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
 & rustup target add $RustTarget 2>&1 | Out-Null
 
 if (-not (Get-Command cargo-cbuild -ErrorAction SilentlyContinue)) {
-    Write-Host "Installing cargo-c..." -ForegroundColor Cyan
-    & cargo install cargo-c
+    Write-Host "Installing cargo-c (with --locked for reproducible build)..." -ForegroundColor Cyan
+    & cargo install cargo-c --locked --version "0.10.5"
 }
 
 # ── Clone and build ─────────────────────────────────────────────────────
