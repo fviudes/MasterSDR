@@ -59,6 +59,31 @@ void HermesModel::connectToRadio(const HermesRadioInfo& info)
     m_numReceivers = info.numReceivers;
 
     emit radioInfoChanged();
+
+    m_connection->connectToRadio(info);
+
+    qDebug() << "HermesModel: Connecting to" << m_radioName
+             << "GW:" << m_gatewareVersion
+             << "MAC:" << m_macAddress;
+}
+
+void HermesModel::disconnectFromRadio()
+{
+    m_connection->disconnectFromRadio();
+}
+
+void HermesModel::setFrequency(uint32_t freqHz)
+{
+    if (m_connected) {
+        m_connection->setRX1Frequency(freqHz);
+    }
+}
+
+void HermesModel::setMox(bool active)
+{
+    if (m_connected) {
+        m_connection->setPtt(active);
+    }
 }
 
 float HermesModel::swr() const
