@@ -350,9 +350,9 @@ void IcomIpConnection::onKeepAlive()
 
 void IcomIpConnection::sendSerialPacket(uint16_t seq, const QByteArray& civFrame)
 {
-    // IC-705: CI-V commands go to ctrl port 50001, not serial 50002
-    QByteArray pkt = buildPacketFor(TYPE_DATA, seq, m_ctrlPort, m_destId, civFrame);
-    m_socket->writeDatagram(pkt, m_host, m_ctrlPort);
+    // CI-V commands go to Serial Port UDP 50002 (per IC-705 menu)
+    QByteArray pkt = buildPacketFor(TYPE_DATA, seq, m_serialPort, m_destId, civFrame);
+    m_socket->writeDatagram(pkt, m_host, m_serialPort);
 }
 
 void IcomIpConnection::sendCivCommand(uint8_t cmd, uint8_t subCmd, const QByteArray& data)
