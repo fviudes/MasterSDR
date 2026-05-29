@@ -1805,6 +1805,10 @@ MainWindow::MainWindow(QWidget* parent)
                 if (auto* s = m_radioModel.slice(0)) {
                     s->setFrequency(mhz);
                 }
+                // Direct VFO position update (works without a SliceModel)
+                if (auto* sw = m_panStack ? m_panStack->activeSpectrum() : nullptr) {
+                    sw->setVfoFrequency(mhz);
+                }
                 // Feed synthetic spectrum to panadapter
                 if (auto* sw = m_panStack ? m_panStack->activeSpectrum() : nullptr) {
                     QVector<float> bins(512, -120.0f);
