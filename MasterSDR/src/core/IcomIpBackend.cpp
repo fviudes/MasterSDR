@@ -4,6 +4,7 @@
 #include "core/AudioEngine.h"
 
 #include <QDebug>
+#include <QtEndian>
 
 namespace MasterSDR {
 
