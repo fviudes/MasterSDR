@@ -1882,6 +1882,18 @@ MainWindow::MainWindow(QWidget* parent)
                     m_connPanel->setProperty("icomModel", model);
                 }
             });
+            // Spectrum scope data from CI-V 0x27 → panadapter
+            connect(m_icomIpConn, &IcomIpConnection::spectrumDataReady, this, [this](const QByteArray& scopeData) {
+                if (auto* sw = m_panStack ? m_panStack->activeSpectrum() : nullptr) {
+                    int numPoints = scopeData.size();
+                    QVector<float> bins(numPoints);
+                    for (int i = 0; i < numPoints; ++i) {
+                        float level = static_cast<uint8_t>(scopeData[i]) / 255.0f;
+                        bins[i] = -140.0f + level * 120.0f;
+                    }
+                    sw->updateSpectrum(bins);
+                }
+            });
         }
         m_connPanel->setProperty("icomModel", model);
         // Set CI-V address — use the combo selection or derive from model

@@ -187,6 +187,10 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
                 // Query rig identity for auto-detection
                 QByteArray rigIdCmd = m_civProto.buildReadRigId();
                 sendSerialPacket(m_seq++, rigIdCmd);
+                // Enable spectrum scope (CI-V 0x27 0x11)
+                QByteArray scopeEnable;
+                scopeEnable.append('\x01');
+                sendCivCommand(IcomCivProtocol::CMD_SPECTRUM, IcomCivProtocol::SUB_SCOPE_ENABLE, scopeEnable);
                 // Register audio stream on port 50003 — send init packet
                 if (m_audioSocket) {
                     uint16_t audioSeq = m_seq++;
@@ -312,6 +316,12 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
             }
             break;
         }
+        case IcomCivProtocol::CMD_SPECTRUM: {
+            if (resp.subCmd == IcomCivProtocol::SUB_SCOPE_DATA && !resp.data.isEmpty()) {
+                emit spectrumDataReady(resp.data);
+            }
+            break;
+        }
         default:
             break;
         }
@@ -335,6 +345,8 @@ void IcomIpConnection::onKeepAlive()
     sendCivCommand(IcomCivProtocol::CMD_SPLIT, 0);           // Split (0x0F)
     sendCivCommand(IcomCivProtocol::CMD_PREAMP, IcomCivProtocol::SUB_PREAMP);      // Preamp (0x16 0x02)
     sendCivCommand(IcomCivProtocol::CMD_ATTENUATOR, 0);      // Attenuator (0x11)
+    // Spectrum scope data (CI-V 0x27 0x00)
+    sendCivCommand(IcomCivProtocol::CMD_SPECTRUM, IcomCivProtocol::SUB_SCOPE_DATA);
 }
 
 void IcomIpConnection::sendSerialPacket(uint16_t seq, const QByteArray& civFrame)
