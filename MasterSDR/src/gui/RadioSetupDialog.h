@@ -1,4 +1,4 @@
-ï»¿#pragma once
+#pragma once
 
 #include "PersistentDialog.h"
 
@@ -25,10 +25,10 @@ class TgxlConnection;
 class PgxlConnection;
 class AntennaGeniusModel;
 
-class IcomIpConnection;
+class IcomIpBackend;
 
-// Radio Setup dialog â€” tabbed configuration window matching SmartSDR's
-// Settings â†’ Radio Setup. Shows radio info, GPS, TX, RX, filters, etc.
+// Radio Setup dialog — tabbed configuration window matching SmartSDR's
+// Settings ? Radio Setup. Shows radio info, GPS, TX, RX, filters, etc.
 class RadioSetupDialog : public PersistentDialog {
     Q_OBJECT
 
@@ -39,7 +39,7 @@ public:
                               AntennaGeniusModel* ag = nullptr,
                               QWidget* parent = nullptr);
     void selectTab(const QString& tabName);
-    void setIcomIpConnection(IcomIpConnection* conn);
+    void setIcomIpConnection(IcomIpBackend* conn);
 
 signals:
     void txBandSettingsRequested();
@@ -49,7 +49,7 @@ signals:
     // Fired when the user toggles SliceLetterDisplay mode in the Themes
     // tab so MainWindow can push a refresh through all slice-letter
     // widgets (the AppSettings value is what's actually consulted at
-    // paint time â€” this signal is just the redraw trigger).
+    // paint time — this signal is just the redraw trigger).
     void sliceLetterDisplayModeChanged();
 
 protected:
@@ -109,7 +109,7 @@ private:
     FirmwareUploader* m_uploader{nullptr};
     FirmwareStager*   m_stager{nullptr};
 
-    // Lazy tab construction â€” deferred builders keyed by tab index (#1776)
+    // Lazy tab construction — deferred builders keyed by tab index (#1776)
     QHash<int, std::function<QWidget*()>> m_deferredBuilders;
     void buildDeferredTab(int index);
 
@@ -117,13 +117,13 @@ private:
     int                       m_apdTabIndex{-1};
     QHash<QString, QComboBox*> m_apdSamplerCombos;
 
-    // Peripherals tab â€” savers run on dialog close to persist field edits
+    // Peripherals tab — savers run on dialog close to persist field edits
     // that the user did not commit via the row's Connect/Disconnect button.
     // Currently only used to honour "user cleared IP and closed dialog"
-    // â†’ wipe the saved manual IP/port. New-IP edits still require an
+    // ? wipe the saved manual IP/port. New-IP edits still require an
     // explicit Connect click so an unfinished value cannot leak in.
     QVector<std::function<void()>> m_peripheralRowSavers;
-    IcomIpConnection* m_icomIpConn{nullptr};
+    IcomIpBackend* m_icomIpConn{nullptr};
     QLabel* m_icomStatusLabel{nullptr};
     QLabel* m_icomModelLabel{nullptr};
     QLabel* m_icomIpLabel{nullptr};

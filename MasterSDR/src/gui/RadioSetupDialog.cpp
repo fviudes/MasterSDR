@@ -1,4 +1,4 @@
-﻿#include "RadioSetupDialog.h"
+#include "RadioSetupDialog.h"
 #include "CwDecodeSettings.h"
 #include "GuardedSlider.h"
 #include "ComboStyle.h"
@@ -17,7 +17,7 @@
 #include "core/FirmwareStager.h"
 #include "core/TgxlConnection.h"
 #include "core/PgxlConnection.h"
-#include "core/IcomIpConnection.h"
+#include "core/IcomIpBackend.h"
 #include "models/AntennaGeniusModel.h"
 
 #include <QCloseEvent>
@@ -203,7 +203,7 @@ RadioSetupDialog::RadioSetupDialog(RadioModel* model, AudioEngine* audio,
     addDeferred("Antennas",    [this] { return buildAntennaNamesTab(); });
     addDeferred("Filters",     [this] { return buildFiltersTab(); });
     addDeferred("XVTR",        [this] { return buildXvtrTab(); });
-    // External APD tab (#2186) — only present on radios that report
+    // External APD tab (#2186) � only present on radios that report
     // `apd configurable=1` (FLEX-8x00 series with SmartSDR 4.2.18+).
     m_apdTabIndex = tabs->addTab(new QWidget, "APD");
     m_deferredBuilders[m_apdTabIndex] = [this] { return buildApdTab(); };
@@ -242,7 +242,7 @@ void RadioSetupDialog::closeEvent(QCloseEvent* event)
     PersistentDialog::closeEvent(event);
 }
 
-// ── Radio tab ─────────────────────────────────────────────────────────────────
+// -- Radio tab -----------------------------------------------------------------
 
 QWidget* RadioSetupDialog::buildRadioTab()
 {
@@ -382,7 +382,7 @@ QWidget* RadioSetupDialog::buildRadioTab()
         vbox->addWidget(group);
     }
 
-    // License Info group (matches SmartSDR Radio Setup → License Info section)
+    // License Info group (matches SmartSDR Radio Setup ? License Info section)
     {
         auto* group = new QGroupBox("License Info");
         group->setStyleSheet(kGroupStyle);
@@ -394,26 +394,26 @@ QWidget* RadioSetupDialog::buildRadioTab()
         // Row 0: Subscription | Expiration
         grid->addWidget(new QLabel("Subscription:"), 0, 0);
         m_licSubscriptionLabel = new QLabel(
-            m_model->licenseSubscription().isEmpty() ? "—" : m_model->licenseSubscription());
+            m_model->licenseSubscription().isEmpty() ? "�" : m_model->licenseSubscription());
         m_licSubscriptionLabel->setStyleSheet(kValueStyle);
         grid->addWidget(m_licSubscriptionLabel, 0, 1);
 
         grid->addWidget(new QLabel("Expiration:"), 0, 2);
         m_licExpirationLabel = new QLabel(
-            m_model->licenseExpirationDate().isEmpty() ? "—" : m_model->licenseExpirationDate());
+            m_model->licenseExpirationDate().isEmpty() ? "�" : m_model->licenseExpirationDate());
         m_licExpirationLabel->setStyleSheet(kValueStyle);
         grid->addWidget(m_licExpirationLabel, 0, 3);
 
         // Row 1: Radio ID | Licensed version
         grid->addWidget(new QLabel("Radio ID:"), 1, 0);
         m_licRadioIdLabel = new QLabel(
-            m_model->licenseRadioId().isEmpty() ? "—" : m_model->licenseRadioId());
+            m_model->licenseRadioId().isEmpty() ? "�" : m_model->licenseRadioId());
         m_licRadioIdLabel->setStyleSheet(kValueStyle);
         grid->addWidget(m_licRadioIdLabel, 1, 1);
 
         grid->addWidget(new QLabel("Licensed version:"), 1, 2);
         m_licMaxVersionLabel = new QLabel(
-            m_model->licenseMaxVersion().isEmpty() ? "—" : m_model->licenseMaxVersion());
+            m_model->licenseMaxVersion().isEmpty() ? "�" : m_model->licenseMaxVersion());
         m_licMaxVersionLabel->setStyleSheet(kValueStyle);
         grid->addWidget(m_licMaxVersionLabel, 1, 3);
 
@@ -495,7 +495,7 @@ QWidget* RadioSetupDialog::buildRadioTab()
         btnRow->addWidget(m_fwUploadBtn);
         vlay->addLayout(btnRow);
 
-        // ── Stager wiring ─────────────────────────────────────────────
+        // -- Stager wiring ---------------------------------------------
         m_stager = new FirmwareStager(this);
 
         connect(checkBtn, &QPushButton::clicked, this, [this, checkBtn] {
@@ -547,7 +547,7 @@ QWidget* RadioSetupDialog::buildRadioTab()
             m_fwStatusLabel->setText(err);
         });
 
-        // ── Browse / select installer manually ────────────────────────
+        // -- Browse / select installer manually ------------------------
         // Accepts the SmartSDR installer the user has already downloaded
         // from FlexRadio (.msi for v4.2+, .exe for older releases) or a
         // pre-extracted .ssdr file. The stager auto-detects which.
@@ -574,7 +574,7 @@ QWidget* RadioSetupDialog::buildRadioTab()
                 FirmwareStager::modelToFamily(m_model->model()));
         });
 
-        // ── Upload ────────────────────────────────────────────────────
+        // -- Upload ----------------------------------------------------
         connect(m_fwUploadBtn, &QPushButton::clicked, this, [this] {
             if (m_fwFilePath.isEmpty()) return;
 
@@ -625,7 +625,7 @@ QWidget* RadioSetupDialog::buildRadioTab()
 
     // Firmware disclaimer
     auto* disclaimer = new QLabel(
-        "⚠ CAUTION: Firmware update is currently a highly experimental feature. "
+        "? CAUTION: Firmware update is currently a highly experimental feature. "
         "Use at your own risk. At this time we still recommend updating "
         "via the SmartSDR Windows application.");
     disclaimer->setWordWrap(true);
@@ -934,7 +934,7 @@ QWidget* RadioSetupDialog::buildTxTab()
 
         // Scale factor lets the same helper drive both 1:1 ms fields and
         // the seconds-displayed timeout field which the radio still
-        // expects in ms (FlexLib Radio.cs:7463 — "in milliseconds").
+        // expects in ms (FlexLib Radio.cs:7463 � "in milliseconds").
         auto connectTimingField = [&](QLineEdit* edit, const QString& key, int scale = 1) {
             connect(edit, &QLineEdit::editingFinished, this, [this, edit, key, scale] {
                 int val = qMax(0, edit->text().toInt());
@@ -947,7 +947,7 @@ QWidget* RadioSetupDialog::buildTxTab()
         auto* txDelayEdit = addTimingField(0, 1, "TX Delay:",      tx.txDelay());
         auto* tx1Edit     = addTimingField(1, 0, "RCA TX1:",       tx.tx1Delay());
         // Timeout stored on the radio in milliseconds (FlexLib Radio.cs:7463);
-        // display in whole seconds for readability — minutes lose too much
+        // display in whole seconds for readability � minutes lose too much
         // resolution for short-cycle TOT settings.
         auto* timeoutEdit = addTimingField(1, 1, "Timeout (sec):", tx.interlockTimeout() / 1000);
         auto* tx2Edit     = addTimingField(2, 0, "RCA TX2:",       tx.tx2Delay());
@@ -1020,7 +1020,7 @@ QWidget* RadioSetupDialog::buildTxTab()
     // Max Power / Show TX in Waterfall / Slice-TX Follow
     //
     // Tune Mode (single_tone / two_tone) used to live here too but was
-    // removed — it persisted "Two Tone" across restarts as if it were a
+    // removed � it persisted "Two Tone" across restarts as if it were a
     // normal operating mode, which surprised users who hit the regular
     // Tune button later and got an unexpected 2-tone test.  Tune Mode is
     // now a transient one-shot, surfaced via the TUNE button's right-
@@ -1071,7 +1071,7 @@ QWidget* RadioSetupDialog::buildTxTab()
         });
         grid->addWidget(swBtn, 1, 1);
 
-        // Slice–TX Follow Mode (#441, #1351) — mutually exclusive toggles
+        // Slice�TX Follow Mode (#441, #1351) � mutually exclusive toggles
         auto* followLbl = new QLabel("Slice/TX Follow:");
         followLbl->setStyleSheet(kLabelStyle);
         grid->addWidget(followLbl, 2, 0);
@@ -1270,7 +1270,7 @@ QWidget* RadioSetupDialog::buildPhoneCwTab()
         });
         grid->addWidget(syncBtn, 1, 5);
 
-        // CW Decode — independent RX / TX toggles (#2417).  RX keeps the
+        // CW Decode � independent RX / TX toggles (#2417).  RX keeps the
         // legacy behaviour of decoding the received CW slice; TX decodes
         // the operator's own keying via the client-side sidetone, useful
         // as a self-training tool for paddle / bug timing.  MainWindow
@@ -1632,14 +1632,14 @@ QWidget* RadioSetupDialog::buildRxTab()
     vbox->addStretch(1);
     return page;
 }
-// ── Audio tab ────────────────────────────────────────────────────────────────
+// -- Audio tab ----------------------------------------------------------------
 
 QWidget* RadioSetupDialog::buildAudioTab()
 {
     auto* page = new QWidget;
     auto* vbox = new QVBoxLayout(page);
 
-    // ── Radio Audio Outputs ──────────────────────────────────────────────
+    // -- Radio Audio Outputs ----------------------------------------------
     auto* outGroup = new QGroupBox("Radio Audio Outputs");
     outGroup->setStyleSheet(kGroupStyle);
     auto* outLayout = new QVBoxLayout(outGroup);
@@ -1706,7 +1706,7 @@ QWidget* RadioSetupDialog::buildAudioTab()
     });
     connect(hpMute, &QPushButton::toggled, m_model, &RadioModel::setHeadphoneMute);
 
-    // Front Speaker (mute only) — only on M-suffix models with built-in speaker
+    // Front Speaker (mute only) � only on M-suffix models with built-in speaker
     // M-suffix models have a built-in front speaker (6400M, 6600M, 8400M, 8600M, AU-510M, AU-520M)
     bool hasFrontSpeaker = m_model->model().endsWith("M", Qt::CaseInsensitive);
     if (hasFrontSpeaker) {
@@ -1745,7 +1745,7 @@ QWidget* RadioSetupDialog::buildAudioTab()
 
     vbox->addWidget(outGroup);
 
-    // ── Audio Compression ────────────────────────────────────────────────
+    // -- Audio Compression ------------------------------------------------
     {
         auto* compGroup = new QGroupBox("Audio Compression (SmartLink)");
         compGroup->setStyleSheet(kGroupStyle);
@@ -1795,7 +1795,7 @@ QWidget* RadioSetupDialog::buildAudioTab()
         vbox->addWidget(compGroup);
     }
 
-    // ── Packet-Loss Concealment ─────────────────────────────────────────
+    // -- Packet-Loss Concealment -----------------------------------------
     // Fades dropped VITA-49 audio packets to silence (uncompressed) or
     // calls libopus native PLC (Opus) instead of splicing the next packet
     // directly. Cuts the broadband click on lossy WAN/SmartLink. (#2731)
@@ -1832,7 +1832,7 @@ QWidget* RadioSetupDialog::buildAudioTab()
         vbox->addWidget(plcCheck);
     }
 
-    // ── Prevent Sleep ───────────────────────────────────────────────────
+    // -- Prevent Sleep ---------------------------------------------------
     {
         auto* sleepCheck = new QCheckBox("Prevent system sleep while connected");
         sleepCheck->setStyleSheet("QCheckBox { color: #c8d8e8; font-size: 11px; }");
@@ -1849,7 +1849,7 @@ QWidget* RadioSetupDialog::buildAudioTab()
         vbox->addWidget(sleepCheck);
     }
 
-    // ── PC Audio Devices ────────────────────────────────────────────────
+    // -- PC Audio Devices ------------------------------------------------
     auto* pcGroup = new QGroupBox("PC Audio Devices");
     pcGroup->setStyleSheet(kGroupStyle);
     auto* pcLayout = new QVBoxLayout(pcGroup);
@@ -1963,7 +1963,7 @@ QWidget* RadioSetupDialog::buildAudioTab()
         bufEdit->setFixedWidth(50);
         auto* bufUnit = new QLabel("ms");
         bufUnit->setStyleSheet(kLabelStyle);
-        auto* bufHint = new QLabel("(50–1000, increase for VPN/SmartLink jitter)");
+        auto* bufHint = new QLabel("(50�1000, increase for VPN/SmartLink jitter)");
         bufHint->setStyleSheet("QLabel { color: #506070; font-size: 10px; }");
         connect(bufEdit, &QLineEdit::editingFinished, this, [this, bufEdit] {
             int val = qBound(50, bufEdit->text().toInt(), 1000);
@@ -1987,7 +1987,7 @@ QWidget* RadioSetupDialog::buildAudioTab()
 
     vbox->addWidget(pcGroup);
 
-    // ── Recording ───────────────────────────────────────────────────────
+    // -- Recording -------------------------------------------------------
     {
         auto* recGroup = new QGroupBox("Recording");
         recGroup->setStyleSheet(kGroupStyle);
@@ -2110,7 +2110,7 @@ QWidget* RadioSetupDialog::buildAudioTab()
         vbox->addWidget(recGroup);
     }
 
-    // ── NVIDIA BNR (GPU Noise Removal) ──────────────────────────────────
+    // -- NVIDIA BNR (GPU Noise Removal) ----------------------------------
 #ifdef HAVE_BNR
     {
         auto* bnrGroup = new QGroupBox("NVIDIA BNR (GPU Noise Removal)");
@@ -2232,7 +2232,7 @@ QWidget* RadioSetupDialog::buildAudioTab()
     return page;
 }
 
-// ── Filters tab ─────────────────────────────────────────────────────────────
+// -- Filters tab -------------------------------------------------------------
 
 QWidget* RadioSetupDialog::buildFiltersTab()
 {
@@ -2676,12 +2676,12 @@ QWidget* RadioSetupDialog::buildAntennaNamesTab()
     return page;
 }
 
-// ── APD tab (External Adaptive Pre-Distortion) ──────────────────────────────
+// -- APD tab (External Adaptive Pre-Distortion) ------------------------------
 //
 // Per-TX-antenna selection of the sample port the radio uses for APD
 // adaptation.  INTERNAL samples inside the radio (legacy behaviour);
 // RX_A/RX_B/XVTA/XVTB take a coupled feedback signal from one of the
-// receive or transverter inputs — required to train APD against the
+// receive or transverter inputs � required to train APD against the
 // real RF when transmitting through an external linear amplifier.
 //
 // Tab is added eagerly but kept hidden until the radio reports
@@ -2694,7 +2694,7 @@ QWidget* RadioSetupDialog::buildApdTab()
     auto* vbox = new QVBoxLayout(page);
     vbox->setSpacing(8);
 
-    // Model header — matches other tabs (e.g. Filters, TX)
+    // Model header � matches other tabs (e.g. Filters, TX)
     {
         auto* hdr = new QHBoxLayout;
         hdr->addStretch(1);
@@ -2706,7 +2706,7 @@ QWidget* RadioSetupDialog::buildApdTab()
 
     auto& tx = m_model->transmitModel();
 
-    // External Sampler group — 2-column grid: ANT1/XVTA on the top row,
+    // External Sampler group � 2-column grid: ANT1/XVTA on the top row,
     // ANT2/XVTB on the bottom row, then the Reset button on its own row.
     {
         auto* group = new QGroupBox("External Sampler (per TX ANT)");
@@ -2714,7 +2714,7 @@ QWidget* RadioSetupDialog::buildApdTab()
         auto* grid = new QGridLayout(group);
         grid->setSpacing(8);
 
-        // Row, col-pair, antenna name → builds label + combo, hooks signals.
+        // Row, col-pair, antenna name ? builds label + combo, hooks signals.
         auto buildRow = [&](int row, int colBase, const QString& ant) {
             auto* lbl = new QLabel(ant + ":");
             lbl->setStyleSheet(kLabelStyle);
@@ -2741,7 +2741,7 @@ QWidget* RadioSetupDialog::buildApdTab()
         buildRow(1, 0, "ANT2");
         buildRow(1, 2, "XVTB");
 
-        // Equalizer Reset button (row 2) — clears all per-antenna training.
+        // Equalizer Reset button (row 2) � clears all per-antenna training.
         auto* resetLbl = new QLabel("Equalizer Reset:");
         resetLbl->setStyleSheet(kLabelStyle);
         grid->addWidget(resetLbl, 2, 0);
@@ -2782,7 +2782,7 @@ void RadioSetupDialog::refreshApdSamplerCombo(const QString& txAnt)
     combo->setCurrentText(s.selected);
 }
 
-// ── USB Cables tab ───────────────────────────────────────────────────────────
+// -- USB Cables tab -----------------------------------------------------------
 
 QWidget* RadioSetupDialog::buildUsbCablesTab()
 {
@@ -2808,7 +2808,7 @@ QWidget* RadioSetupDialog::buildUsbCablesTab()
     static const QString kCheck =
         "QCheckBox { color: #c8d8e8; font-size: 11px; }";
 
-    // ── Left: cable list ────────────────────────────────────────────────
+    // -- Left: cable list ------------------------------------------------
     auto* listGroup = new QGroupBox("Cables");
     listGroup->setStyleSheet(kGroupStyle);
     listGroup->setFixedWidth(180);
@@ -2823,7 +2823,7 @@ QWidget* RadioSetupDialog::buildUsbCablesTab()
     listLayout->addWidget(cableList);
     hbox->addWidget(listGroup);
 
-    // ── Right: stacked property panels ──────────────────────────────────
+    // -- Right: stacked property panels ----------------------------------
     auto* stack = new QStackedWidget;
 
     // Page 0: No cable selected
@@ -2846,7 +2846,7 @@ QWidget* RadioSetupDialog::buildUsbCablesTab()
         combo->setStyleSheet(kCombo);
         return combo;
     };
-    // Map source display name → protocol value
+    // Map source display name ? protocol value
     auto sourceToProto = [](const QString& display) -> QString {
         if (display == "TX Pan")        return "tx_pan";
         if (display == "TX Slice")      return "tx_slice";
@@ -3164,7 +3164,7 @@ QWidget* RadioSetupDialog::buildUsbCablesTab()
 
     hbox->addWidget(stack, 1);
 
-    // ── Populate cable list from model ──────────────────────────────────
+    // -- Populate cable list from model ----------------------------------
     auto refreshList = [cableList, cableModel]() {
         QString prevSn;
         if (cableList->currentItem())
@@ -3190,7 +3190,7 @@ QWidget* RadioSetupDialog::buildUsbCablesTab()
         }
     };
 
-    // ── Select cable → show properties ──────────────────────────────────
+    // -- Select cable ? show properties ----------------------------------
     auto showCableProps = [=](const QString& sn) {
         if (sn.isEmpty() || !cableModel->cables().contains(sn)) {
             stack->setCurrentIndex(0);
@@ -3236,7 +3236,7 @@ QWidget* RadioSetupDialog::buildUsbCablesTab()
                 : "QLabel { color: #808080; font-size: 11px; }");
             // Update bit grid rows
             auto* bitGroup = bitPage->findChild<QGroupBox*>("Bit Configuration (0-7)");
-            // Bit grid cells are updated by index in the grid layout — skip for now,
+            // Bit grid cells are updated by index in the grid layout � skip for now,
             // per-bit UI refresh would iterate the grid children
         } else if (t == "passthrough") {
             stack->setCurrentIndex(4);
@@ -3258,7 +3258,7 @@ QWidget* RadioSetupDialog::buildUsbCablesTab()
             showCableProps(current->data(Qt::UserRole).toString());
     });
 
-    // ── Wire model signals ──────────────────────────────────────────────
+    // -- Wire model signals ----------------------------------------------
     connect(cableModel, &UsbCableModel::cableAdded, this, [refreshList](const QString&) {
         refreshList();
     });
@@ -3274,7 +3274,7 @@ QWidget* RadioSetupDialog::buildUsbCablesTab()
             showCableProps(sn);
     });
 
-    // ── Wire property edits → commands ──────────────────────────────────
+    // -- Wire property edits ? commands ----------------------------------
     // CAT
     auto sendCatProp = [cableModel, cableList](const QString& key, const QString& val) {
         auto* item = cableList->currentItem();
@@ -3368,7 +3368,7 @@ QWidget* RadioSetupDialog::buildSerialTab()
 
     auto& settings = AppSettings::instance();
 
-    // ── Port Configuration ───────────────────────────────────────────────
+    // -- Port Configuration -----------------------------------------------
     {
         auto* group = new QGroupBox("Port Configuration");
         group->setStyleSheet(kGroupStyle);
@@ -3380,7 +3380,7 @@ QWidget* RadioSetupDialog::buildSerialTab()
         auto* portCombo = new QComboBox;
         portCombo->setMinimumWidth(200);
         for (const auto& info : QSerialPortInfo::availablePorts())
-            portCombo->addItem(QString("%1 — %2").arg(info.portName(), info.description()),
+            portCombo->addItem(QString("%1 � %2").arg(info.portName(), info.description()),
                                info.portName());
         // "Custom..." sentinel triggers manual entry field
         portCombo->addItem("Custom...", QStringLiteral("__custom__"));
@@ -3401,7 +3401,7 @@ QWidget* RadioSetupDialog::buildSerialTab()
         refreshBtn->setFixedHeight(24);
         grid->addWidget(refreshBtn, 0, 3);
 
-        // Custom port row — hidden unless "Custom..." selected or saved port is custom
+        // Custom port row � hidden unless "Custom..." selected or saved port is custom
         auto* customLabel = new QLabel("Path:");
         auto* customEdit = new QLineEdit;
         customEdit->setPlaceholderText("/dev/ttyr0");
@@ -3430,7 +3430,7 @@ QWidget* RadioSetupDialog::buildSerialTab()
                 portCombo->removeItem(0);
             for (const auto& info : QSerialPortInfo::availablePorts())
                 portCombo->insertItem(portCombo->count() - 1,
-                    QString("%1 — %2").arg(info.portName(), info.description()),
+                    QString("%1 � %2").arg(info.portName(), info.description()),
                     info.portName());
             if (wasCustom) {
                 portCombo->setCurrentIndex(portCombo->count() - 1);
@@ -3498,7 +3498,7 @@ QWidget* RadioSetupDialog::buildSerialTab()
         connect(stopCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, savePort);
     }
 
-    // ── Pin Assignment ───────────────────────────────────────────────────
+    // -- Pin Assignment ---------------------------------------------------
     {
         auto* group = new QGroupBox("Pin Assignment");
         group->setStyleSheet(kGroupStyle);
@@ -3603,7 +3603,7 @@ QWidget* RadioSetupDialog::buildSerialTab()
         vbox->addWidget(group);
     }
 
-    // ── Open / Close / Auto-open ────────────────────────────────────────
+    // -- Open / Close / Auto-open ----------------------------------------
     {
         auto* row = new QHBoxLayout;
         row->setSpacing(8);
@@ -3672,7 +3672,7 @@ QWidget* RadioSetupDialog::buildSerialTab()
         vbox->addWidget(autoOpen);
     }
 
-    // ── FlexControl tuning knob ────────────────────────────────────────
+    // -- FlexControl tuning knob ----------------------------------------
     {
         auto* group = new QGroupBox("FlexControl Tuning Knob");
         group->setStyleSheet(kGroupStyle);
@@ -3821,7 +3821,7 @@ QWidget* RadioSetupDialog::buildSerialTab()
 
 
 
-// ─── Peripherals tab — manual IP connect for TGXL, PGXL, AG (#914) ───────────
+// --- Peripherals tab � manual IP connect for TGXL, PGXL, AG (#914) -----------
 
 QWidget* RadioSetupDialog::buildPeripheralsTab()
 {
@@ -3829,7 +3829,7 @@ QWidget* RadioSetupDialog::buildPeripheralsTab()
     auto* vbox = new QVBoxLayout(page);
     vbox->setSpacing(8);
 
-    auto* group = new QGroupBox("External Devices — Manual IP Connection");
+    auto* group = new QGroupBox("External Devices � Manual IP Connection");
     group->setStyleSheet(kGroupStyle);
     auto* grid = new QGridLayout(group);
     grid->setSpacing(6);
@@ -3864,7 +3864,7 @@ QWidget* RadioSetupDialog::buildPeripheralsTab()
         devLbl->setStyleSheet(kLabelStyle);
         grid->addWidget(devLbl, row, 0);
 
-        // IP field — pre-fill from settings, or from live connection if discovered
+        // IP field � pre-fill from settings, or from live connection if discovered
         auto* ipEdit = new QLineEdit;
         ipEdit->setPlaceholderText("e.g. 192.168.1.100");
         ipEdit->setStyleSheet(kEditStyle);
@@ -3877,7 +3877,7 @@ QWidget* RadioSetupDialog::buildPeripheralsTab()
         }
         grid->addWidget(ipEdit, row, 1);
 
-        // Port field — pre-fill from settings, or from live connection
+        // Port field � pre-fill from settings, or from live connection
         auto* portSpin = new QSpinBox;
         portSpin->setRange(1, 65535);
         int savedPort = settings.value(portKey, "0").toInt();
@@ -3910,7 +3910,7 @@ QWidget* RadioSetupDialog::buildPeripheralsTab()
             QString ip = ipEdit->text().trimmed();
             if (isConnectedFn()) {
                 // If the user cleared the IP field before clicking, wipe
-                // the saved manual IP/port FIRST — the disconnect signal
+                // the saved manual IP/port FIRST � the disconnect signal
                 // fires synchronously and downstream handlers (e.g. SS
                 // button visibility) read these settings to decide
                 // whether to keep showing the device. Clearing after the
@@ -3925,7 +3925,7 @@ QWidget* RadioSetupDialog::buildPeripheralsTab()
                 if (ip.isEmpty()) {
                     // Empty IP while disconnected: if a manual IP was saved
                     // previously, treat this click as "save back to default"
-                    // — clear the persisted manual IP/port so the device
+                    // � clear the persisted manual IP/port so the device
                     // stops auto-connecting.
                     if (!settings.value(ipKey, "").toString().isEmpty()) {
                         settings.remove(ipKey);
@@ -4017,7 +4017,7 @@ QWidget* RadioSetupDialog::buildPeripheralsTab()
         connect(m_pgxl, &PgxlConnection::disconnected, this, updatePgxl);
     }
 
-    // Row 3: Antenna Genius (AG) — hide "Connected" when ShackSwitch is using the model
+    // Row 3: Antenna Genius (AG) � hide "Connected" when ShackSwitch is using the model
     if (m_ag) {
         auto isRealAg = [this]() {
             if (!m_ag->isConnected()) return false;
@@ -4035,8 +4035,8 @@ QWidget* RadioSetupDialog::buildPeripheralsTab()
         connect(m_ag, &AntennaGeniusModel::disconnected, this, updateAg);
     }
 
-    // Row 4: ShackSwitch — Connect/Disconnect + status (same pattern as AG)
-    //         plus a small "⚙ Web UI" button that opens the device's web interface.
+    // Row 4: ShackSwitch � Connect/Disconnect + status (same pattern as AG)
+    //         plus a small "? Web UI" button that opens the device's web interface.
     if (m_ag) {
         auto isSsConnected = [this]() {
             return m_ag->isConnected() &&
@@ -4059,8 +4059,8 @@ QWidget* RadioSetupDialog::buildPeripheralsTab()
         connect(m_ag, &AntennaGeniusModel::connected,    this, updateSs);
         connect(m_ag, &AntennaGeniusModel::disconnected, this, updateSs);
 
-        // "⚙ Web UI" button — opens ShackSwitch web interface in a compact app window
-        auto* webBtn = new QPushButton("⚙ Web UI");
+        // "? Web UI" button � opens ShackSwitch web interface in a compact app window
+        auto* webBtn = new QPushButton("? Web UI");
         webBtn->setStyleSheet(kBtnStyle);
         webBtn->setToolTip("Open ShackSwitch web interface");
         grid->addWidget(webBtn, 4, 5);
@@ -4130,7 +4130,7 @@ void RadioSetupDialog::selectTab(const QString& tabName)
     }
 }
 
-// ── UI Enhancements tab ───────────────────────────────────────────────────────
+// -- UI Enhancements tab -------------------------------------------------------
 
 QWidget* RadioSetupDialog::buildUiEnhancementsTab()
 {
@@ -4144,17 +4144,17 @@ QWidget* RadioSetupDialog::buildUiEnhancementsTab()
     vbox->setSpacing(12);
     vbox->setContentsMargins(16, 16, 16, 16);
 
-    // ── Slice letter display ─────────────────────────────────────────────────
+    // -- Slice letter display -------------------------------------------------
     // Two display modes for slice letters in the GUI (#2606):
-    //   "Global"       (default) — letters track the radio's global slice
+    //   "Global"       (default) � letters track the radio's global slice
     //                  index ('A' = slot 0, 'B' = slot 1, ...) so Multi-Flex
     //                  operators can see at a glance which global slots are
     //                  in use.
-    //   "RadioIndexed" — use the radio-provided per-client letter (matches
+    //   "RadioIndexed" � use the radio-provided per-client letter (matches
     //                  SmartSDR behaviour) with the global slot id rendered
     //                  as a subscript so slot awareness survives.
     //
-    // Pure display change — slice IDs in commands, settings keys, and
+    // Pure display change � slice IDs in commands, settings keys, and
     // signal routing remain global throughout.
     {
         auto* letterGrp = new QGroupBox("Slice Letter Display");
@@ -4163,9 +4163,9 @@ QWidget* RadioSetupDialog::buildUiEnhancementsTab()
         letterLayout->setSpacing(8);
 
         auto* radioRow = new QHBoxLayout;
-        auto* globalRadio = new QRadioButton("Global slot index (A=0, B=1, …)");
+        auto* globalRadio = new QRadioButton("Global slot index (A=0, B=1, �)");
         auto* radioIdxRadio =
-            new QRadioButton("Radio-assigned letter with global subscript (A₂)");
+            new QRadioButton("Radio-assigned letter with global subscript (A2)");
         globalRadio->setStyleSheet("QRadioButton { color: #c8d8e8; font-size: 12px; }");
         radioIdxRadio->setStyleSheet("QRadioButton { color: #c8d8e8; font-size: 12px; }");
         radioRow->addWidget(globalRadio);
@@ -4192,7 +4192,7 @@ QWidget* RadioSetupDialog::buildUiEnhancementsTab()
             s.setValue("SliceLetterDisplay", mode);
             s.save();
             // Push a refresh through anything that paints a slice letter
-            // — the active slice path's syncFromSlice() pulls.  Cheapest
+            // � the active slice path's syncFromSlice() pulls.  Cheapest
             // broad-stroke: re-emit currentSliceChanged so the model
             // listeners reapply via their existing slots.
             emit sliceLetterDisplayModeChanged();
@@ -4207,7 +4207,7 @@ QWidget* RadioSetupDialog::buildUiEnhancementsTab()
         vbox->addWidget(letterGrp);
     }
 
-    // ── Slice color group ────────────────────────────────────────────────────
+    // -- Slice color group ----------------------------------------------------
     auto* grp = new QGroupBox("Slice Colors");
     grp->setStyleSheet(kGroupStyle);
     auto* grpLayout = new QVBoxLayout(grp);
@@ -4229,7 +4229,7 @@ QWidget* RadioSetupDialog::buildUiEnhancementsTab()
     desc->setWordWrap(true);
     grpLayout->addWidget(desc);
 
-    // Grid of 8 color buttons (A–H)
+    // Grid of 8 color buttons (A�H)
     auto* colorGrid = new QHBoxLayout;
     colorGrid->setSpacing(8);
 
@@ -4269,7 +4269,7 @@ QWidget* RadioSetupDialog::buildUiEnhancementsTab()
     vbox->addWidget(grp);
     vbox->addStretch();
 
-    // ── Helpers (capture manager by pointer, buttons by value) ────────────────
+    // -- Helpers (capture manager by pointer, buttons by value) ----------------
     SliceColorManager* pMgr = &SliceColorManager::instance();
 
     // Updates a single button's background to reflect current color.
@@ -4299,11 +4299,11 @@ QWidget* RadioSetupDialog::buildUiEnhancementsTab()
             b->setEnabled(custom);
     };
 
-    // ── Initial state ─────────────────────────────────────────────────────────
+    // -- Initial state ---------------------------------------------------------
     syncModeRadios(pMgr->useCustomColors());
     refreshAllBtns();
 
-    // ── Signals ───────────────────────────────────────────────────────────────
+    // -- Signals ---------------------------------------------------------------
     connect(defaultsRadio, &QRadioButton::toggled, page,
             [pMgr, syncModeRadios, refreshAllBtns](bool checked) mutable {
         if (!checked) return;
@@ -4350,26 +4350,26 @@ QWidget* RadioSetupDialog::buildUiEnhancementsTab()
     return page;
 }
 
-void RadioSetupDialog::setIcomIpConnection(IcomIpConnection* conn)
+void RadioSetupDialog::setIcomIpConnection(IcomIpBackend* conn)
 {
     m_icomIpConn = conn;
     if (m_icomIpConn) {
-        connect(m_icomIpConn, &IcomIpConnection::stateChanged, this, [this](ISourceBackend::State state) {
+        connect(m_icomIpConn, &IcomIpBackend::stateChanged, this, [this](ISourceBackend::State state) {
             if (m_icomStateLabel) {
                 m_icomStateLabel->setText(state == ISourceBackend::State::Connected ? "Connected" :
                                           state == ISourceBackend::State::Connecting ? "Connecting..." : "Disconnected");
             }
         });
-        connect(m_icomIpConn, &IcomIpConnection::frequencyUpdated, this, [this](uint64_t freqHz) {
+        connect(m_icomIpConn, &IcomIpBackend::frequencyUpdated, this, [this](uint64_t freqHz) {
             if (m_icomFreqLabel) {
                 double mhz = static_cast<double>(freqHz) / 1e6;
                 m_icomFreqLabel->setText(QString::number(mhz, 'f', 6) + " MHz");
             }
         });
-        connect(m_icomIpConn, &IcomIpConnection::modeUpdated, this, [this](const QString& mode) {
+        connect(m_icomIpConn, &IcomIpBackend::modeUpdated, this, [this](const QString& mode) {
             if (m_icomModeLabel) m_icomModeLabel->setText(mode);
         });
-        connect(m_icomIpConn, &IcomIpConnection::sMeterUpdated, this, [this](int level) {
+        connect(m_icomIpConn, &IcomIpBackend::sMeterUpdated, this, [this](int level) {
             if (m_icomSMeterLabel) m_icomSMeterLabel->setText(QString("S%1").arg(level / 24));
         });
     }

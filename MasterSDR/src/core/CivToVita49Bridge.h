@@ -153,6 +153,7 @@ signals:
     void attenuatorUpdated(bool on);
     void bkInUpdated(int mode);
     void apfUpdated(int mode);
+    void squelchStatusUpdated(bool open);
 
     // ── VITA-49 data forwarded (for diagnostic use) ──
 

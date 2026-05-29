@@ -3,41 +3,16 @@
 #include "core/ISourceBackend.h"
 #include "core/CivToVita49Bridge.h"
 
-#include <QUdpSocket>
-#include <QTimer>
-#include <QHostAddress>
+#include <QObject>
 #include <QByteArray>
 #include <atomic>
 #include <cstdint>
 
 namespace MasterSDR {
 
-class PanadapterStream;
 class MeterModel;
+class AudioEngine;
 
-// IcomIpBackend integrates an Icom IP (LAN) radio into MasterSDR via
-// the CI-V → VITA-49 translation bridge. It presents the standard
-// ISourceBackend interface to SourceManager while internally routing
-// all radio data through VITA-49 to PanadapterStream and MeterModel.
-//
-// Pipeline:
-//
-//   Icom Radio (UDP 50001/50002/50003)
-//        │ CI-V + PCM + Scope
-//   ┌────▼─────────────────────────┐
-//   │  CivToVita49Bridge           │  CI-V → VITA-49 translation
-//   │  · VITA-49 audio (0x03E3)   │
-//   │  · VITA-49 FFT   (0x8003)   │
-//   │  · VITA-49 meter (0x8002)   │
-//   │  · Status line generation    │
-//   └────┬─────────────────────────┘
-//        │ loopback UDP (localhost)
-//   ┌────▼─────────────────────────┐
-//   │  PanadapterStream (existing) │  core MasterSDR
-//   │  MeterModel (existing)       │  unchanged
-//   │  AudioEngine (existing)      │
-//   └──────────────────────────────┘
-//
 class IcomIpBackend : public ISourceBackend {
     Q_OBJECT
 
@@ -62,7 +37,17 @@ public:
     bool isPtt() const override { return m_bridge.isPtt(); }
     int sMeterLevel() const override { return m_bridge.sMeterLevel(); }
 
-    // ── Extended controls (Icom-specific) ────────────────────
+    // ── Icom-specific connect (called by MainWindow) ──────────────────────
+
+    void connectToRadio(const QString& host, uint16_t ctrlPort,
+                        uint16_t serialPort, uint16_t audioPort,
+                        const QString& username, const QString& password);
+
+    // ── CI-V config ──────────────────────────────────────────
+
+    void setCivAddress(uint8_t addr) { m_bridge.setCivAddress(addr); }
+
+    // ── Extended controls ────────────────────────────────────
 
     void setSplit(bool on) { m_bridge.setSplit(on); }
     void setTxPower(int pct) { m_bridge.setTxPower(pct); }
@@ -70,26 +55,26 @@ public:
     void setAttenuator(bool on) { m_bridge.setAttenuator(on); }
     void setPreamp(int level) { m_bridge.setPreamp(level); }
 
-    // ── Configuration ────────────────────────────────────────
+    // ── External pipeline setup ────────────────────────────────
 
-    // Radio connection parameters
-    void setHost(const QString& host) { m_host = host; }
-    void setCtrlPort(uint16_t port) { m_ctrlPort = port; }
-    void setSerialPort(uint16_t port) { m_serialPort = port; }
-    void setAudioPort(uint16_t port) { m_audioPort = port; }
-    void setCivAddress(uint8_t addr) { m_bridge.setCivAddress(addr); }
-
-    // VITA-49/panadapter config
-    void setPanCenter(uint64_t centerHz) { m_bridge.setPanCenter(centerHz); }
-    void setPanSpan(uint32_t spanHz) { m_bridge.setPanSpan(spanHz); }
-
-    // Set the PanadapterStream to feed VITA-49 data into.
-    // The bridge will send synthesized VITA-49 packets to the stream's loopback port.
-    void setPanadapterStream(PanadapterStream* stream);
-
-    // Add a MeterModel to receive synthetic meter definitions.
-    // Called before connectToRadio().
     void setMeterModel(MeterModel* meterModel);
+    void setAudioEngine(AudioEngine* audioEngine);
+
+signals:
+    // ── Same signals MainWindow.cpp expects from IcomIpConnection ──────────
+
+    void squelchStatusUpdated(bool open);
+    void txPowerUpdated(int pct);
+    void rfGainUpdated(int pct);
+    void splitUpdated(bool on);
+    void preampUpdated(int level);
+    void attenuatorUpdated(bool on);
+    void bkInUpdated(int mode);
+    void apfUpdated(int mode);
+
+protected:
+    void emitAudioDataReady(const QByteArray& pcm);
+    void emitSpectrumDataReady(const QByteArray& scopeData);
 
 private slots:
     void onBridgeConnected();
@@ -100,7 +85,16 @@ private slots:
     void onBridgeSMeterUpdated(int level);
     void onBridgePttChanged(bool tx);
 
-    // Forwarded VITA-49 diagnostic signals → main thread
+    void onBridgeSquelchStatusUpdated(bool open) { emit squelchStatusUpdated(open); }
+    void onBridgeTxPowerUpdated(int pct) { emit txPowerUpdated(pct); }
+    void onBridgeRfGainUpdated(int pct) { emit rfGainUpdated(pct); }
+    void onBridgeSplitUpdated(bool on) { emit splitUpdated(on); }
+    void onBridgePreampUpdated(int level) { emit preampUpdated(level); }
+    void onBridgeAttenuatorUpdated(bool on) { emit attenuatorUpdated(on); }
+    void onBridgeBkInUpdated(int mode) { emit bkInUpdated(mode); }
+    void onBridgeApfUpdated(int mode) { emit apfUpdated(mode); }
+
+    // VITA-49 diagnosis → data extraction
     void onVita49AudioPacket(const QByteArray& pkt);
     void onVita49FftPacket(const QByteArray& pkt);
     void onVita49MeterPacket(const QByteArray& pkt);
@@ -108,22 +102,20 @@ private slots:
 private:
     void wireBridgeSignals();
     void applyMeterDefinitions(MeterModel* model);
-    void applyPanadapterDefinitions();
 
     CivToVita49Bridge m_bridge;
+
+    MeterModel* m_meterModel{nullptr};
+    AudioEngine* m_audioEngine{nullptr};
 
     QString m_host{QStringLiteral("192.168.1.100")};
     uint16_t m_ctrlPort{50001};
     uint16_t m_serialPort{50002};
     uint16_t m_audioPort{50003};
+    QString m_username;
+    QString m_password;
 
     std::atomic<State> m_state{State::Disconnected};
-
-    // External references (NOT owned)
-    PanadapterStream* m_panStream{nullptr};
-    MeterModel* m_meterModel{nullptr};
-
-    // Meter definitions sent flag
     bool m_meterDefsSent{false};
 };
 

@@ -300,10 +300,11 @@ void CivToVita49Bridge::handleCivResponse(uint8_t cmd, uint8_t subCmd, const QBy
                 emit sMeterUpdated(level);
             } else if (subCmd == IcomCivProtocol::SUB_SQUELCH) {
                 m_squelchOpen = (data[0] != 0x00);
+                emit squelchStatusUpdated(m_squelchOpen);
             }
 
             // Synthesize VITA-49 meter packet
-            if (m_vita49Enabled && m_vita49Port > 0) {
+            if (m_vita49Enabled) {
                 synthesizeVita49Meters();
             }
         }
@@ -521,7 +522,7 @@ void CivToVita49Bridge::onAudioReadyRead()
 
         QByteArray payload = data.mid(HEADER_SIZE);
 
-        if (m_vita49Enabled && m_vita49Port > 0) {
+        if (m_vita49Enabled) {
             // IC-705 sends scope data (>=400 bytes) + PCM audio intermixed
             if (payload.size() >= 400) {
                 synthesizeVita49Fft(payload);
