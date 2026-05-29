@@ -257,6 +257,45 @@ void IcomIpConnection::processPacket(const QByteArray& data, quint16 senderPort)
             }
             break;
         }
+        case IcomCivProtocol::CMD_SPLIT: {
+            if (!resp.data.isEmpty()) {
+                m_split = (resp.data[0] != 0x00);
+                emit splitUpdated(m_split);
+            }
+            break;
+        }
+        case IcomCivProtocol::CMD_ATTENUATOR: {
+            if (!resp.data.isEmpty()) {
+                m_attenuator = (resp.data[0] != 0x00);
+                emit attenuatorUpdated(m_attenuator);
+            }
+            break;
+        }
+        case IcomCivProtocol::CMD_MIC_GAIN: {
+            if (!resp.data.isEmpty() && resp.subCmd == IcomCivProtocol::SUB_TX_POWER) {
+                m_txPower = static_cast<int>(resp.data[0]) * 100 / 255;
+                emit txPowerUpdated(m_txPower);
+            } else if (!resp.data.isEmpty() && resp.subCmd == IcomCivProtocol::SUB_RF_GAIN) {
+                m_rfGain = static_cast<int>(resp.data[0]) * 100 / 255;
+                emit rfGainUpdated(m_rfGain);
+            }
+            break;
+        }
+        case IcomCivProtocol::CMD_PREAMP: {
+            if (!resp.data.isEmpty()) {
+                if (resp.subCmd == IcomCivProtocol::SUB_PREAMP) {
+                    m_preamp = static_cast<int>(resp.data[0]);
+                    emit preampUpdated(m_preamp);
+                } else if (resp.subCmd == IcomCivProtocol::SUB_BKIN) {
+                    m_bkInMode = static_cast<int>(resp.data[0]);
+                    emit bkInUpdated(m_bkInMode);
+                } else if (resp.subCmd == IcomCivProtocol::SUB_APF) {
+                    m_apfMode = static_cast<int>(resp.data[0]);
+                    emit apfUpdated(m_apfMode);
+                }
+            }
+            break;
+        }
         default:
             break;
         }
@@ -274,6 +313,12 @@ void IcomIpConnection::onKeepAlive()
     sendCivCommand(IcomCivProtocol::CMD_MODE, IcomCivProtocol::SUB_MODE_READ); // Mode (0x06 0x04)
     sendCivCommand(IcomCivProtocol::CMD_S_METER, IcomCivProtocol::SUB_SMETER); // S-meter (0x15 0x02)
     sendCivCommand(IcomCivProtocol::CMD_S_METER, IcomCivProtocol::SUB_SQUELCH); // Squelch (0x15 0x01)
+    // Extended commands (IC-7610/IC-9700 compatible)
+    sendCivCommand(IcomCivProtocol::CMD_MIC_GAIN, IcomCivProtocol::SUB_TX_POWER); // TX Power (0x14 0x0A)
+    sendCivCommand(IcomCivProtocol::CMD_MIC_GAIN, IcomCivProtocol::SUB_RF_GAIN);  // RF Gain (0x14 0x02)
+    sendCivCommand(IcomCivProtocol::CMD_SPLIT, 0);           // Split (0x0F)
+    sendCivCommand(IcomCivProtocol::CMD_PREAMP, IcomCivProtocol::SUB_PREAMP);      // Preamp (0x16 0x02)
+    sendCivCommand(IcomCivProtocol::CMD_ATTENUATOR, 0);      // Attenuator (0x11)
 }
 
 void IcomIpConnection::sendSerialPacket(uint16_t seq, const QByteArray& civFrame)

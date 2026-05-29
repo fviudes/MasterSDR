@@ -248,4 +248,49 @@ QByteArray IcomCivProtocol::buildReadTxFreq() const
     return buildCommand(CMD_FREQ, 0x03);
 }
 
+QByteArray IcomCivProtocol::buildReadSplit() const
+{
+    return buildCommand(CMD_SPLIT, 0);
+}
+
+QByteArray IcomCivProtocol::buildReadBkIn() const
+{
+    return buildCommand(CMD_PREAMP, SUB_BKIN);
+}
+
+QByteArray IcomCivProtocol::buildReadApf() const
+{
+    return buildCommand(CMD_PREAMP, SUB_APF);
+}
+
+QByteArray IcomCivProtocol::buildReadRfPower() const
+{
+    return buildCommand(CMD_MIC_GAIN, SUB_TX_POWER);
+}
+
+QByteArray IcomCivProtocol::buildReadRfGain() const
+{
+    return buildCommand(CMD_MIC_GAIN, SUB_RF_GAIN);
+}
+
+QByteArray IcomCivProtocol::buildReadPreamp() const
+{
+    return buildCommand(CMD_PREAMP, SUB_PREAMP);
+}
+
+QByteArray IcomCivProtocol::buildReadAttenuator() const
+{
+    return buildCommand(CMD_ATTENUATOR, 0);
+}
+
+QByteArray IcomCivProtocol::buildReadFilter() const
+{
+    return buildCommand(CMD_FILTER, 0x03);
+}
+
+QByteArray IcomCivProtocol::buildReadRxAntenna() const
+{
+    return buildCommand(CMD_RX_ANTENNA, 0);
+}
+
 } // namespace MasterSDR

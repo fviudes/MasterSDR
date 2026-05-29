@@ -30,11 +30,13 @@ public:
     static constexpr uint8_t CMD_READ_VFO    = 0x03;
     static constexpr uint8_t CMD_MODE        = 0x06;
     static constexpr uint8_t CMD_ATTENUATOR  = 0x11;
+    static constexpr uint8_t CMD_RX_ANTENNA  = 0x12;
     static constexpr uint8_t CMD_MIC_GAIN    = 0x14;
     static constexpr uint8_t CMD_S_METER     = 0x15;
     static constexpr uint8_t CMD_PREAMP      = 0x16;
     static constexpr uint8_t CMD_RIG_ID      = 0x19;
     static constexpr uint8_t CMD_PTT         = 0x1C;
+    static constexpr uint8_t CMD_FILTER      = 0x1A;
     static constexpr uint8_t CMD_GPS         = 0x23;
     static constexpr uint8_t CMD_SPECTRUM    = 0x27;
     static constexpr uint8_t CMD_BROADCAST   = 0x00;  // Address 0x00 = all radios respond
@@ -51,6 +53,8 @@ public:
 
     // Sub-commands for CMD_PREAMP (0x16)
     static constexpr uint8_t SUB_PREAMP      = 0x02;
+    static constexpr uint8_t SUB_BKIN        = 0x47;
+    static constexpr uint8_t SUB_APF         = 0x32;
 
     // Sub-commands for CMD_MIC_GAIN (0x14)
     static constexpr uint8_t SUB_MIC_GAIN    = 0x0B;
@@ -114,6 +118,16 @@ public:
     static float smeterToDbm(uint8_t value);
 
     QByteArray buildReadRigId() const;
+    QByteArray buildReadSplit() const;
+    QByteArray buildReadBkIn() const;
+    QByteArray buildReadApf() const;
+    QByteArray buildReadRfPower() const;
+    QByteArray buildReadRfGain() const;
+    QByteArray buildReadPreamp() const;
+    QByteArray buildReadAttenuator() const;
+    QByteArray buildReadFilter() const;
+    QByteArray buildReadRxAntenna() const;
+    QByteArray buildSetSplit(bool on) const;
 
 private:
     uint8_t m_civAddr{DEFAULT_CI_V_ADDR};

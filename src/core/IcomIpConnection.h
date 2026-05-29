@@ -38,6 +38,13 @@ public:
 
 signals:
     void squelchStatusUpdated(bool open);
+    void txPowerUpdated(int pct);
+    void rfGainUpdated(int pct);
+    void splitUpdated(bool on);
+    void preampUpdated(int level);
+    void attenuatorUpdated(bool on);
+    void bkInUpdated(int mode);
+    void apfUpdated(int mode);
 
 private slots:
     void onReadyRead();
@@ -81,6 +88,13 @@ private:
     QString m_rxMode{QLatin1String("USB")};
     bool m_ptt{false};
     int m_sMeter{0};
+    int m_txPower{50};
+    int m_rfGain{100};
+    bool m_split{false};
+    int m_preamp{0};
+    bool m_attenuator{false};
+    int m_bkInMode{0};
+    int m_apfMode{0};
 
     static constexpr uint16_t TYPE_DATA    = 0x00;
     static constexpr uint16_t TYPE_NACK    = 0x01;

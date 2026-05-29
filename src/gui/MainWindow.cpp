@@ -1847,6 +1847,22 @@ MainWindow::MainWindow(QWidget* parent)
                 QString rxModeText = open ? m_icomIpConn->mode() : QLatin1String("SQL");
                 m_appletPanel->sMeterWidget()->setRxMode(rxModeText);
             });
+            connect(m_icomIpConn, &IcomIpConnection::txPowerUpdated, this, [this](int pct) {
+                Q_UNUSED(pct);
+            });
+            connect(m_icomIpConn, &IcomIpConnection::rfGainUpdated, this, [this](int pct) {
+                Q_UNUSED(pct);
+            });
+            connect(m_icomIpConn, &IcomIpConnection::splitUpdated, this, [this](bool on) {
+                if (on) m_appletPanel->sMeterWidget()->setTxMode(QLatin1String("SPLIT"));
+                else m_appletPanel->sMeterWidget()->setTxMode(m_icomIpConn->mode());
+            });
+            connect(m_icomIpConn, &IcomIpConnection::preampUpdated, this, [this](int level) {
+                Q_UNUSED(level);
+            });
+            connect(m_icomIpConn, &IcomIpConnection::attenuatorUpdated, this, [this](bool on) {
+                Q_UNUSED(on);
+            });
             connect(m_icomIpConn, &IcomIpConnection::audioDataReady, this, [this](const QByteArray& pcm) {
                 if (m_icomAudioSink && m_icomAudioDevice) {
                     m_icomAudioDevice->write(pcm);
