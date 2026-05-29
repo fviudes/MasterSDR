@@ -102,17 +102,19 @@ jobs:
             echo "WARNING: Icon file not found at $ICON_PATH"
           fi
 
-          # Verify desktop file has Icon entry
+          # Verify desktop file has correct Icon entry - force it
           DESKTOP_FILE="AppDir/usr/share/applications/MasterSDR.desktop"
           if [ ! -f "$DESKTOP_FILE" ]; then
             echo "Desktop file not found, creating..."
             cp MasterSDR.desktop "$DESKTOP_FILE"
           fi
+          # Ensure Icon=mastersdr (lowercase) is present
+          sed -i 's/^Icon=.*/Icon=mastersdr/' "$DESKTOP_FILE"
           if ! grep -q "^Icon=" "$DESKTOP_FILE"; then
-            echo "Adding Icon entry to desktop file..."
             echo "Icon=mastersdr" >> "$DESKTOP_FILE"
           fi
-          echo "Desktop file Icon entry: $(grep "^Icon=" "$DESKTOP_FILE")"
+          echo "Desktop file contents:"
+          cat "$DESKTOP_FILE"
 
           # Bundle DeepFilterNet3 model for DFNR
           if [ -f third_party/deepfilter/models/DeepFilterNet3_onnx.tar.gz ]; then
