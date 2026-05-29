@@ -130,7 +130,7 @@ jobs:
           $version = "${{ github.ref_name }}" -replace '^v', ''
           $runtimeDir = (Resolve-Path "installer-runtime").Path
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAPP_VERSION=$version "/DVC_RUNTIME_DIR=$runtimeDir" packaging\windows\installer.iss
-          Move-Item "packaging\windows\Output\*.exe" ".."
+          Move-Item "MasterSDR-v*.exe" ".."
 
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
