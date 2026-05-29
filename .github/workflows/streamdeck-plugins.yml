@@ -17,12 +17,12 @@ jobs:
       - name: Package Elgato plugin
         run: |
           cd MasterSDR/plugins/elgato-mastersdr
-          zip -r ../../com.mastersdr.radio.streamDeckPlugin com.mastersdr.radio.sdPlugin/
+          zip -r ../../../com.mastersdr.radio.streamDeckPlugin com.mastersdr.radio.sdPlugin/
 
       - name: Package StreamController plugin
         run: |
           cd MasterSDR/plugins
-          zip -r ../streamcontroller-mastersdr.zip streamcontroller-mastersdr/ \
+          zip -r ../../streamcontroller-mastersdr.zip streamcontroller-mastersdr/ \
             -x "*/__pycache__/*"
 
       - name: Attach to release
