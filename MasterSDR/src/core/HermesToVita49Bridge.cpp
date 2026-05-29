@@ -4,6 +4,7 @@
 
 #include <QDebug>
 #include <QDateTime>
+#include <QThread>
 #include <QtEndian>
 #include <QtMath>
 #include <cmath>
@@ -416,7 +417,7 @@ void HermesToVita49Bridge::computeAudioExtract(const QByteArray& widebandPayload
 
 void HermesToVita49Bridge::processStatusReply(const QByteArray& data)
 {
-    if (data.size() < DISCOVERY_SIZE) return;
+    if (static_cast<size_t>(data.size()) < DISCOVERY_SIZE) return;
 
     auto reply = HermesProtocol::decodeDiscoveryReply(data, m_host.toString(), m_radioPort);
 
