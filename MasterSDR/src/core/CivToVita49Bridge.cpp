@@ -73,8 +73,20 @@ void CivToVita49Bridge::sendIcomCivCommand(uint8_t cmd, uint8_t subCmd,
     IcomCivProtocol proto(m_civAddr);
     QByteArray civFrame = proto.buildCommand(cmd, subCmd, data);
 
-    QByteArray pkt = buildIcomPacket(TYPE_DATA, m_seq++, m_ctrlPort, m_destId, civFrame);
-    m_ctrlSocket->writeDatagram(pkt, m_host, m_ctrlPort);
+    qCDebug(lcConnection) << "CivToVita49Bridge: CI-V TX cmd:" << Qt::hex << cmd
+             << "sub:" << subCmd << "frame:" << civFrame.toHex();
+
+    // Send CI-V as TYPE_DATA on port 50001 (standard Icom IP protocol)
+    {
+        QByteArray pkt = buildIcomPacket(TYPE_DATA, m_seq++, m_ctrlPort, m_destId, civFrame);
+        m_ctrlSocket->writeDatagram(pkt, m_host, m_ctrlPort);
+    }
+
+    // ALSO send raw CI-V frame on port 50002 (serial tunnel)
+    // Some Icom models only respond to raw CI-V on the serial port
+    {
+        m_ctrlSocket->writeDatagram(civFrame, m_host, m_serialPort);
+    }
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -529,6 +541,9 @@ void CivToVita49Bridge::onAudioReadyRead()
         QByteArray data;
         data.resize(static_cast<int>(m_audioSocket->pendingDatagramSize()));
         m_audioSocket->readDatagram(data.data(), data.size());
+
+        qCDebug(lcConnection) << "CivToVita49Bridge: audio data size:" << data.size()
+                 << "hex:" << data.left(16).toHex();
 
         if (data.size() <= HEADER_SIZE) continue;
 
