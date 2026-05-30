@@ -165,6 +165,13 @@ signals:
     // Emitted when VITA-49 meter packet is ready
     void vita49MeterPacket(const QByteArray& packet);
 
+    // ── Raw data signals (bypass VITA-49, direct Icom PCM) ──
+
+    // Raw int16 mono PCM from Icom audio port (for legacy QAudioSink)
+    void rawAudioDataReady(const QByteArray& pcm);
+    // Raw scope bytes from Icom audio port (0-255 per bin, for SpectrumWidget)
+    void rawSpectrumDataReady(const QByteArray& scopeData);
+
 private slots:
     void onCtrlReadyRead();
     void onAudioReadyRead();

@@ -522,8 +522,15 @@ void CivToVita49Bridge::onAudioReadyRead()
 
         QByteArray payload = data.mid(HEADER_SIZE);
 
+        // Always emit raw data for legacy MainWindow path
+        if (payload.size() >= 400) {
+            emit rawSpectrumDataReady(payload);
+        } else {
+            emit rawAudioDataReady(payload);
+        }
+
+        // Also synthesize VITA-49 for the modern pipeline
         if (m_vita49Enabled) {
-            // IC-705 sends scope data (>=400 bytes) + PCM audio intermixed
             if (payload.size() >= 400) {
                 synthesizeVita49Fft(payload);
             } else {

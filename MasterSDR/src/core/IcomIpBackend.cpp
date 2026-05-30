@@ -66,6 +66,12 @@ void IcomIpBackend::wireBridgeSignals()
             this, &IcomIpBackend::onVita49FftPacket);
     connect(&m_bridge, &CivToVita49Bridge::vita49MeterPacket,
             this, &IcomIpBackend::onVita49MeterPacket);
+
+    // Raw data → ISourceBackend signals (MainWindow-compatible path)
+    connect(&m_bridge, &CivToVita49Bridge::rawAudioDataReady, this,
+            [this](const QByteArray& pcm) { emitAudioDataReady(pcm); });
+    connect(&m_bridge, &CivToVita49Bridge::rawSpectrumDataReady, this,
+            [this](const QByteArray& data) { emitSpectrumDataReady(data); });
 }
 
 void IcomIpBackend::connectToRadio()
