@@ -583,6 +583,7 @@ private:
     QLabel* m_tgxlIndicator{nullptr};
     HermesModel* m_hermes{nullptr};
     IcomIpBackend* m_icomIpConn{nullptr};
+    bool m_isUpdatingFromIcom{false};
     QAudioSink* m_icomAudioSink{nullptr};
     QIODevice* m_icomAudioDevice{nullptr};
     QLabel* m_pgxlSeparator{nullptr};

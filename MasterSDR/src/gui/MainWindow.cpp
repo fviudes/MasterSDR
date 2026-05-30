@@ -1776,6 +1776,26 @@ MainWindow::MainWindow(QWidget* parent)
                     m_icomAudioSink = new QAudioSink(dev, fmt, this);
                     m_icomAudioDevice = m_icomAudioSink->start();
                 }
+                // ── Bidirectional wiring: SliceModel (UI) ↔ IcomIpBackend (radio) ──
+                if (auto* s = m_radioModel.slice(0)) {
+                    // UI → Radio: forward user freq/mode changes to Icom IP radio
+                    connect(s, &SliceModel::frequencyChanged, this, [this](double mhz) {
+                        if (m_isUpdatingFromIcom) return;
+                        if (m_icomIpConn && m_icomIpConn->state() == ISourceBackend::State::Connected) {
+                            m_icomIpConn->setFrequency(static_cast<uint64_t>(mhz * 1e6));
+                        }
+                    }, Qt::UniqueConnection);
+                    connect(s, &SliceModel::modeChanged, this, [this](const QString& mode) {
+                        if (m_isUpdatingFromIcom) return;
+                        if (m_icomIpConn && m_icomIpConn->state() == ISourceBackend::State::Connected) {
+                            QString civMode = mode;
+                            if (mode == QLatin1String("DIGU")) civMode = QStringLiteral("USB");
+                            else if (mode == QLatin1String("FT8")) civMode = QStringLiteral("USB");
+                            else if (mode == QLatin1String("FT4")) civMode = QStringLiteral("USB");
+                            m_icomIpConn->setMode(civMode);
+                        }
+                    }, Qt::UniqueConnection);
+                }
             });
             connect(m_icomIpConn, &IcomIpBackend::disconnected, this, [this] {
                 m_connPanel->setConnected(false);
@@ -1806,7 +1826,9 @@ MainWindow::MainWindow(QWidget* parent)
             connect(m_icomIpConn, &IcomIpBackend::frequencyUpdated, this, [this](uint64_t freqHz) {
                 double mhz = static_cast<double>(freqHz) / 1e6;
                 if (auto* s = m_radioModel.slice(0)) {
+                    m_isUpdatingFromIcom = true;
                     s->setFrequency(mhz);
+                    m_isUpdatingFromIcom = false;
                 }
                 // Direct VFO position update + synthetic spectrum fallback
                 SpectrumWidget* targetSw = m_panStack ? m_panStack->activeSpectrum() : nullptr;
@@ -1831,7 +1853,9 @@ MainWindow::MainWindow(QWidget* parent)
                 else if (mappedMode == "DIGU") mappedMode = "DIGU";
                 else if (mappedMode == "DIGL" || mappedMode == "RTTY") mappedMode = "DIGL";
                 if (auto* s = m_radioModel.slice(0)) {
+                    m_isUpdatingFromIcom = true;
                     s->applyStatus({{QStringLiteral("mode"), mappedMode}});
+                    m_isUpdatingFromIcom = false;
                 }
                 // Applet Panel: update mode displays
                 m_appletPanel->sMeterWidget()->setRxMode(mappedMode);
