@@ -158,8 +158,16 @@ void CivToVita49Bridge::onCtrlReadyRead()
         if (data.size() >= 6 && data.size() < 60
             && static_cast<uint8_t>(data[0]) == IcomCivProtocol::PREAMBLE1
             && static_cast<uint8_t>(data[1]) == IcomCivProtocol::PREAMBLE2) {
+            qCDebug(lcConnection) << "CivToVita49Bridge: raw CI-V from port" << senderPort
+                     << "size:" << data.size() << "hex:" << data.left(16).toHex();
             parseCivResponse(data);
             continue;
+        }
+
+        // Log ALL data received
+        if (data.size() > 0) {
+            qCDebug(lcConnection) << "CivToVita49Bridge: data from port" << senderPort
+                     << "size:" << data.size() << "hex:" << data.left(24).toHex();
         }
 
         if (data.size() < HEADER_SIZE) continue;
