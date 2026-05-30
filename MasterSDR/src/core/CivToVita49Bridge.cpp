@@ -70,22 +70,27 @@ void CivToVita49Bridge::sendIcomCtrlPacket(uint16_t type, uint16_t seq,
 void CivToVita49Bridge::sendIcomCivCommand(uint8_t cmd, uint8_t subCmd,
                                             const QByteArray& data)
 {
+    // Try broadcast address (0x00) in addition to configured address
+    IcomCivProtocol protoBroadcast(0x00);
+    QByteArray civFrameBc = protoBroadcast.buildCommand(cmd, subCmd, data);
+
     IcomCivProtocol proto(m_civAddr);
     QByteArray civFrame = proto.buildCommand(cmd, subCmd, data);
 
     qCDebug(lcConnection) << "CivToVita49Bridge: CI-V TX cmd:" << Qt::hex << cmd
-             << "sub:" << subCmd << "frame:" << civFrame.toHex();
+             << "sub:" << subCmd << "addr:" << Qt::hex << m_civAddr
+             << "frame:" << civFrame.toHex();
 
-    // Send CI-V as TYPE_DATA on port 50001 (standard Icom IP protocol)
+    // Send raw CI-V on port 50002 (serial tunnel) — primary CI-V channel
+    {
+        m_ctrlSocket->writeDatagram(civFrame, m_host, m_serialPort);
+        m_ctrlSocket->writeDatagram(civFrameBc, m_host, m_serialPort);
+    }
+
+    // Also send via TYPE_DATA on port 50001 (control channel)
     {
         QByteArray pkt = buildIcomPacket(TYPE_DATA, m_seq++, m_ctrlPort, m_destId, civFrame);
         m_ctrlSocket->writeDatagram(pkt, m_host, m_ctrlPort);
-    }
-
-    // ALSO send raw CI-V frame on port 50002 (serial tunnel)
-    // Some Icom models only respond to raw CI-V on the serial port
-    {
-        m_ctrlSocket->writeDatagram(civFrame, m_host, m_serialPort);
     }
 }
 
