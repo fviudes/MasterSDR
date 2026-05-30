@@ -70,27 +70,35 @@ void CivToVita49Bridge::sendIcomCtrlPacket(uint16_t type, uint16_t seq,
 void CivToVita49Bridge::sendIcomCivCommand(uint8_t cmd, uint8_t subCmd,
                                             const QByteArray& data)
 {
-    // Try broadcast address (0x00) in addition to configured address
-    IcomCivProtocol protoBroadcast(0x00);
-    QByteArray civFrameBc = protoBroadcast.buildCommand(cmd, subCmd, data);
-
     IcomCivProtocol proto(m_civAddr);
     QByteArray civFrame = proto.buildCommand(cmd, subCmd, data);
 
+    qint64 sent;
     qCDebug(lcConnection) << "CivToVita49Bridge: CI-V TX cmd:" << Qt::hex << cmd
              << "sub:" << subCmd << "addr:" << Qt::hex << m_civAddr
              << "frame:" << civFrame.toHex();
 
-    // Send raw CI-V on port 50002 (serial tunnel) — primary CI-V channel
-    {
-        m_ctrlSocket->writeDatagram(civFrame, m_host, m_serialPort);
-        m_ctrlSocket->writeDatagram(civFrameBc, m_host, m_serialPort);
+    // Send raw CI-V on port 50002 (serial tunnel)
+    sent = m_ctrlSocket->writeDatagram(civFrame, m_host, m_serialPort);
+    if (sent < 0) {
+        qCWarning(lcConnection) << "CivToVita49Bridge: CI-V write to 50002 FAILED:" << m_ctrlSocket->errorString();
     }
 
-    // Also send via TYPE_DATA on port 50001 (control channel)
+    // Also send with broadcast address 0x00
+    IcomCivProtocol protoBroadcast(0x00);
+    QByteArray civFrameBc = protoBroadcast.buildCommand(cmd, subCmd, data);
+    sent = m_ctrlSocket->writeDatagram(civFrameBc, m_host, m_serialPort);
+    if (sent < 0) {
+        qCWarning(lcConnection) << "CivToVita49Bridge: broadcast write FAILED";
+    }
+
+    // Send CI-V as TYPE_DATA on port 50002 (serial channel)
     {
-        QByteArray pkt = buildIcomPacket(TYPE_DATA, m_seq++, m_ctrlPort, m_destId, civFrame);
-        m_ctrlSocket->writeDatagram(pkt, m_host, m_ctrlPort);
+        QByteArray pkt = buildIcomPacket(TYPE_DATA, m_seq++, m_serialPort, m_destId, civFrame);
+        sent = m_ctrlSocket->writeDatagram(pkt, m_host, m_serialPort);
+        if (sent < 0) {
+            qCWarning(lcConnection) << "CivToVita49Bridge: TYPE_DATA write FAILED";
+        }
     }
 }
 
