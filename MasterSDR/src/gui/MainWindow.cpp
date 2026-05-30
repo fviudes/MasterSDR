@@ -5411,7 +5411,7 @@ MasterDspDialog* MainWindow::ensureMasterDspDialog()
 void MainWindow::wireRadioSetupDialogSignals(RadioSetupDialog* dlg, const QString& prevComp)
 {
     if (!dlg) return;
-    dlg->setIcomIpBackend(m_icomIpConn);
+    dlg->setIcomIpConnection(m_icomIpConn);
     connect(dlg, &RadioSetupDialog::disconnectIcomRequested, this, [this] {
         if (m_icomIpConn) m_icomIpConn->disconnectFromRadio();
     });
