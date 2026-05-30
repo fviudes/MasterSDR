@@ -176,7 +176,38 @@ void CivToVita49Bridge::processIcomPacket(const QByteArray& data, quint16 sender
     uint16_t srcPort = qFromLittleEndian<quint16>(reinterpret_cast<const uchar*>(data.constData()) + 8);
     uint16_t srcId  = qFromLittleEndian<quint16>(reinterpret_cast<const uchar*>(data.constData()) + 10);
 
+    qCDebug(lcConnection) << "CivToVita49Bridge: recv from port" << senderPort
+             << "type:" << Qt::hex << type << "srcPort:" << srcPort << "srcId:" << srcId
+             << "size:" << data.size();
+
     // Control channel messages
+    // Handle TYPE_READY from ANY port (radio might respond from different port)
+    if (type == TYPE_READY && !m_connected) {
+        m_connected = true;
+        m_state = ConnectionState::Connected;
+        qCDebug(lcConnection) << "CivToVita49Bridge: READY received from port" << senderPort << ", connection established";
+        emit stateChanged(m_state);
+        emit connected();
+
+        m_keepAliveTimer->start();
+
+        // Register serial + audio channels
+        {
+            QByteArray pkt = buildIcomPacket(TYPE_DATA, m_seq++, m_serialPort, m_destId);
+            m_ctrlSocket->writeDatagram(pkt, m_host, m_serialPort);
+        }
+        {
+            QByteArray pkt = buildIcomPacket(TYPE_DATA, m_seq++, m_audioPort, m_destId);
+            m_audioSocket->writeDatagram(pkt, m_host, m_audioPort);
+        }
+
+        // Initial state poll
+        sendIcomCivCommand(IcomCivProtocol::CMD_READ_VFO);
+        sendIcomCivCommand(IcomCivProtocol::CMD_MODE, IcomCivProtocol::SUB_MODE_READ);
+        sendIcomCivCommand(IcomCivProtocol::CMD_S_METER, IcomCivProtocol::SUB_SMETER);
+        sendIcomCivCommand(IcomCivProtocol::CMD_S_METER, IcomCivProtocol::SUB_SQUELCH);
+    }
+
     if (senderPort == m_ctrlPort) {
         switch (type) {
         case TYPE_SYN_ACK:
@@ -184,33 +215,6 @@ void CivToVita49Bridge::processIcomPacket(const QByteArray& data, quint16 sender
             m_destId = srcId;
             qCDebug(lcConnection) << "CivToVita49Bridge: SYN-ACK, sending READY";
             sendIcomCtrlPacket(TYPE_READY, m_seq++, m_destPort, m_destId);
-            break;
-
-        case TYPE_READY:
-            if (!m_connected) {
-                m_connected = true;
-                m_state = ConnectionState::Connected;
-                emit stateChanged(m_state);
-                emit connected();
-
-                m_keepAliveTimer->start();
-
-                // Register serial + audio channels
-                {
-                    QByteArray pkt = buildIcomPacket(TYPE_DATA, m_seq++, m_serialPort, m_destId);
-                    m_ctrlSocket->writeDatagram(pkt, m_host, m_serialPort);
-                }
-                {
-                    QByteArray pkt = buildIcomPacket(TYPE_DATA, m_seq++, m_audioPort, m_destId);
-                    m_audioSocket->writeDatagram(pkt, m_host, m_audioPort);
-                }
-
-                // Initial state poll
-                sendIcomCivCommand(IcomCivProtocol::CMD_READ_VFO);
-                sendIcomCivCommand(IcomCivProtocol::CMD_MODE, IcomCivProtocol::SUB_MODE_READ);
-                sendIcomCivCommand(IcomCivProtocol::CMD_S_METER, IcomCivProtocol::SUB_SMETER);
-                sendIcomCivCommand(IcomCivProtocol::CMD_S_METER, IcomCivProtocol::SUB_SQUELCH);
-            }
             break;
 
         case TYPE_PING:
