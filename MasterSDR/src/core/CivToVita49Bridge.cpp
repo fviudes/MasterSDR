@@ -92,10 +92,10 @@ void CivToVita49Bridge::sendIcomCivCommand(uint8_t cmd, uint8_t subCmd,
         qCWarning(lcConnection) << "CivToVita49Bridge: broadcast write FAILED";
     }
 
-    // Send CI-V as TYPE_DATA on port 50002 (serial channel)
+    // Send CI-V as TYPE_DATA on port 50001 (control port — radio responds here)
     {
-        QByteArray pkt = buildIcomPacket(TYPE_DATA, m_seq++, m_serialPort, m_destId, civFrame);
-        sent = m_ctrlSocket->writeDatagram(pkt, m_host, m_serialPort);
+        QByteArray pkt = buildIcomPacket(TYPE_DATA, m_seq++, m_ctrlPort, m_destId, civFrame);
+        sent = m_ctrlSocket->writeDatagram(pkt, m_host, m_ctrlPort);
         if (sent < 0) {
             qCWarning(lcConnection) << "CivToVita49Bridge: TYPE_DATA write FAILED";
         }
